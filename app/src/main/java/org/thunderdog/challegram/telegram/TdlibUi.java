@@ -130,6 +130,7 @@ import org.thunderdog.challegram.ui.PasswordController;
 import org.thunderdog.challegram.ui.PeopleController;
 import org.thunderdog.challegram.ui.PhoneController;
 import org.thunderdog.challegram.ui.StarsController;
+import org.thunderdog.challegram.ui.TonWalletController;
 import org.thunderdog.challegram.ui.StarsCollectibleController;
 import org.thunderdog.challegram.ui.StarsGiftAuctionController;
 import org.thunderdog.challegram.ui.BusinessSettingsController;
@@ -5344,9 +5345,12 @@ public class TdlibUi extends Handler {
               result = new PremiumSettingsController(context.context(), tdlib, new TdApi.PremiumSourceSettings());
               break;
             }
+            case TdApi.SettingsSectionMyGrams.CONSTRUCTOR: {
+              result = new TonWalletController(context.context(), tdlib);
+              break;
+            }
             case TdApi.SettingsSectionQrCode.CONSTRUCTOR:
             case TdApi.SettingsSectionSearch.CONSTRUCTOR:
-            case TdApi.SettingsSectionMyGrams.CONSTRUCTOR:
             case TdApi.SettingsSectionPowerSaving.CONSTRUCTOR:
             case TdApi.SettingsSectionSendGift.CONSTRUCTOR:
             case TdApi.SettingsSectionInAppBrowser.CONSTRUCTOR:

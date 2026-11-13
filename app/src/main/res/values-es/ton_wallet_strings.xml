@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="TgxTonWallet">Billetera TON</string>
+  <string name="TgxTonAmount">%1$s TON</string>
+  <string name="TgxTonTelegramBalance">Saldo TON en Telegram</string>
+  <string name="TgxTonLedger">Movimientos TON de Telegram</string>
+  <string name="TgxTonBlockchainWallet">Billetera en la blockchain</string>
+  <string name="TgxTonCopyAddress">Copiar dirección de la billetera</string>
+  <string name="TgxTonBackupEnabled">Copia de seguridad habilitada</string>
+  <string name="TgxTonGasless">Transferencias sin comisión de red restantes: %1$s</string>
+  <string name="TgxTonWalletHistory">Movimientos en la blockchain</string>
+  <string name="TgxTonNfts">NFT de la billetera</string>
+  <string name="TgxTonWalletMissing">Esta cuenta no tiene una billetera activa en la blockchain.</string>
+  <string name="TgxTonEntry">%1$s · %2$s</string>
+  <string name="TgxTonOverview">Resumen de la billetera</string>
+  <string name="TgxTonEmpty">No se encontraron registros.</string>
+  <string name="TgxTonKeyChange">Cambio de clave de la billetera</string>
+  <string name="TgxTonNftTransfer">Transferencia de NFT</string>
+  <string name="TgxTonIncoming">Entradas</string>
+  <string name="TgxTonOutgoing">Salidas</string>
+  <string name="TgxTonAll">Todos los movimientos</string>
+  <string name="TgxTonRefund">Reembolso</string>
+  <string name="TgxTonFee">Comisión de red: %1$s</string>
+  <string name="TgxTonCompleted">Completado</string>
+  <string name="TgxTonFailed">Fallido</string>
+</resources>

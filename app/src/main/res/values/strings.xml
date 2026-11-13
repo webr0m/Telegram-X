@@ -6821,4 +6821,27 @@
   <string name="EnableGalleryAutosave">Save automatically to gallery</string>
   <string name="EnableGalleryAutosaveConfirm">Save new photos and videos that finish downloading to the shared gallery on this device? Your Telegram rules and chat exceptions apply.</string>
   <string name="GalleryAutosaveNeedsAndroid10">Automatic gallery saving requires Android 10 or later.</string>
+  <string name="TgxTonWallet">TON wallet</string>
+  <string name="TgxTonAmount">%1$s TON</string>
+  <string name="TgxTonTelegramBalance">TON balance in Telegram</string>
+  <string name="TgxTonLedger">Telegram TON transactions</string>
+  <string name="TgxTonBlockchainWallet">On-chain wallet</string>
+  <string name="TgxTonCopyAddress">Copy wallet address</string>
+  <string name="TgxTonBackupEnabled">Wallet backup enabled</string>
+  <string name="TgxTonGasless">Gasless transfers remaining: %1$s</string>
+  <string name="TgxTonWalletHistory">On-chain transactions</string>
+  <string name="TgxTonNfts">Wallet NFTs</string>
+  <string name="TgxTonWalletMissing">No active on-chain wallet is available for this account.</string>
+  <string name="TgxTonEntry">%1$s · %2$s</string>
+  <string name="TgxTonOverview">Wallet overview</string>
+  <string name="TgxTonEmpty">No entries found.</string>
+  <string name="TgxTonKeyChange">Wallet key change</string>
+  <string name="TgxTonNftTransfer">NFT transfer</string>
+  <string name="TgxTonIncoming">Incoming</string>
+  <string name="TgxTonOutgoing">Outgoing</string>
+  <string name="TgxTonAll">All directions</string>
+  <string name="TgxTonRefund">Refund</string>
+  <string name="TgxTonFee">Network fee: %1$s</string>
+  <string name="TgxTonCompleted">Completed</string>
+  <string name="TgxTonFailed">Failed</string>
 </resources>

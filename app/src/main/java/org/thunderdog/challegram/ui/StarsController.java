@@ -237,6 +237,7 @@ public final class StarsController extends RecyclerViewController<Void> implemen
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tgxStarsRefresh, 0, R.string.TgxPremiumRefreshStars));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_starsGifts, 0, R.string.TgxStarsGiftCatalog));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_giftMyAuctions, 0, R.string.TgxStarsMyAuctions));
+    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonWallet, 0, R.string.TgxTonWallet));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_giftMyCollectibles, 0, R.string.TgxStarsReceivedGifts));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_starsRevenue, 0, R.string.TgxStarsRevenue));
     adapter.setItems(items, false);
@@ -293,6 +294,8 @@ public final class StarsController extends RecyclerViewController<Void> implemen
       pickGiftRecipient();
     } else if (id == R.id.btn_giftMyAuctions) {
       showActiveAuctions();
+    } else if (id == R.id.btn_tonWallet) {
+      navigateTo(new TonWalletController(context(), tdlib));
     } else if (id == R.id.btn_giftMyCollectibles) {
       navigateTo(new StarsGiftMarketController(context(), tdlib, 0, tdlib.myUserId()));
     } else if (id == R.id.btn_starsRevenue) {

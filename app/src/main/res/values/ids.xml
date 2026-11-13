@@ -1696,5 +1696,16 @@
   <item type="id" name="btn_savedTagRetry" />
   <item type="id" name="btn_savedTagEmojiPack" />
   <item type="id" name="btn_enableGalleryAutosave" />
+  <item type="id" name="controller_tonWallet" />
+  <item type="id" name="btn_tonWallet" />
+  <item type="id" name="btn_tonLedger" />
+  <item type="id" name="btn_tonCopyAddress" />
+  <item type="id" name="btn_tonWalletHistory" />
+  <item type="id" name="btn_tonNfts" />
+  <item type="id" name="btn_tonOverview" />
+  <item type="id" name="btn_tonDirection" />
+  <item type="id" name="btn_tonEntry" />
+  <item type="id" name="btn_tonMore" />
+  <item type="id" name="btn_tonRefresh" />
 </resources>
 <!-- endregion -->

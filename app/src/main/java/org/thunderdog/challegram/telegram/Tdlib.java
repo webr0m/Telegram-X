@@ -937,6 +937,9 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       } else {
         galleryAutosave.reset();
         ownedStarAmount = null;
+        tonWalletState = null;
+        tonGaslessTransfers = null;
+        ownedGramAmount = null;
         quickReplyShortcuts.clear();
         quickReplyMessages.clear();
         activeGiftAuctions = new TdApi.GiftAuctionState[0];
@@ -9878,9 +9881,27 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
   }
 
+  private volatile Long ownedGramAmount;
+  private volatile TdApi.TonWalletState tonWalletState;
+  private volatile TdApi.TonWalletGaslessTransfersInfo tonGaslessTransfers;
+  private final java.util.concurrent.CopyOnWriteArrayList<Runnable> tonWalletListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public Long ownedGramAmount () { return ownedGramAmount; }
+  public TdApi.TonWalletState tonWalletState () { return tonWalletState; }
+  public TdApi.TonWalletGaslessTransfersInfo tonGaslessTransfers () { return tonGaslessTransfers; }
+  public void addTonWalletListener (Runnable listener) { tonWalletListeners.addIfAbsent(listener); }
+  public void removeTonWalletListener (Runnable listener) { tonWalletListeners.remove(listener); }
+
+  private void notifyTonWalletListeners () {
+    for (Runnable listener : tonWalletListeners) {
+      listener.run();
+    }
+  }
+
   @TdlibThread
   private void updateOwnedGramCount (TdApi.UpdateOwnedGramCount update) {
-    // TODO(gram)
+    ownedGramAmount = update.gramAmount;
+    notifyTonWalletListeners();
   }
 
   @TdlibThread
@@ -10893,13 +10914,19 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       case TdApi.UpdateActiveGiftAuctions.CONSTRUCTOR:
         activeGiftAuctions = ((TdApi.UpdateActiveGiftAuctions) update).states.clone();
         break;
+      case TdApi.UpdateTonWalletState.CONSTRUCTOR:
+        tonWalletState = ((TdApi.UpdateTonWalletState) update).state;
+        notifyTonWalletListeners();
+        break;
+      case TdApi.UpdateTonWalletGaslessTransfersInfo.CONSTRUCTOR:
+        tonGaslessTransfers = ((TdApi.UpdateTonWalletGaslessTransfersInfo) update).info;
+        notifyTonWalletListeners();
+        break;
       case TdApi.UpdateLiveStoryTopDonors.CONSTRUCTOR:
       case TdApi.UpdateStakeDiceState.CONSTRUCTOR:
       case TdApi.UpdateNewOauthRequest.CONSTRUCTOR:
       case TdApi.UpdateTextCompositionStyles.CONSTRUCTOR:
       case TdApi.UpdateAllowedBotUsernamePremiumSuffixes.CONSTRUCTOR:
-      case TdApi.UpdateTonWalletGaslessTransfersInfo.CONSTRUCTOR:
-      case TdApi.UpdateTonWalletState.CONSTRUCTOR:
       case TdApi.UpdateTonWalletTonConnectSession.CONSTRUCTOR:
       case TdApi.UpdateTonWalletTonConnectSessionDisconnectRequired.CONSTRUCTOR:
       case TdApi.UpdateWebProxyCarrierOpened.CONSTRUCTOR:
