@@ -1711,5 +1711,6 @@
   <item name="btn_tonRevenue" type="id" />
   <item name="btn_tonWithdraw" type="id" />
   <item name="controller_tonRevenue" type="id" />
+  <item name="btn_tonBalanceTopUp" type="id" />
 </resources>
 <!-- endregion -->

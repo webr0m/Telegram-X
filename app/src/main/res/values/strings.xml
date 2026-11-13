@@ -6873,4 +6873,10 @@
   <string name="TgxTonGaslessTransaction">Telegram paid the network fee.</string>
   <string name="TgxTonEncryptedComment">Encrypted comment</string>
   <string name="TgxTonCommission">Telegram commission: %1$s</string>
+  <string name="TgxTonBalanceTopUp">Top up Telegram balance</string>
+  <string name="TgxTonTopUpOpen">Continue to %1$s to review Telegram balance top-up options?</string>
+  <string name="TgxTonReceive">Receive TON</string>
+  <string name="TgxTonReceiveInfo">Share this public wallet address to receive TON on the TON network.\n\n%1$s</string>
+  <string name="TgxTonExplorer">View in explorer</string>
+  <string name="TgxTonExplorerOpen">Open this address on %1$s?</string>
 </resources>

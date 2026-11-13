@@ -52,4 +52,10 @@
   <string name="TgxTonGaslessTransaction">Telegram pagó la comisión de red.</string>
   <string name="TgxTonEncryptedComment">Comentario cifrado</string>
   <string name="TgxTonCommission">Comisión de Telegram: %1$s</string>
+  <string name="TgxTonBalanceTopUp">Recargar saldo de Telegram</string>
+  <string name="TgxTonTopUpOpen">¿Continuar a %1$s para revisar las opciones de recarga del saldo de Telegram?</string>
+  <string name="TgxTonReceive">Recibir TON</string>
+  <string name="TgxTonReceiveInfo">Comparte esta dirección pública para recibir TON en la red TON.\n\n%1$s</string>
+  <string name="TgxTonExplorer">Ver en el explorador</string>
+  <string name="TgxTonExplorerOpen">¿Abrir esta dirección en %1$s?</string>
 </resources>

@@ -18,16 +18,20 @@
 package org.thunderdog.challegram.ui;
 
 import android.content.Context;
+import android.net.Uri;
 import android.view.View;
 
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.tool.Intents;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.math.BigDecimal;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -44,10 +48,11 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
   private SettingsAdapter adapter;
   private final Runnable listener = () -> runOnUiThreadOptional(() -> {
     if (sameAccount() && adapter != null) {
-      render();
+      refreshWalletOptions();
     }
   });
   private Page page = Page.OVERVIEW;
+  private boolean walletAvailable;
   private Direction direction = Direction.ALL;
   private String offset = "";
   private Long balance;
@@ -76,12 +81,21 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     super.destroy();
   }
 
+  private void refreshWalletOptions () {
+    if (page == Page.OVERVIEW && walletAvailable != tdlib.options().canUseTonWallet) {
+      show(Page.OVERVIEW);
+    } else {
+      render();
+    }
+  }
+
   private boolean sameAccount () {
     return account != 0 && account == tdlib.myUserId() && tdlib.isAuthorized();
   }
 
   private void show (Page selection) {
     page = selection;
+    walletAvailable = tdlib.options().canUseTonWallet;
     generation++;
     entries.clear();
     cursors.clear();
@@ -218,6 +232,9 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       if (current != null) {
         rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, ton(current)));
       }
+      if (httpsUrl(tdlib.options().gramTopUpUrl) != null) {
+        rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonBalanceTopUp, 0, R.string.TgxTonBalanceTopUp));
+      }
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonLedger, 0, R.string.TgxTonLedger));
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonRevenue, 0, R.string.TgxTonRevenue));
       if (tdlib.options().canUseTonWallet) {
@@ -225,7 +242,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         rows.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.TgxTonBlockchainWallet));
         if (state != null && !StringUtils.isEmpty(state.address)) {
           rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, ton(state.gramAmount)));
-          rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonCopyAddress, 0, R.string.TgxTonCopyAddress));
+          rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonCopyAddress, 0, R.string.TgxTonReceive));
           if (state.isBackupEnabled) {
             rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.TgxTonBackupEnabled));
           }
@@ -350,6 +367,12 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     } else if (id == R.id.btn_tonLedger || id == R.id.btn_tonWalletHistory || id == R.id.btn_tonNfts) {
       direction = Direction.ALL;
       show(id == R.id.btn_tonLedger ? Page.TELEGRAM : id == R.id.btn_tonNfts ? Page.NFT : Page.WALLET);
+    } else if (id == R.id.btn_tonBalanceTopUp) {
+      String url = tdlib.options().gramTopUpUrl;
+      URI parsed = httpsUrl(url);
+      if (parsed != null) {
+        confirmExternal(R.string.TgxTonTopUpOpen, parsed, () -> url.equals(tdlib.options().gramTopUpUrl));
+      }
     } else if (id == R.id.btn_tonRevenue) {
       navigateTo(new TonRevenueController(context(), tdlib));
     } else if (id == R.id.btn_tonConnections && tdlib.options().canUseTonWallet) {
@@ -359,12 +382,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     } else if (id == R.id.btn_tonCopyAddress) {
       TdApi.TonWalletState state = tdlib.tonWalletState();
       if (tdlib.options().canUseTonWallet && state != null && !StringUtils.isEmpty(state.address)) {
-        showConfirm(state.address, Lang.getString(R.string.Copy), () -> {
-          TdApi.TonWalletState fresh = tdlib.tonWalletState();
-          if (sameAccount() && tdlib.options().canUseTonWallet && fresh != null && state.address.equals(fresh.address)) {
-            UI.copyText(fresh.address, R.string.CopiedText);
-          }
-        });
+        showReceive(state.address);
       }
     } else if (id == R.id.btn_tonDirection) {
       Options.Builder options = new Options.Builder();
@@ -383,6 +401,66 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     } else if (id == R.id.btn_tonEntry && view.getTag() instanceof ListItem row) {
       showDetails(row.getData());
     }
+  }
+
+  static URI httpsUrl (String value) {
+    if (value == null) {
+      return null;
+    }
+    try {
+      URI url = new URI(value);
+      if ("https".equalsIgnoreCase(url.getScheme()) && url.getHost() != null &&
+          url.getRawUserInfo() == null && (url.getPort() == -1 || url.getPort() == 443)) {
+        return url;
+      }
+    } catch (URISyntaxException ignored) { }
+    return null;
+  }
+
+  static URI explorerAddress (String prefix, String address) {
+    URI base = httpsUrl(prefix);
+    if (base == null || base.getRawFragment() != null || address == null ||
+        !address.matches("(?:[A-Za-z0-9_-]{48}|-?[0-9]{1,3}:[a-fA-F0-9]{64})")) {
+      return null;
+    }
+    return httpsUrl(prefix + address.replace(":", "%3A"));
+  }
+
+  private void confirmExternal (int message, URI url, java.util.function.BooleanSupplier stillAllowed) {
+    showConfirm(Lang.getString(message, url.getHost()), Lang.getString(R.string.Continue), () -> {
+      if (sameAccount() && isFocused() && stillAllowed.getAsBoolean()) {
+        Intents.openUriInBrowser(Uri.parse(url.toASCIIString()));
+      }
+    });
+  }
+
+  private boolean hasWalletAddress (String expected) {
+    TdApi.TonWalletState state = tdlib.tonWalletState();
+    return sameAccount() && tdlib.options().canUseTonWallet && state != null && expected.equals(state.address);
+  }
+
+  private void showReceive (String address) {
+    String prefix = tdlib.options().tonBlockchainExplorerUrl;
+    URI explorer = explorerAddress(prefix, address);
+    Options.Builder options = new Options.Builder().info(Lang.getString(R.string.TgxTonReceiveInfo, address))
+      .item(new OptionItem(1, Lang.getString(R.string.Copy), OptionColor.NORMAL, 0))
+      .item(new OptionItem(2, Lang.getString(R.string.Share), OptionColor.NORMAL, 0));
+    if (explorer != null) {
+      options.item(new OptionItem(3, Lang.getString(R.string.TgxTonExplorer), OptionColor.NORMAL, 0));
+    }
+    showOptions(options.cancelItem().build(), (view, id) -> {
+      if (hasWalletAddress(address)) {
+        if (id == 1) {
+          UI.copyText(address, R.string.CopiedText);
+        } else if (id == 2) {
+          Intents.shareText(address);
+        } else if (id == 3 && explorer != null && prefix.equals(tdlib.options().tonBlockchainExplorerUrl)) {
+          confirmExternal(R.string.TgxTonExplorerOpen, explorer,
+            () -> hasWalletAddress(address) && prefix.equals(tdlib.options().tonBlockchainExplorerUrl));
+        }
+      }
+      return true;
+    });
   }
 
   private void showDetails (Object data) {
@@ -429,12 +507,20 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       if (nft.gift != null && !StringUtils.isEmpty(nft.gift.name)) {
         options.item(new OptionItem(2, Lang.getString(R.string.TgxStarsViewCollectible), OptionColor.NORMAL, 0));
       }
+      String prefix = tdlib.options().tonBlockchainExplorerUrl;
+      URI explorer = explorerAddress(prefix, nft.address);
+      if (explorer != null) {
+        options.item(new OptionItem(3, Lang.getString(R.string.TgxTonExplorer), OptionColor.NORMAL, 0));
+      }
       options.cancelItem();
       showOptions(options.build(), (view, id) -> {
         if (sameAccount() && id == 1) {
           UI.copyText(nft.address, R.string.CopiedText);
         } else if (sameAccount() && id == 2) {
           navigateTo(new StarsCollectibleController(context(), tdlib, nft.gift.name, account));
+        } else if (sameAccount() && id == 3 && explorer != null && prefix.equals(tdlib.options().tonBlockchainExplorerUrl)) {
+          confirmExternal(R.string.TgxTonExplorerOpen, explorer,
+            () -> tdlib.options().canUseTonWallet && prefix.equals(tdlib.options().tonBlockchainExplorerUrl));
         }
         return true;
       });

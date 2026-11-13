@@ -9910,6 +9910,13 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
     final String name = update.name;
     switch (name) {
+      case "gram_top_up_url":
+      case "ton_blockchain_explorer_url":
+      case "can_use_ton_wallet":
+        if (updateResult == TdlibOptions.UpdateResult.VALUE_UPDATED) {
+          notifyTonWalletListeners();
+        }
+        break;
       case "version":
         context().setTdlibVersion(Td.stringValue(update.value));
         break;
