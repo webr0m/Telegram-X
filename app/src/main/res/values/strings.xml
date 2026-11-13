@@ -6813,4 +6813,9 @@
   <string name="SavedMessagesRenameTag">Rename tag</string>
   <string name="SavedMessagesTagLabelHint">Up to 12 characters. Leave it blank to remove the label.</string>
   <string name="SavedMessagesDraftTooLong">This draft exceeds the Telegram message length limit.</string>
+  <string name="SavedMessagesPickCustomTag">Choose a custom emoji</string>
+  <string name="SavedMessagesNoEmojiPacks">No installed custom emoji available.</string>
+  <string name="SavedMessagesEmojiLoadFailed">Unable to load custom emoji.</string>
+  <string name="SavedMessagesConfirmCustomTag">Add this emoji as a tag on the selected saved message?</string>
+  <string name="SavedMessagesTagAlreadyAdded">This tag is already on the message.</string>
 </resources>

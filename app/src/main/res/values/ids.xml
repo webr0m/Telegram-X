@@ -1692,5 +1692,8 @@
   <item type="id" name="btn_savedMessagesReorder" />
   <item type="id" name="btn_savedMessagesTags" />
   <item type="id" name="btn_savedMessagesClearTag" />
+  <item type="id" name="controller_savedTagEmojiPicker" />
+  <item type="id" name="btn_savedTagRetry" />
+  <item type="id" name="btn_savedTagEmojiPack" />
 </resources>
 <!-- endregion -->

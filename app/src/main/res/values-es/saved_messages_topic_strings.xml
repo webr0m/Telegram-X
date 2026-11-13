@@ -41,4 +41,9 @@
   <string name="SavedMessagesRenameTag">Renombrar etiqueta</string>
   <string name="SavedMessagesTagLabelHint">Hasta 12 caracteres. Deja el nombre en blanco para quitarlo.</string>
   <string name="SavedMessagesDraftTooLong">Este borrador supera el límite de longitud de Telegram.</string>
+  <string name="SavedMessagesPickCustomTag">Elegir emoji personalizado</string>
+  <string name="SavedMessagesNoEmojiPacks">No hay emojis personalizados instalados disponibles.</string>
+  <string name="SavedMessagesEmojiLoadFailed">No se pudieron cargar los emojis personalizados.</string>
+  <string name="SavedMessagesConfirmCustomTag">¿Añadir este emoji como etiqueta al mensaje guardado seleccionado?</string>
+  <string name="SavedMessagesTagAlreadyAdded">El mensaje ya tiene esta etiqueta.</string>
 </resources>

@@ -72,6 +72,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private String query = "";
   private TdApi.ReactionType activeTag;
   private String activeTagLabel;
+  private long customTagMessageId, selectedCustomEmoji;
   private boolean loading, end, failed, saving, topicListEnd;
 
   SavedMessagesTopicsController (Context context, Tdlib tdlib, long chatId, long topicId) {
@@ -145,6 +146,12 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     super.onFocus();
     if (adapter != null) {
       onTopicsChanged();
+      if (selectedCustomEmoji != 0) {
+        long messageId = customTagMessageId;
+        TdApi.ReactionType tag = new TdApi.ReactionTypeCustomEmoji(selectedCustomEmoji);
+        customTagMessageId = selectedCustomEmoji = 0;
+        changeTag(messageId, tag, false, true);
+      }
     }
   }
 
@@ -536,21 +543,27 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
         addTag(tags, reaction.type);
       }
     }
-    if (tags.isEmpty()) {
-      UI.showToast(R.string.SavedMessagesNoTags, Toast.LENGTH_SHORT);
-      return;
-    }
     Options.Builder options = new Options.Builder().info(Lang.getString(R.string.SavedMessagesManageTags));
     for (int i = 0; i < tags.size(); i++) {
       TdApi.ReactionType tag = tags.get(i);
       options.item(new OptionItem(i + 1, Lang.getString(isTagSelected(message, tag) ?
         R.string.SavedMessagesRemoveTag : R.string.SavedMessagesAddTag, reactionLabel(tag)), OptionColor.NORMAL, 0));
     }
+    int custom = tags.size() + 1;
+    options.item(new OptionItem(custom, Lang.getString(R.string.SavedMessagesPickCustomTag), OptionColor.NORMAL, 0));
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
-      if (id > 0 && id <= tags.size()) {
+      if (id == custom) {
+        if (isFocused() && currentAccount() && tdlib.hasPremium()) {
+          navigateTo(new SavedTagEmojiPicker(context(), tdlib, account, Lang.getString(R.string.SavedMessagesPickCustomTag),
+            (emojiId) -> {
+              customTagMessageId = message.id;
+              selectedCustomEmoji = emojiId;
+            }));
+        }
+      } else if (id > 0 && id <= tags.size()) {
         TdApi.ReactionType tag = tags.get(id - 1);
-        changeTag(message.id, tag, isTagSelected(message, tag));
+        changeTag(message.id, tag, isTagSelected(message, tag), false);
       }
       return true;
     });
@@ -568,7 +581,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     tags.add(candidate);
   }
 
-  private void changeTag (long messageId, TdApi.ReactionType tag, boolean remove) {
+  private void changeTag (long messageId, TdApi.ReactionType tag, boolean remove, boolean fromPicker) {
     if (saving || !isFocused() || !currentAccount() || !tdlib.hasPremium()) {
       return;
     }
@@ -576,8 +589,18 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     render();
     tdlib.send(new TdApi.GetMessage(chatId, messageId), (fresh, error) -> runOnUiThreadOptional(() -> {
       if (!isFocused() || !currentAccount() || !tdlib.hasPremium() || error != null ||
-          !belongsToTopic(fresh, chatId, topicId) || !supportsTags(fresh) || isTagSelected(fresh, tag) != remove) {
+          !belongsToTopic(fresh, chatId, topicId) || !supportsTags(fresh)) {
         finishTagChange(error, false);
+        return;
+      }
+      if (isTagSelected(fresh, tag) != remove) {
+        if (fromPicker) {
+          saving = false;
+          render();
+          UI.showToast(R.string.SavedMessagesTagAlreadyAdded, Toast.LENGTH_SHORT);
+        } else {
+          finishTagChange(null, false);
+        }
         return;
       }
       TdApi.Function<TdApi.Ok> request = remove ? new TdApi.RemoveMessageReaction(chatId, messageId, tag) :
