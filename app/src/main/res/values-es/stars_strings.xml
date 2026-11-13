@@ -160,4 +160,10 @@
   <string name="TgxStarsUpgradeGiftConfirm">¿Mejorar este regalo a coleccionable por %1$s estrellas?</string>
   <string name="TgxStarsUpgradeKeepDetails">Mejorar y conservar los datos del regalo</string>
   <string name="TgxStarsUpgradeOmitDetails">Mejorar sin los datos del regalo</string>
+  <string name="TgxStarsGiftEstimatedAverage">Valor estimado según ventas similares: %1$s</string>
+  <string name="TgxStarsGiftEstimatedValue">Valor estimado: %1$s</string>
+  <string name="TgxStarsGiftMarketFloor">Precio mínimo de los anuncios actuales: %1$s</string>
+  <string name="TgxStarsGiftMarketMonth">Precio medio de venta del último mes: %1$s</string>
+  <string name="TgxStarsGiftLastFragmentSale">Última venta en Fragment: %1$s</string>
+  <string name="TgxStarsGiftLastSale">Última venta: %1$s</string>
 </resources>

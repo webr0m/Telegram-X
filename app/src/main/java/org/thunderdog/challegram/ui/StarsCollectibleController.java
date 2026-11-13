@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
 import java.util.function.LongConsumer;
 
+import me.vkryl.core.CurrencyUtils;
 import me.vkryl.core.StringUtils;
 import me.vkryl.core.lambda.RunnableData;
 
@@ -47,6 +48,8 @@ public final class StarsCollectibleController extends RecyclerViewController<Voi
   private SettingsAdapter adapter;
   private TdApi.UpgradedGift gift;
   private Uri fragment;
+  private TdApi.UpgradedGiftValueInfo valuation;
+  private int loadGeneration;
   private boolean loading, busy, failed;
 
   public StarsCollectibleController (Context context, Tdlib tdlib, String name, long recipient) {
@@ -73,6 +76,8 @@ public final class StarsCollectibleController extends RecyclerViewController<Voi
     loading = true;
     failed = false;
     fragment = null;
+    valuation = null;
+    int generation = ++loadGeneration;
     render();
     tdlib.send(new TdApi.GetUpgradedGift(name), (fresh, error) -> runOnUiThreadOptional(() -> {
       if (account != tdlib.myUserId()) {
@@ -84,8 +89,9 @@ public final class StarsCollectibleController extends RecyclerViewController<Voi
       render();
     }));
     tdlib.send(new TdApi.GetUpgradedGiftValueInfo(name), (value, error) -> runOnUiThreadOptional(() -> {
-      if (account == tdlib.myUserId() && value != null && value.fragmentListedGiftCount > 0) {
-        fragment = fragmentUri(value.fragmentUrl);
+      if (account == tdlib.myUserId() && generation == loadGeneration && value != null) {
+        valuation = value;
+        fragment = value.fragmentListedGiftCount > 0 ? fragmentUri(value.fragmentUrl) : null;
         render();
       }
     }));
@@ -151,6 +157,7 @@ public final class StarsCollectibleController extends RecyclerViewController<Voi
       items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.LoadingInformation));
     } else if (gift != null) {
       items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, title(gift)));
+      addValuation(items);
       long owner = userOwner(gift);
       if (gift.ownerId != null) {
         items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getString(R.string.TgxStarsGiftOwner,
@@ -172,6 +179,25 @@ public final class StarsCollectibleController extends RecyclerViewController<Voi
         failed ? R.string.RetryChatList : R.string.TgxPremiumRefreshStars));
     }
     adapter.setItems(items, false);
+  }
+
+  private void addValuation (ArrayList<ListItem> items) {
+    TdApi.UpgradedGiftValueInfo value = valuation;
+    if (value == null || StringUtils.isEmpty(value.currency)) {
+      return;
+    }
+    addValue(items, value.isValueAverage ? R.string.TgxStarsGiftEstimatedAverage : R.string.TgxStarsGiftEstimatedValue,
+      value.currency, value.value);
+    addValue(items, R.string.TgxStarsGiftMarketFloor, value.currency, value.minimumPrice);
+    addValue(items, R.string.TgxStarsGiftMarketMonth, value.currency, value.averageSalePrice);
+    addValue(items, value.isLastSaleOnFragment ? R.string.TgxStarsGiftLastFragmentSale : R.string.TgxStarsGiftLastSale,
+      value.currency, value.lastSalePrice);
+  }
+
+  private void addValue (ArrayList<ListItem> items, int label, String currency, long amount) {
+    if (amount > 0) {
+      items.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getString(label, CurrencyUtils.buildAmount(currency, amount))));
+    }
   }
 
   private void addPurchase (ArrayList<ListItem> items, boolean ton, long amount) {

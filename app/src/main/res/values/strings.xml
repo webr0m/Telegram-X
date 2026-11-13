@@ -6748,4 +6748,10 @@
   <string name="TgxStarsUpgradeGiftConfirm">Upgrade this gift to a collectible for %1$s Stars?</string>
   <string name="TgxStarsUpgradeKeepDetails">Upgrade and keep gift details</string>
   <string name="TgxStarsUpgradeOmitDetails">Upgrade without gift details</string>
+  <string name="TgxStarsGiftEstimatedAverage">Estimated value from similar sales: %1$s</string>
+  <string name="TgxStarsGiftEstimatedValue">Estimated value: %1$s</string>
+  <string name="TgxStarsGiftMarketFloor">Lowest current listing price: %1$s</string>
+  <string name="TgxStarsGiftMarketMonth">Average sale price this month: %1$s</string>
+  <string name="TgxStarsGiftLastFragmentSale">Last sale on Fragment: %1$s</string>
+  <string name="TgxStarsGiftLastSale">Last sale: %1$s</string>
 </resources>
