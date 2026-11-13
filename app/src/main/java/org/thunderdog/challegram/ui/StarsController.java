@@ -237,7 +237,7 @@ public final class StarsController extends RecyclerViewController<Void> implemen
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tgxStarsRefresh, 0, R.string.TgxPremiumRefreshStars));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_starsGifts, 0, R.string.TgxStarsGiftCatalog));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_giftMyAuctions, 0, R.string.TgxStarsMyAuctions));
-    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_giftMyCollectibles, 0, R.string.TgxStarsMyCollectibles));
+    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_giftMyCollectibles, 0, R.string.TgxStarsReceivedGifts));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_starsRevenue, 0, R.string.TgxStarsRevenue));
     adapter.setItems(items, false);
   }

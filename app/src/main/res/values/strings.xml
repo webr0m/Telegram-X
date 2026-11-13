@@ -6740,4 +6740,8 @@
   <string name="TgxStarsShowGiftConfirm">Display this gift on your public profile?</string>
   <string name="TgxStarsTransferGift">Transfer collectible</string>
   <string name="TgxStarsTransferGiftConfirm">Transfer this collectible to %1$s for %2$s Stars? They will become its owner.</string>
+  <string name="TgxStarsReceivedGifts">My Gifts</string>
+  <string name="TgxStarsRegularGift">%1$s Gift · %2$s</string>
+  <string name="TgxStarsConvertGift">Convert to Stars</string>
+  <string name="TgxStarsConvertGiftConfirm">Permanently convert this gift into %1$s Stars?</string>
 </resources>

@@ -152,4 +152,8 @@
   <string name="TgxStarsShowGiftConfirm">¿Mostrar este regalo en tu perfil público?</string>
   <string name="TgxStarsTransferGift">Transferir coleccionable</string>
   <string name="TgxStarsTransferGiftConfirm">¿Transferir este coleccionable a %1$s por %2$s estrellas? Pasará a ser de su propiedad.</string>
+  <string name="TgxStarsReceivedGifts">Mis regalos</string>
+  <string name="TgxStarsRegularGift">%1$s Regalo · %2$s</string>
+  <string name="TgxStarsConvertGift">Convertir en estrellas</string>
+  <string name="TgxStarsConvertGiftConfirm">¿Convertir este regalo en %1$s estrellas de forma permanente?</string>
 </resources>

@@ -71,7 +71,7 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
   @Override public int getId () { return R.id.controller_giftMarket; }
   @Override public CharSequence getName () {
     return Lang.getString(profile != null ? R.string.TgxStarsPublicCollectibles :
-      owned() ? R.string.TgxStarsMyCollectibles : R.string.TgxStarsResale);
+      owned() ? R.string.TgxStarsReceivedGifts : R.string.TgxStarsResale);
   }
 
   @Override
@@ -91,19 +91,23 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
     render();
     if (owned() || profile != null) {
       tdlib.send(new TdApi.GetReceivedGifts("", owned() ? new TdApi.MessageSenderUser(account) : profile, 0,
-        profile != null, false, true, true, true, false, false, true, false, cursor, 30),
+        profile != null, false, profile != null, profile != null, profile != null, false, false, true, false, cursor, 30),
         (page, error) -> runOnUiThreadOptional(() -> {
           if (account != tdlib.myUserId()) {
             return;
           }
           if (page != null) {
             for (TdApi.ReceivedGift item : page.gifts) {
-              if (!item.wasRefunded && item.gift instanceof TdApi.SentGiftUpgraded upgraded) {
-                if (profile != null) {
+              if (item.wasRefunded) {
+                continue;
+              }
+              if (profile != null) {
+                if (item.gift instanceof TdApi.SentGiftUpgraded upgraded) {
                   entries.put(upgraded.gift.name, upgraded.gift);
-                } else if (!StringUtils.isEmpty(item.receivedGiftId)) {
-                  entries.put(item.receivedGiftId, item);
                 }
+              } else if (!StringUtils.isEmpty(item.receivedGiftId) &&
+                  (item.gift instanceof TdApi.SentGiftUpgraded || item.gift instanceof TdApi.SentGiftRegular)) {
+                entries.put(item.receivedGiftId, item);
               }
             }
           }
@@ -150,6 +154,13 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
   private void render () {
     ArrayList<ListItem> items = new ArrayList<>();
     for (TdApi.Object entry : entries.values()) {
+      if (entry instanceof TdApi.ReceivedGift received && received.gift instanceof TdApi.SentGiftRegular regular) {
+        String emoji = regular.gift.sticker != null ? regular.gift.sticker.emoji : "";
+        String title = Lang.getString(R.string.TgxStarsRegularGift, emoji,
+          Lang.dateYearShortTime(received.date, TimeUnit.SECONDS)).trim();
+        items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_giftMarketItem, R.drawable.baseline_stars_24, title).setData(received));
+        continue;
+      }
       TdApi.UpgradedGift gift = entry instanceof TdApi.ReceivedGift received ?
         ((TdApi.SentGiftUpgraded) received.gift).gift : (TdApi.UpgradedGift) entry;
       String title = Lang.getString(R.string.TgxStarsCollectibleNumber, gift.title, Lang.formatNumber(gift.number));
@@ -197,9 +208,53 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
       if (row.getData() instanceof TdApi.UpgradedGift gift) {
         navigateTo(new StarsCollectibleController(context, tdlib, gift.name, recipientId));
       } else if (row.getData() instanceof TdApi.ReceivedGift received) {
-        showListingActions(received);
+        if (received.gift instanceof TdApi.SentGiftUpgraded) {
+          showListingActions(received);
+        } else if (received.gift instanceof TdApi.SentGiftRegular regular) {
+          showRegularGiftActions(received, regular.gift);
+        }
       }
     }
+  }
+
+  private void showRegularGiftActions (TdApi.ReceivedGift received, TdApi.Gift gift) {
+    Options.Builder options = new Options.Builder().info(Lang.getString(R.string.TgxStarsRegularGift,
+      gift.sticker != null ? gift.sticker.emoji : "", Lang.dateYearShortTime(received.date, TimeUnit.SECONDS)).trim());
+    options.item(new OptionItem(1, Lang.getString(received.isSaved ? R.string.TgxStarsHideGift : R.string.TgxStarsShowGift),
+      OptionColor.NORMAL, 0));
+    if (received.sellStarCount > 0) {
+      options.item(new OptionItem(2, Lang.getString(R.string.TgxStarsConvertGift), OptionColor.RED, 0));
+    }
+    options.cancelItem();
+    showOptions(options.build(), (view, id) -> {
+      if (id == 1) {
+        showConfirm(Lang.getString(received.isSaved ? R.string.TgxStarsHideGiftConfirm : R.string.TgxStarsShowGiftConfirm),
+          Lang.getString(R.string.Save), () -> toggleVisibility(received));
+      } else if (id == 2) {
+        showConfirm(Lang.getString(R.string.TgxStarsConvertGiftConfirm, Lang.formatNumber(received.sellStarCount)),
+          Lang.getString(R.string.TgxStarsConvertGift), () -> convertGift(received));
+      }
+      return true;
+    });
+  }
+
+  private void convertGift (TdApi.ReceivedGift expected) {
+    if (!begin()) {
+      return;
+    }
+    tdlib.send(new TdApi.GetReceivedGift(expected.receivedGiftId), (fresh, error) -> runOnUiThreadOptional(() -> {
+      if (!current() || error != null || !canConvert(expected, fresh)) {
+        afterMutation(error, false);
+        return;
+      }
+      tdlib.send(new TdApi.SellGift("", fresh.receivedGiftId),
+        (ok, sellError) -> runOnUiThreadOptional(() -> afterMutation(sellError, sellError == null)));
+    }));
+  }
+
+  static boolean canConvert (TdApi.ReceivedGift expected, TdApi.ReceivedGift fresh) {
+    return sameOwnedGift(expected, fresh) && fresh.gift instanceof TdApi.SentGiftRegular &&
+      fresh.sellStarCount > 0 && expected.sellStarCount == fresh.sellStarCount;
   }
 
   private void showListingActions (TdApi.ReceivedGift received) {
