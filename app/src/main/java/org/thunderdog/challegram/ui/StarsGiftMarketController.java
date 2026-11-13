@@ -225,17 +225,69 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
     if (received.sellStarCount > 0) {
       options.item(new OptionItem(2, Lang.getString(R.string.TgxStarsConvertGift), OptionColor.RED, 0));
     }
+    long upgradePrice = upgradePrice(received);
+    if (upgradePrice >= 0) {
+      options.item(new OptionItem(3, Lang.getString(R.string.TgxStarsUpgradeGift), OptionColor.NORMAL, 0));
+    }
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
       if (id == 1) {
         showConfirm(Lang.getString(received.isSaved ? R.string.TgxStarsHideGiftConfirm : R.string.TgxStarsShowGiftConfirm),
           Lang.getString(R.string.Save), () -> toggleVisibility(received));
+      } else if (id == 3) {
+        chooseUpgradePrivacy(received, upgradePrice);
       } else if (id == 2) {
         showConfirm(Lang.getString(R.string.TgxStarsConvertGiftConfirm, Lang.formatNumber(received.sellStarCount)),
           Lang.getString(R.string.TgxStarsConvertGift), () -> convertGift(received));
       }
       return true;
     });
+  }
+
+  private void chooseUpgradePrivacy (TdApi.ReceivedGift expected, long price) {
+    showOptions(Lang.getString(R.string.TgxStarsUpgradeGiftConfirm, Lang.formatNumber(price)),
+      new int[] {1, 2, R.id.btn_cancel},
+      new String[] {Lang.getString(R.string.TgxStarsUpgradeKeepDetails),
+        Lang.getString(R.string.TgxStarsUpgradeOmitDetails), Lang.getString(R.string.Cancel)}, (view, id) -> {
+        if (id == 1 || id == 2) {
+          boolean keep = id == 1;
+          tdlib.ui().post(() -> {
+            if (current()) {
+              showConfirm(Lang.getString(R.string.TgxStarsUpgradeGiftConfirm, Lang.formatNumber(price)),
+                Lang.getString(keep ? R.string.TgxStarsUpgradeKeepDetails : R.string.TgxStarsUpgradeOmitDetails),
+                () -> upgradeGift(expected, price, keep));
+            }
+          });
+        }
+        return true;
+      });
+  }
+
+  static long upgradePrice (TdApi.ReceivedGift gift) {
+    if (!gift.canBeUpgraded || gift.wasRefunded || !(gift.gift instanceof TdApi.SentGiftRegular regular)) {
+      return -1;
+    }
+    return gift.prepaidUpgradeStarCount > 0 ? 0 : regular.gift.upgradeStarCount > 0 ? regular.gift.upgradeStarCount : -1;
+  }
+
+  private void upgradeGift (TdApi.ReceivedGift expected, long price, boolean keepDetails) {
+    if (!begin()) {
+      return;
+    }
+    tdlib.send(new TdApi.GetReceivedGift(expected.receivedGiftId), (fresh, error) -> runOnUiThreadOptional(() -> {
+      if (!current() || error != null || !sameOwnedGift(expected, fresh) || upgradePrice(fresh) != price) {
+        afterMutation(error, false);
+        return;
+      }
+      tdlib.send(new TdApi.UpgradeGift("", fresh.receivedGiftId, keepDetails, price), (result, upgradeError) ->
+        runOnUiThreadOptional(() -> {
+          boolean open = result != null && current();
+          afterMutation(upgradeError, result != null);
+          if (open && result.gift != null && !StringUtils.isEmpty(result.gift.name)) {
+            navigateTo(new StarsCollectibleController(context(), tdlib, result.gift.name, account));
+          }
+        }));
+    }));
   }
 
   private void convertGift (TdApi.ReceivedGift expected) {

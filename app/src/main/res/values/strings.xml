@@ -6744,4 +6744,8 @@
   <string name="TgxStarsRegularGift">%1$s Gift · %2$s</string>
   <string name="TgxStarsConvertGift">Convert to Stars</string>
   <string name="TgxStarsConvertGiftConfirm">Permanently convert this gift into %1$s Stars?</string>
+  <string name="TgxStarsUpgradeGift">Upgrade to collectible</string>
+  <string name="TgxStarsUpgradeGiftConfirm">Upgrade this gift to a collectible for %1$s Stars?</string>
+  <string name="TgxStarsUpgradeKeepDetails">Upgrade and keep gift details</string>
+  <string name="TgxStarsUpgradeOmitDetails">Upgrade without gift details</string>
 </resources>

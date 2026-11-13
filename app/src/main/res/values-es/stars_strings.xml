@@ -156,4 +156,8 @@
   <string name="TgxStarsRegularGift">%1$s Regalo · %2$s</string>
   <string name="TgxStarsConvertGift">Convertir en estrellas</string>
   <string name="TgxStarsConvertGiftConfirm">¿Convertir este regalo en %1$s estrellas de forma permanente?</string>
+  <string name="TgxStarsUpgradeGift">Mejorar a coleccionable</string>
+  <string name="TgxStarsUpgradeGiftConfirm">¿Mejorar este regalo a coleccionable por %1$s estrellas?</string>
+  <string name="TgxStarsUpgradeKeepDetails">Mejorar y conservar los datos del regalo</string>
+  <string name="TgxStarsUpgradeOmitDetails">Mejorar sin los datos del regalo</string>
 </resources>
