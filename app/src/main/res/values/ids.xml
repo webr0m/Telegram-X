@@ -1677,5 +1677,6 @@
   <item type="id" name="btn_tgxQuickReplySelect" />
   <item type="id" name="btn_tgxQuickReplyReload" />
   <item type="id" name="btn_tgxQuickReplyConfirm" />
+  <item type="id" name="btn_editGroupLocation" />
 </resources>
 <!-- endregion -->

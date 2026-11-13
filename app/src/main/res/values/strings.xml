@@ -6754,4 +6754,10 @@
   <string name="TgxStarsGiftMarketMonth">Average sale price this month: %1$s</string>
   <string name="TgxStarsGiftLastFragmentSale">Last sale on Fragment: %1$s</string>
   <string name="TgxStarsGiftLastSale">Last sale: %1$s</string>
+  <string name="EditGroupLocation">Edit group location</string>
+  <string name="GroupLocationAddress">Enter an address from 1 to 64 characters.</string>
+  <string name="GroupLocationCoordinates">Enter latitude and longitude separated by a comma.</string>
+  <string name="GroupLocationConfirm">Publish %1$s (%2$s, %3$s) as the group location?</string>
+  <string name="GroupLocationChanged">The group location or your permission changed. Reopen the editor.</string>
+  <string name="GroupLocationSaved">Group location saved</string>
 </resources>

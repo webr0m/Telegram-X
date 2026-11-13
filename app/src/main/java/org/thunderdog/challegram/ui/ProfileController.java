@@ -727,6 +727,10 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       ids.append(R.id.btn_viewGroupLocation);
       strings.append(R.string.ViewGroupLocation);
     }
+    if (canEditGroupLocation(supergroupFull)) {
+      ids.append(R.id.btn_editGroupLocation);
+      strings.append(R.string.EditGroupLocation);
+    }
     if (canAddAnyKindOfMembers()) {
       ids.append(R.id.more_btn_addMember);
       strings.append(Lang.getString(R.string.AddMember));
@@ -1068,6 +1072,104 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       chat.type instanceof TdApi.ChatTypeBasicGroup || chat.type instanceof TdApi.ChatTypeSupergroup);
   }
 
+  private boolean updatingGroupLocation;
+
+  private boolean canEditGroupLocation (TdApi.SupergroupFullInfo info) {
+    return mode == Mode.SUPERGROUP && chat != null && supergroup != null && info != null &&
+      info.canSetLocation && tdlib.chatStatus(chat.id) instanceof TdApi.ChatMemberStatusCreator;
+  }
+
+  private void editGroupLocation () {
+    if (!canEditGroupLocation(supergroupFull) || updatingGroupLocation) {
+      return;
+    }
+    TdApi.ChatLocation previous = supergroupFull.location;
+    long account = tdlib.myUserId(), chatId = chat.id, groupId = supergroup.id;
+    openInputAlert(Lang.getString(R.string.EditGroupLocation), Lang.getString(R.string.GroupLocationAddress),
+      R.string.Continue, R.string.Cancel, previous != null ? previous.address : null, (field, value) -> {
+        String address = value.trim();
+        if (address.isEmpty() || address.codePointCount(0, address.length()) > 64) {
+          UI.showToast(R.string.GroupLocationAddress, Toast.LENGTH_SHORT);
+          return false;
+        }
+        tdlib.ui().post(() -> {
+          if (isFocused() && tdlib.myUserId() == account && getChatId() == chatId) {
+            TdApi.Location point = previous != null ? previous.location : null;
+            openInputAlert(Lang.getString(R.string.EditGroupLocation), Lang.getString(R.string.GroupLocationCoordinates),
+              R.string.Continue, R.string.Cancel, point != null ? point.latitude + ", " + point.longitude : null,
+              (input, coordinates) -> {
+                TdApi.Location location = parseGroupLocationPoint(coordinates);
+                if (location == null) {
+                  UI.showToast(R.string.GroupLocationCoordinates, Toast.LENGTH_SHORT);
+                  return false;
+                }
+                tdlib.ui().post(() -> {
+                  if (isFocused() && tdlib.myUserId() == account && getChatId() == chatId) {
+                    showConfirm(Lang.getString(R.string.GroupLocationConfirm, address, location.latitude, location.longitude),
+                      Lang.getString(R.string.Save), () -> saveGroupLocation(account, chatId, groupId, previous,
+                        new TdApi.ChatLocation(location, address)));
+                  }
+                });
+                return true;
+              }, true);
+          }
+        });
+        return true;
+      }, true);
+  }
+
+  static TdApi.Location parseGroupLocationPoint (String coordinates) {
+    String[] parts = coordinates.split(",", -1);
+    if (parts.length == 2) {
+      try {
+        double latitude = Double.parseDouble(parts[0].trim());
+        double longitude = Double.parseDouble(parts[1].trim());
+        if (latitude >= -90 && latitude <= 90 && longitude >= -180 && longitude <= 180) {
+          return new TdApi.Location(latitude, longitude, 0);
+        }
+      } catch (NumberFormatException ignored) {
+        // The editor keeps the invalid input available for correction.
+      }
+    }
+    return null;
+  }
+
+  static boolean sameGroupLocation (TdApi.ChatLocation a, TdApi.ChatLocation b) {
+    return a == b || (a != null && b != null && java.util.Objects.equals(a.address, b.address) &&
+      a.location != null && b.location != null && a.location.latitude == b.location.latitude &&
+      a.location.longitude == b.location.longitude);
+  }
+
+  private void saveGroupLocation (long account, long chatId, long groupId, TdApi.ChatLocation previous, TdApi.ChatLocation updated) {
+    if (updatingGroupLocation || !isFocused() || account == 0 || account != tdlib.myUserId() || getChatId() != chatId) {
+      return;
+    }
+    updatingGroupLocation = true;
+    tdlib.send(new TdApi.GetSupergroupFullInfo(groupId), (fresh, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || account != tdlib.myUserId() || getChatId() != chatId) {
+        updatingGroupLocation = false;
+      } else if (error != null || !canEditGroupLocation(fresh) || !sameGroupLocation(previous, fresh.location)) {
+        updatingGroupLocation = false;
+        if (error != null) {
+          UI.showError(error);
+        } else {
+          UI.showToast(R.string.GroupLocationChanged, Toast.LENGTH_SHORT);
+        }
+      } else {
+        tdlib.send(new TdApi.SetChatLocation(chatId, updated), (ok, saveError) -> runOnUiThreadOptional(() -> {
+          updatingGroupLocation = false;
+          if (isFocused() && account == tdlib.myUserId() && getChatId() == chatId) {
+            if (saveError != null) {
+              UI.showError(saveError);
+            } else {
+              UI.showToast(R.string.GroupLocationSaved, Toast.LENGTH_SHORT);
+            }
+          }
+        }));
+      }
+    }));
+  }
+
   private void openGroupLocation () {
     if (chat == null || supergroupFull == null || supergroupFull.location == null) {
       return;
@@ -1337,6 +1439,10 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       if (canConfigureChatAutosave()) {
         tdlib.ui().showChatAutosaveSettings(this, chat.id);
       }
+      return;
+    }
+    if (id == R.id.btn_editGroupLocation) {
+      editGroupLocation();
       return;
     }
     if (id == R.id.btn_viewGroupLocation) {

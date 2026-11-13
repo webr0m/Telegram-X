@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="EditGroupLocation">Editar ubicación del grupo</string>
+  <string name="GroupLocationAddress">Ingresa una dirección de 1 a 64 caracteres.</string>
+  <string name="GroupLocationCoordinates">Ingresa latitud y longitud separadas por una coma.</string>
+  <string name="GroupLocationConfirm">¿Publicar %1$s (%2$s, %3$s) como ubicación del grupo?</string>
+  <string name="GroupLocationChanged">Cambió la ubicación del grupo o tu permiso. Vuelve a abrir el editor.</string>
+  <string name="GroupLocationSaved">Ubicación del grupo guardada</string>
+</resources>
