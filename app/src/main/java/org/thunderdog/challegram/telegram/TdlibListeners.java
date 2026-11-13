@@ -914,7 +914,7 @@ public class TdlibListeners {
 
   void updateMessagesDeleted (TdApi.UpdateDeleteMessages update) {
     runMessageUpdate(update.chatId, listener ->
-      listener.onMessagesDeleted(update.chatId, update.messageIds)
+      listener.onMessagesDeleted(update.chatId, update.messageIds, update.fromCache)
     );
   }
 

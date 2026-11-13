@@ -40,9 +40,11 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 
 import tgx.td.MessageId;
 import tgx.td.Td;
@@ -50,20 +52,52 @@ import tgx.td.Td;
 final class SavedMessagesTopicsController extends RecyclerViewController<Void> implements View.OnClickListener {
   private final long account, chatId, topicId;
   private final LinkedHashMap<Long, TdApi.Message> messages = new LinkedHashMap<>();
+  private final HashSet<Long> liveChangesDuringPage = new HashSet<>();
+  private final HashMap<Long, Consumer<TdApi.Message>> pendingPageEdits = new HashMap<>();
   private final HashSet<Long> cursors = new HashSet<>();
   private final Runnable topicListener = () -> runOnUiThreadOptional(this::onTopicsChanged);
   private SettingsAdapter adapter;
-  private final MessageListener sendListener = new MessageListener() {
+  private final MessageListener messageListener = new MessageListener() {
+    @Override
+    public void onNewMessage (TdApi.Message message) {
+      runOnUiThreadOptional(() -> onLiveMessage(message));
+    }
+
     @Override
     public void onMessageSendSucceeded (TdApi.Message message, long oldMessageId) {
-      runOnUiThreadOptional(() -> onDraftSendFinished(oldMessageId, null));
+      runOnUiThreadOptional(() -> {
+        onDraftSendFinished(oldMessageId, null);
+        onLiveMessage(message);
+      });
     }
 
     @Override
     public void onMessageSendFailed (TdApi.Message message, long oldMessageId, TdApi.Error error) {
       runOnUiThreadOptional(() -> onDraftSendFinished(oldMessageId, error));
     }
+
+    @Override
+    public void onMessageContentChanged (long updatedChatId, long messageId, TdApi.MessageContent content) {
+      if (updatedChatId == chatId) {
+        runOnUiThreadOptional(() -> onLiveChange(messageId, message -> message.content = content));
+      }
+    }
+
+    @Override
+    public void onMessageInteractionInfoChanged (long updatedChatId, long messageId, TdApi.MessageInteractionInfo info) {
+      if (updatedChatId == chatId) {
+        runOnUiThreadOptional(() -> onLiveChange(messageId, message -> message.interactionInfo = info));
+      }
+    }
+
+    @Override
+    public void onMessagesDeleted (long updatedChatId, long[] messageIds, boolean fromCache) {
+      if (updatedChatId == chatId && !fromCache) {
+        runOnUiThreadOptional(() -> removeLiveMessages(messageIds));
+      }
+    }
   };
+  private boolean resyncFilteredHistory, filterRefreshQueued, resyncPage;
   private long pendingDraftId, pendingReplyId;
   private String pendingDraftText;
   private TdApi.SavedMessagesTopic openedTopic;
@@ -98,18 +132,14 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     adapter = new SettingsAdapter(this);
     recycler.setAdapter(adapter);
     tdlib.addSavedMessagesTopicListener(topicListener);
-    if (topicId != 0) {
-      tdlib.listeners().subscribeToMessageUpdates(chatId, sendListener);
-    }
+    tdlib.listeners().subscribeToMessageUpdates(chatId, messageListener);
     load();
   }
 
   @Override
   public void destroy () {
     tdlib.removeSavedMessagesTopicListener(topicListener);
-    if (topicId != 0) {
-      tdlib.listeners().unsubscribeFromMessageUpdates(chatId, sendListener);
-    }
+    tdlib.listeners().unsubscribeFromMessageUpdates(chatId, messageListener);
     super.destroy();
   }
 
@@ -118,27 +148,119 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   }
 
   private void onTopicsChanged () {
-    if (!currentAccount() || adapter == null || !isFocused()) {
+    if (!currentAccount() || adapter == null) {
       return;
     }
-    if (topicId == 0) {
-      render();
-    } else {
-      TdApi.SavedMessagesTopic fresh = tdlib.savedMessagesTopic(topicId);
-      if (fresh != null && openedTopic != null && lastId(fresh) != lastId(openedTopic) && query.isEmpty() && activeTag == null) {
-        openedTopic = fresh;
-        restart("");
-        return;
-      }
-      openedTopic = fresh;
-      if (fresh == null) {
+    if (topicId != 0) {
+      TdApi.SavedMessagesTopic before = openedTopic;
+      openedTopic = tdlib.savedMessagesTopic(topicId);
+      if (openedTopic == null) {
         generation++;
         loading = false;
         end = true;
         messages.clear();
+      } else if (before == null) {
+        restart(query);
+        return;
+      } else if (lastId(openedTopic) != lastId(before) && openedTopic.lastMessage != null) {
+        onLiveMessage(openedTopic.lastMessage);
       }
+    }
+    render();
+  }
+
+  private boolean hasFilteredHistory () {
+    return !query.isEmpty() || activeTag != null;
+  }
+
+  static boolean isLiveHistoryMessage (TdApi.Message message, long chatId, long topicId) {
+    return matchesScope(message, chatId, topicId) && message.sendingState == null &&
+      message.schedulingState == null;
+  }
+
+  private void onLiveMessage (TdApi.Message message) {
+    if (!currentAccount() || showingTopicList() || (topicId != 0 && openedTopic == null) ||
+        !isLiveHistoryMessage(message, chatId, topicId)) {
+      return;
+    }
+    if (hasFilteredHistory()) {
+      requestFilteredRefresh();
+    } else {
+      if (loading) {
+        liveChangesDuringPage.add(message.id);
+      }
+      messages.put(message.id, Td.copyOf(message));
       render();
     }
+  }
+
+  private void onLiveChange (long messageId, Consumer<TdApi.Message> change) {
+    if (!currentAccount() || showingTopicList()) {
+      return;
+    }
+    TdApi.Message displayed = messages.get(messageId);
+    if (displayed != null) {
+      if (loading) {
+        liveChangesDuringPage.add(messageId);
+      }
+      change.accept(displayed);
+      render();
+    }
+    if (hasFilteredHistory()) {
+      if (displayed != null) {
+        requestFilteredRefresh();
+      } else {
+        tdlib.send(new TdApi.GetMessage(chatId, messageId), (message, error) -> runOnUiThreadOptional(() -> {
+          if (currentAccount() && hasFilteredHistory() && isLiveHistoryMessage(message, chatId, topicId)) {
+            requestFilteredRefresh();
+          }
+        }));
+      }
+    } else if (displayed == null && loading) {
+      pendingPageEdits.merge(messageId, change, Consumer::andThen);
+    }
+  }
+
+  private void removeLiveMessages (long[] messageIds) {
+    if (!currentAccount() || showingTopicList()) {
+      return;
+    }
+    boolean changed = false;
+    for (long id : messageIds) {
+      if (loading) {
+        liveChangesDuringPage.add(id);
+        pendingPageEdits.remove(id);
+      }
+      changed |= messages.remove(id) != null;
+    }
+    if (changed) {
+      render();
+      if (hasFilteredHistory()) {
+        requestFilteredRefresh();
+      }
+    } else if (loading && hasFilteredHistory()) {
+      requestFilteredRefresh();
+    }
+  }
+
+  private void requestFilteredRefresh () {
+    resyncFilteredHistory = true;
+    if (filterRefreshQueued || !isFocused() || saving || loading) {
+      return;
+    }
+    filterRefreshQueued = true;
+    runOnUiThreadOptional(() -> {
+      filterRefreshQueued = false;
+      if (resyncFilteredHistory && currentAccount() && isFocused() && !loading && !saving &&
+          hasFilteredHistory() && (topicId == 0 || openedTopic != null)) {
+        resyncFilteredHistory = false;
+        resyncPage = true;
+        cursor = 0;
+        cursors.clear();
+        end = false;
+        load();
+      }
+    }, null, 250);
   }
 
   @Override
@@ -146,6 +268,9 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     super.onFocus();
     if (adapter != null) {
       onTopicsChanged();
+      if (resyncFilteredHistory) {
+        requestFilteredRefresh();
+      }
       if (selectedCustomEmoji != 0) {
         long messageId = customTagMessageId;
         TdApi.ReactionType tag = new TdApi.ReactionTypeCustomEmoji(selectedCustomEmoji);
@@ -172,6 +297,8 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       return;
     }
     loading = true;
+    liveChangesDuringPage.clear();
+    pendingPageEdits.clear();
     failed = false;
     render();
     int request = generation;
@@ -228,20 +355,36 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     loading = false;
     failed = error != null;
     if (!failed && page != null) {
+      if (resyncPage) {
+        messages.clear();
+      }
       for (TdApi.Message message : page) {
-        if (matchesScope(message, chatId, topicId)) {
-          messages.put(message.id, message);
+        if (matchesScope(message, chatId, topicId) && !liveChangesDuringPage.contains(message.id)) {
+          TdApi.Message copy = Td.copyOf(message);
+          Consumer<TdApi.Message> edit = pendingPageEdits.get(message.id);
+          if (edit != null) {
+            edit.accept(copy);
+          }
+          messages.put(copy.id, copy);
         }
       }
       end = next <= 0 || !cursors.add(next);
       cursor = next;
     }
+    resyncPage = false;
+    liveChangesDuringPage.clear();
+    pendingPageEdits.clear();
     render();
+    if (resyncFilteredHistory) {
+      requestFilteredRefresh();
+    }
   }
 
   private void restart (String nextQuery) {
     generation++;
-    loading = failed = end = false;
+    loading = failed = end = resyncPage = resyncFilteredHistory = false;
+    liveChangesDuringPage.clear();
+    pendingPageEdits.clear();
     messages.clear();
     cursors.clear();
     cursor = 0;
@@ -285,7 +428,9 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesTopicActions, 0, R.string.SavedMessagesTopicActions));
     }
     if (!showingTopicList() && (topicId == 0 || openedTopic != null)) {
-      for (TdApi.Message message : messages.values()) {
+      ArrayList<TdApi.Message> ordered = new ArrayList<>(messages.values());
+      ordered.sort(Comparator.comparingLong((TdApi.Message message) -> message.id).reversed());
+      for (TdApi.Message message : ordered) {
         ContentPreview preview = ContentPreview.getChatListPreview(tdlib, chatId, message, false);
         String date = Lang.dateYearShortTime(message.date, TimeUnit.SECONDS);
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesItem, 0,
