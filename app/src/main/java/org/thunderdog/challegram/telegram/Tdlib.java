@@ -937,6 +937,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         quickReplyShortcuts.clear();
         quickReplyMessages.clear();
         activeGiftAuctions = new TdApi.GiftAuctionState[0];
+        savedMessagesTopics.clear();
         quickReplyShortcutOrder = null;
         incrementJobReferenceCount(JOB_ID_CLEAN_UP);
         deleteAllFiles(success -> {
@@ -7873,14 +7874,44 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   // Updates: SAVED MESSAGES
 
+  private final java.util.concurrent.ConcurrentHashMap<Long, TdApi.SavedMessagesTopic> savedMessagesTopics =
+    new java.util.concurrent.ConcurrentHashMap<>();
+  private final java.util.concurrent.CopyOnWriteArrayList<Runnable> savedMessagesTopicListeners =
+    new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public java.util.Collection<TdApi.SavedMessagesTopic> savedMessagesTopics () {
+    return new java.util.ArrayList<>(savedMessagesTopics.values());
+  }
+
+  public @Nullable TdApi.SavedMessagesTopic savedMessagesTopic (long id) {
+    return savedMessagesTopics.get(id);
+  }
+
+  public void addSavedMessagesTopicListener (Runnable listener) {
+    savedMessagesTopicListeners.addIfAbsent(listener);
+  }
+
+  public void removeSavedMessagesTopicListener (Runnable listener) {
+    savedMessagesTopicListeners.remove(listener);
+  }
+
   @TdlibThread
   private void updateSavedMessagesTopic (TdApi.UpdateSavedMessagesTopic update) {
-
+    if (update.topic.order == 0) {
+      savedMessagesTopics.remove(update.topic.id);
+    } else {
+      savedMessagesTopics.put(update.topic.id, update.topic);
+    }
+    for (Runnable listener : savedMessagesTopicListeners) {
+      listener.run();
+    }
   }
 
   @TdlibThread
   private void updateSavedMessagesTopicCount (TdApi.UpdateSavedMessagesTopicCount update) {
-
+    for (Runnable listener : savedMessagesTopicListeners) {
+      listener.run();
+    }
   }
 
   @TdlibThread

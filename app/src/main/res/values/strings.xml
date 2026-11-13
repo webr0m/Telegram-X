@@ -6771,5 +6771,21 @@
   <string name="ProfileSuggestionApplied">Profile updated</string>
   <string name="ProfilePhotoSuggestionPreview">Profile photo suggestion</string>
   <string name="BirthdateSuggestionPreview">Birthday suggestion</string>
+  <string name="SavedMessagesTopics">Saved Messages topics</string>
+  <string name="SavedMessagesHiddenAuthors">Hidden authors</string>
+  <string name="SavedMessagesMyNotes">My notes</string>
+  <string name="SavedMessagesPinnedTopic">Pinned · %1$s</string>
+  <string name="SavedMessagesSearchTopic">Search this topic</string>
+  <string name="SavedMessagesClearSearch">Clear search</string>
+  <string name="SavedMessagesTopicActions">Topic options</string>
+  <string name="SavedMessagesPreviewLine">%1$s · %2$s</string>
+  <string name="SavedMessagesLoadMore">Load more</string>
+  <string name="SavedMessagesTopicEmpty">No messages to show.</string>
+  <string name="SavedMessagesPinTopic">Pin topic</string>
+  <string name="SavedMessagesUnpinTopic">Unpin topic</string>
+  <string name="SavedMessagesDeleteTopic">Delete saved messages in this topic</string>
+  <string name="SavedMessagesDeleteTopicConfirm">Permanently delete the saved messages in %1$s?</string>
+  <string name="SavedMessagesTopicChanged">This topic changed. Open its options again.</string>
   <string name="SavedBirthdateSuggestion">Suggested birthday: **%1$s**.</string>
+  <string name="SavedMessagesNewNote">Write a note</string>
 </resources>

@@ -2473,6 +2473,12 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
   @Override
   public void onMoreItemPressed (int id) {
+    if (id == R.id.btn_savedMessagesTopics) {
+      if (isSelfChat() && !inPreviewMode() && !areScheduledOnly()) {
+        navigateTo(new SavedMessagesTopicsController(context(), tdlib, getChatId(), 0));
+      }
+      return;
+    }
     if (id == R.id.btn_businessBotPauseChat) {
       confirmBusinessBotPause();
       return;
@@ -5725,6 +5731,10 @@ public class MessagesController extends ViewController<MessagesController.Argume
     IntList ids = new IntList(4);
     StringList strings = new StringList(4);
 
+    if (isSelfChat() && !inPreviewMode() && !areScheduledOnly()) {
+      ids.append(R.id.btn_savedMessagesTopics);
+      strings.append(R.string.SavedMessagesTopics);
+    }
     TdApi.BusinessBotManageBar botManageBar = businessBotBar(chat.id);
     if (botManageBar != null) {
       ids.append(R.id.btn_businessBotPauseChat);

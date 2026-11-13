@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="SavedMessagesTopics">Temas de Mensajes guardados</string>
+  <string name="SavedMessagesHiddenAuthors">Autores ocultos</string>
+  <string name="SavedMessagesMyNotes">Mis notas</string>
+  <string name="SavedMessagesPinnedTopic">Fijado · %1$s</string>
+  <string name="SavedMessagesSearchTopic">Buscar en este tema</string>
+  <string name="SavedMessagesClearSearch">Borrar búsqueda</string>
+  <string name="SavedMessagesTopicActions">Opciones del tema</string>
+  <string name="SavedMessagesPreviewLine">%1$s · %2$s</string>
+  <string name="SavedMessagesLoadMore">Cargar más</string>
+  <string name="SavedMessagesTopicEmpty">No hay mensajes para mostrar.</string>
+  <string name="SavedMessagesPinTopic">Fijar tema</string>
+  <string name="SavedMessagesUnpinTopic">Desfijar tema</string>
+  <string name="SavedMessagesDeleteTopic">Eliminar mensajes guardados de este tema</string>
+  <string name="SavedMessagesDeleteTopicConfirm">¿Eliminar permanentemente los mensajes guardados en %1$s?</string>
+  <string name="SavedMessagesTopicChanged">El tema cambió. Vuelve a abrir sus opciones.</string>
+  <string name="SavedMessagesNewNote">Escribir una nota</string>
+</resources>

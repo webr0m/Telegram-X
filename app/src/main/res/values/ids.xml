@@ -1678,5 +1678,15 @@
   <item type="id" name="btn_tgxQuickReplyReload" />
   <item type="id" name="btn_tgxQuickReplyConfirm" />
   <item type="id" name="btn_editGroupLocation" />
+  <item type="id" name="controller_savedMessagesTopics" />
+  <item type="id" name="controller_savedMessagesTopic" />
+  <item type="id" name="btn_savedMessagesTopics" />
+  <item type="id" name="btn_savedMessagesTopic" />
+  <item type="id" name="btn_savedMessagesMore" />
+  <item type="id" name="btn_savedMessagesSearch" />
+  <item type="id" name="btn_savedMessagesResetSearch" />
+  <item type="id" name="btn_savedMessagesTopicActions" />
+  <item type="id" name="btn_savedMessagesItem" />
+  <item type="id" name="btn_savedMessagesNewNote" />
 </resources>
 <!-- endregion -->
