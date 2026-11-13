@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="EnableGalleryAutosave">Guardar automáticamente en galería</string>
+  <string name="EnableGalleryAutosaveConfirm">¿Guardar en la galería compartida de este dispositivo las fotos y los videos nuevos que terminen de descargarse? Se aplicarán tus reglas y excepciones de Telegram.</string>
+  <string name="GalleryAutosaveNeedsAndroid10">El guardado automático en galería requiere Android 10 o posterior.</string>
+  <string name="AutosaveExceptionsCompatibility">Estas reglas se sincronizan con Telegram. El guardado en galería funciona cuando lo activas en este dispositivo.</string>
+</resources>

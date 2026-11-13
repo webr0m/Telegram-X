@@ -456,6 +456,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
   private final TdlibSingleton<TdApi.Stickers> genericReactionEffects;
   private final TdlibListeners listeners;
   private final TdlibFilesManager filesManager;
+  private final GalleryAutosave galleryAutosave;
   private final TdlibStatusManager statusManager;
   private final TdlibContactManager contactManager;
   private final TdlibQuickAckManager quickAckManager;
@@ -584,6 +585,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       ms = SystemClock.uptimeMillis();
     }
     this.filesManager = new TdlibFilesManager(this);
+    this.galleryAutosave = new GalleryAutosave(this);
     if (needMeasure) {
       Log.v("INITIALIZATION: Tdlib.filesManager -> %dms", SystemClock.uptimeMillis() - ms);
       ms = SystemClock.uptimeMillis();
@@ -933,6 +935,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         if (after != null)
           after.run();
       } else {
+        galleryAutosave.reset();
         ownedStarAmount = null;
         quickReplyShortcuts.clear();
         quickReplyMessages.clear();
@@ -2467,6 +2470,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   public TdlibQuickAckManager qack () {
     return quickAckManager;
+  }
+
+  public GalleryAutosave galleryAutosave () {
+    return galleryAutosave;
   }
 
   public TdlibFilesManager files () {
@@ -7690,6 +7697,9 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         return;
     }
 
+    if (isUpdate) {
+      galleryAutosave.onNewMessage(update.message);
+    }
     listeners.updateNewMessage(update);
 
     notificationManager.onUpdateNewMessage(update);
@@ -9191,6 +9201,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     context.player().onUpdateFile(this, update);
 
     files().onFileUpdate(update);
+    galleryAutosave.onFile(update.file);
 
     if (update.file.local.isDownloadingActive || update.file.remote.isUploadingActive) {
       files().onFileProgress(update);
@@ -9581,7 +9592,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   @TdlibThread
   private void updateAutosaveSettings (TdApi.UpdateAutosaveSettings update) {
-    // TODO?
+    galleryAutosave.onRulesChanged();
   }
 
   private final List<TdApi.SuggestedAction> suggestedActions = new ArrayList<>();

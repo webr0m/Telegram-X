@@ -2380,7 +2380,7 @@
   <string name="SuggestContactBirthdateConfirm">Suggest %1$s as this contact’s birthday? They will receive your suggestion and choose whether to apply it.</string>
   <string name="ContactBirthdateSuggested">Birthday suggestion sent</string>
   <string name="AutosaveExceptions">Telegram Autosave Exceptions</string>
-  <string name="AutosaveExceptionsCompatibility">These are Telegram account settings used by compatible clients. Changing them does not enable automatic gallery saving in Telegram X.</string>
+  <string name="AutosaveExceptionsCompatibility">These rules sync with Telegram. Automatic gallery saving runs when enabled on this device.</string>
   <string name="NoAutosaveExceptions">No autosave exceptions.</string>
   <string name="ResetAutosaveExceptionConfirm">Reset the autosave exception for %1$s? This chat will use its chat type’s default, which may save more or less media in compatible clients.</string>
   <string name="AutosaveExceptionReset">Autosave exception reset</string>
@@ -6818,4 +6818,7 @@
   <string name="SavedMessagesEmojiLoadFailed">Unable to load custom emoji.</string>
   <string name="SavedMessagesConfirmCustomTag">Add this emoji as a tag on the selected saved message?</string>
   <string name="SavedMessagesTagAlreadyAdded">This tag is already on the message.</string>
+  <string name="EnableGalleryAutosave">Save automatically to gallery</string>
+  <string name="EnableGalleryAutosaveConfirm">Save new photos and videos that finish downloading to the shared gallery on this device? Your Telegram rules and chat exceptions apply.</string>
+  <string name="GalleryAutosaveNeedsAndroid10">Automatic gallery saving requires Android 10 or later.</string>
 </resources>

@@ -37,6 +37,7 @@ import org.thunderdog.challegram.navigation.DoubleHeaderView;
 import org.thunderdog.challegram.navigation.SettingsWrapBuilder;
 import org.thunderdog.challegram.navigation.ViewController;
 import org.thunderdog.challegram.telegram.GlobalConnectionListener;
+import org.thunderdog.challegram.telegram.GalleryAutosave;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibFilesManager;
 import org.thunderdog.challegram.telegram.TdlibManager;
@@ -282,6 +283,9 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
 
         new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.AutosaveMedia),
         new ListItem(ListItem.TYPE_SHADOW_TOP),
+        new ListItem(ListItem.TYPE_RADIO_SETTING, R.id.btn_enableGalleryAutosave, 0, R.string.EnableGalleryAutosave)
+          .setSelected(tdlib.galleryAutosave().enabled()),
+        new ListItem(ListItem.TYPE_SEPARATOR_FULL),
         new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_autosavePrivateChats, 0, R.string.InPrivateChats),
         new ListItem(ListItem.TYPE_SEPARATOR_FULL),
         new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_autosaveGroupChats, 0, R.string.InGroups),
@@ -543,6 +547,15 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
       }, this);
     } else if (id == R.id.btn_autosaveExceptions) {
       showAutosaveExceptions();
+    } else if (id == R.id.btn_enableGalleryAutosave) {
+      if (!GalleryAutosave.supported()) {
+        UI.showToast(R.string.GalleryAutosaveNeedsAndroid10, Toast.LENGTH_SHORT);
+      } else if (tdlib.galleryAutosave().enabled()) {
+        setGalleryAutosave(false);
+      } else {
+        showConfirm(Lang.getString(R.string.EnableGalleryAutosaveConfirm), Lang.getString(R.string.EnableGalleryAutosave),
+          () -> setGalleryAutosave(true));
+      }
     } else if (id == R.id.btn_clearAutosaveExceptions) {
       confirmClearAutosaveExceptions();
     } else if (id == R.id.btn_autosavePrivateChats || id == R.id.btn_autosaveGroupChats || id == R.id.btn_autosaveChannelChats) {
@@ -660,6 +673,18 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
         }
       }
     }));
+  }
+
+  private void setGalleryAutosave (boolean enabled) {
+    if (!isFocused()) {
+      return;
+    }
+    tdlib.galleryAutosave().setEnabled(enabled);
+    int position = adapter.indexOfViewById(R.id.btn_enableGalleryAutosave);
+    if (position != -1) {
+      adapter.getItems().get(position).setSelected(tdlib.galleryAutosave().enabled());
+      adapter.notifyItemChanged(position);
+    }
   }
 
   private void showAutosaveScopeSettings (@IdRes int id, TdApi.ScopeAutosaveSettings settings) {
