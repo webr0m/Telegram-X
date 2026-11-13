@@ -6851,4 +6851,12 @@
   <string name="TgxTonConnectionClosing">Disconnecting</string>
   <string name="TgxTonConnectionClosed">Disconnected</string>
   <string name="TgxTonConnectionCreated">Connected since %1$s</string>
+  <string name="TgxTonRevenue">Gram revenue</string>
+  <string name="TgxTonRevenueTotal">Total earned: %1$s</string>
+  <string name="TgxTonRevenueBalance">Revenue balance: %1$s</string>
+  <string name="TgxTonRevenueAvailable">Available to withdraw: %1$s</string>
+  <string name="TgxTonWithdrawalUnavailable">Withdrawal is currently unavailable.</string>
+  <string name="TgxTonWithdraw">Withdraw Grams</string>
+  <string name="TgxTonWithdrawalConfirm">Continue to Fragment to review withdrawal options?</string>
+  <string name="TgxTonRevenueError">Could not load Gram revenue.</string>
 </resources>

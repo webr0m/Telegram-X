@@ -30,4 +30,12 @@
   <string name="TgxTonConnectionClosing">Desconectando</string>
   <string name="TgxTonConnectionClosed">Desconectada</string>
   <string name="TgxTonConnectionCreated">Conectada desde el %1$s</string>
+  <string name="TgxTonRevenue">Ingresos en Grams</string>
+  <string name="TgxTonRevenueTotal">Total ganado: %1$s</string>
+  <string name="TgxTonRevenueBalance">Saldo de ingresos: %1$s</string>
+  <string name="TgxTonRevenueAvailable">Disponible para retirar: %1$s</string>
+  <string name="TgxTonWithdrawalUnavailable">El retiro no está disponible en este momento.</string>
+  <string name="TgxTonWithdraw">Retirar Grams</string>
+  <string name="TgxTonWithdrawalConfirm">¿Continuar a Fragment para revisar las opciones de retiro?</string>
+  <string name="TgxTonRevenueError">No se pudieron cargar los ingresos en Grams.</string>
 </resources>

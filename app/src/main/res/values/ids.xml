@@ -1708,5 +1708,8 @@
   <item type="id" name="btn_tonMore" />
   <item type="id" name="btn_tonRefresh" />
   <item name="btn_tonConnections" type="id" />
+  <item name="btn_tonRevenue" type="id" />
+  <item name="btn_tonWithdraw" type="id" />
+  <item name="controller_tonRevenue" type="id" />
 </resources>
 <!-- endregion -->

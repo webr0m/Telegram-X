@@ -171,7 +171,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         finish(cursor, null, error);
       }));
     } else {
-      tdlib.send(new TdApi.GetTonWalletNfts(cursor, 30), (result, error) -> runOnUiThreadOptional(() -> {
+      tdlib.send(new TdApi.GetTonWalletNfts(cursor, 20), (result, error) -> runOnUiThreadOptional(() -> {
         if (!sameAccount() || expected != generation) {
           return;
         }
@@ -215,6 +215,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, ton(current)));
       }
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonLedger, 0, R.string.TgxTonLedger));
+      rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonRevenue, 0, R.string.TgxTonRevenue));
       if (tdlib.options().canUseTonWallet) {
         TdApi.TonWalletState state = tdlib.tonWalletState();
         rows.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.TgxTonBlockchainWallet));
@@ -322,6 +323,8 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     } else if (id == R.id.btn_tonLedger || id == R.id.btn_tonWalletHistory || id == R.id.btn_tonNfts) {
       direction = Direction.ALL;
       show(id == R.id.btn_tonLedger ? Page.TELEGRAM : id == R.id.btn_tonNfts ? Page.NFT : Page.WALLET);
+    } else if (id == R.id.btn_tonRevenue) {
+      navigateTo(new TonRevenueController(context(), tdlib));
     } else if (id == R.id.btn_tonConnections && tdlib.options().canUseTonWallet) {
       show(Page.CONNECTIONS);
     } else if (id == R.id.btn_tonMore) {
