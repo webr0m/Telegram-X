@@ -58,4 +58,17 @@
   <string name="TgxTonReceiveInfo">Comparte esta dirección pública para recibir TON en la red TON.\n\n%1$s</string>
   <string name="TgxTonExplorer">Ver en el explorador</string>
   <string name="TgxTonExplorerOpen">¿Abrir esta dirección en %1$s?</string>
+  <string name="TgxTonBuyOnChain">Comprar TON para esta billetera</string>
+  <string name="TgxTonOnRampWallet">Billetera de destino en TON: %1$s</string>
+  <string name="TgxTonOnRampError">No se pudieron cargar los proveedores de compra.</string>
+  <string name="TgxTonOnRampUnavailable">Esta opción de compra no está disponible en este momento.</string>
+  <string name="TgxTonOnRampCurrency">Selecciona la moneda de pago</string>
+  <string name="TgxTonOnRampMethod">Selecciona el método de pago</string>
+  <string name="TgxTonOnRampAmount">Cantidad de TON que quieres comprar</string>
+  <string name="TgxTonOnRampRange">Introduce una cantidad entre %1$s y %2$s TON.</string>
+  <string name="TgxTonOnRampInvalidAmount">Introduce una cantidad de TON válida y dentro de los límites.</string>
+  <string name="TgxTonOnRampConfirm">Revisa una solicitud de %1$s TON para esta billetera:\n%2$s</string>
+  <string name="TgxTonOnRampQuote">Cotización del proveedor: %1$s TON por %2$s %3$s</string>
+  <string name="TgxTonOnRampOpen">¿Continuar a %1$s en el navegador para revisar y completar la compra?</string>
+  <string name="TgxTonOnRampExpired">La cotización o la sesión de pago venció. Vuelve a iniciar la compra.</string>
 </resources>

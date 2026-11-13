@@ -6879,4 +6879,17 @@
   <string name="TgxTonReceiveInfo">Share this public wallet address to receive TON on the TON network.\n\n%1$s</string>
   <string name="TgxTonExplorer">View in explorer</string>
   <string name="TgxTonExplorerOpen">Open this address on %1$s?</string>
+  <string name="TgxTonBuyOnChain">Buy TON for this wallet</string>
+  <string name="TgxTonOnRampWallet">Destination wallet on TON: %1$s</string>
+  <string name="TgxTonOnRampError">Could not load purchase providers.</string>
+  <string name="TgxTonOnRampUnavailable">This purchase option is currently unavailable.</string>
+  <string name="TgxTonOnRampCurrency">Choose the payment currency</string>
+  <string name="TgxTonOnRampMethod">Choose the payment method</string>
+  <string name="TgxTonOnRampAmount">Amount of TON to buy</string>
+  <string name="TgxTonOnRampRange">Enter an amount from %1$s to %2$s TON.</string>
+  <string name="TgxTonOnRampInvalidAmount">Enter a valid TON amount within the available limits.</string>
+  <string name="TgxTonOnRampConfirm">Review a request for %1$s TON to this wallet:\n%2$s</string>
+  <string name="TgxTonOnRampQuote">Provider quote: %1$s TON for %2$s %3$s</string>
+  <string name="TgxTonOnRampOpen">Continue to %1$s in your browser to review and complete the purchase?</string>
+  <string name="TgxTonOnRampExpired">The quote or checkout expired. Start again to get a new one.</string>
 </resources>

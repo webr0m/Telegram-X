@@ -251,6 +251,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
             rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0,
               Lang.getString(R.string.TgxTonGasless, Lang.formatNumber(gasless.leftCount))));
           }
+          rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonBuyOnChain, 0, R.string.TgxTonBuyOnChain));
           rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonWalletHistory, 0, R.string.TgxTonWalletHistory));
           rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonNfts, 0, R.string.TgxTonNfts));
           rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonConnections, 0, R.string.TgxTonConnections));
@@ -377,6 +378,11 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       navigateTo(new TonRevenueController(context(), tdlib));
     } else if (id == R.id.btn_tonConnections && tdlib.options().canUseTonWallet) {
       show(Page.CONNECTIONS);
+    } else if (id == R.id.btn_tonBuyOnChain && tdlib.options().canUseTonWallet) {
+      TdApi.TonWalletState state = tdlib.tonWalletState();
+      if (state != null && !StringUtils.isEmpty(state.address)) {
+        navigateTo(new TonOnRampController(context(), tdlib, account, state.address));
+      }
     } else if (id == R.id.btn_tonMore) {
       load();
     } else if (id == R.id.btn_tonCopyAddress) {
