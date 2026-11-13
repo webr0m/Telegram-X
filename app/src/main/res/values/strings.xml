@@ -6826,7 +6826,6 @@
   <string name="TgxTonTelegramBalance">TON balance in Telegram</string>
   <string name="TgxTonLedger">Telegram TON transactions</string>
   <string name="TgxTonBlockchainWallet">On-chain wallet</string>
-  <string name="TgxTonCopyAddress">Copy wallet address</string>
   <string name="TgxTonBackupEnabled">Wallet backup enabled</string>
   <string name="TgxTonGasless">Gasless transfers remaining: %1$s</string>
   <string name="TgxTonWalletHistory">On-chain transactions</string>

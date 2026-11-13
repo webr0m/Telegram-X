@@ -5,7 +5,6 @@
   <string name="TgxTonTelegramBalance">Saldo TON en Telegram</string>
   <string name="TgxTonLedger">Movimientos TON de Telegram</string>
   <string name="TgxTonBlockchainWallet">Billetera en la blockchain</string>
-  <string name="TgxTonCopyAddress">Copiar dirección de la billetera</string>
   <string name="TgxTonBackupEnabled">Copia de seguridad habilitada</string>
   <string name="TgxTonGasless">Transferencias sin comisión de red restantes: %1$s</string>
   <string name="TgxTonWalletHistory">Movimientos en la blockchain</string>

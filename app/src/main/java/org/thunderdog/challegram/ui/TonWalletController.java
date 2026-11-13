@@ -40,11 +40,10 @@ import java.util.concurrent.TimeUnit;
 import me.vkryl.core.StringUtils;
 
 public final class TonWalletController extends RecyclerViewController<Void> implements View.OnClickListener, Tdlib.TonConnectSessionListener {
-  private final String initialTransactionId;
-
   private enum Page { OVERVIEW, TELEGRAM, WALLET, NFT, CONNECTIONS }
   private enum Direction { ALL, IN, OUT }
   private final long account;
+  private final String initialTransactionId;
   private final LinkedHashMap<String, TdApi.Object> entries = new LinkedHashMap<>();
   private final HashSet<Long> liveSessionIds = new HashSet<>();
   private final HashSet<String> cursors = new HashSet<>();
@@ -60,7 +59,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
   private String offset = "";
   private Long balance;
   private int generation;
-  private boolean loading, failed;
+  private boolean loading, failed, openedInitialTransaction;
 
   public TonWalletController (Context context, Tdlib tdlib) {
     this(context, tdlib, null);
@@ -83,8 +82,6 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     tdlib.addTonConnectSessionListener(this);
     show(Page.OVERVIEW);
   }
-
-  private boolean openedInitialTransaction;
 
   @Override
   public void onFocus () {
@@ -275,7 +272,9 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     int expected = generation;
     tdlib.send(new TdApi.GetTonConnectSessionPendingRequests(session.id), (result, error) -> runOnUiThreadOptional(() -> {
       if (!isFocused() || !sameAccount() || page != Page.CONNECTIONS || expected != generation ||
-          !tdlib.options().canUseTonWallet || !entries.containsKey(Long.toString(session.id))) {
+          !tdlib.options().canUseTonWallet ||
+          !(entries.get(Long.toString(session.id)) instanceof TdApi.TonConnectSession current) ||
+          !(current.state instanceof TdApi.TonConnectSessionStateReady)) {
         return;
       }
       if (error != null) {
@@ -283,7 +282,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         return;
       }
       if (result == null || result.session == null || result.session.id != session.id ||
-          result.session.state instanceof TdApi.TonConnectSessionStateClosed) {
+          !(result.session.state instanceof TdApi.TonConnectSessionStateReady)) {
         return;
       }
       long now = tdlib.options().unixTime.currentTimeMillis() / 1000L;
@@ -529,7 +528,8 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         !address.matches("(?:[A-Za-z0-9_-]{48}|-?[0-9]{1,3}:[a-fA-F0-9]{64})")) {
       return null;
     }
-    return httpsUrl(prefix + address.replace(":", "%3A"));
+    URI result = httpsUrl(prefix + address.replace(":", "%3A"));
+    return result != null && base.getRawAuthority().equals(result.getRawAuthority()) ? result : null;
   }
 
   private void confirmExternal (int message, URI url, java.util.function.BooleanSupplier stillAllowed) {

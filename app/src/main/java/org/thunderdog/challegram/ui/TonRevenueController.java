@@ -170,8 +170,8 @@ public final class TonRevenueController extends RecyclerViewController<Void> imp
       }
       ArrayList<RevenuePoint> points = new ArrayList<>();
       for (int index = 1; index < dates.length(); index++) {
-        long day = Long.parseLong(dates.getString(index));
-        long amount = Long.parseLong(values.getString(index));
+        long day = Long.parseLong(dates.get(index).toString());
+        long amount = Long.parseLong(values.get(index).toString());
         if (day <= 0 || (index > 1 && day <= points.get(index - 2).dayMillis)) {
           return Collections.emptyList();
         }
