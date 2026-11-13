@@ -28,6 +28,7 @@ import androidx.annotation.RequiresApi;
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.Log;
 import org.thunderdog.challegram.core.Background;
+import org.thunderdog.challegram.data.MediaWrapper;
 import org.thunderdog.challegram.unsorted.AppContext;
 
 import java.io.File;
@@ -123,7 +124,7 @@ public final class GalleryAutosave {
     if (exporting.contains(key) || recentlyExported.contains(key)) {
       return;
     }
-    if (rules != null && !allowed(candidate)) {
+    if (rules != null && !canQueue(candidate)) {
       return;
     }
     pending.put(key, candidate);
@@ -179,9 +180,9 @@ public final class GalleryAutosave {
     Iterator<Candidate> entries = pending.values().iterator();
     while (entries.hasNext()) {
       Candidate candidate = entries.next();
-      if (!allowed(candidate)) {
+      if (!canQueue(candidate)) {
         entries.remove();
-      } else if (candidate.file.local != null && candidate.file.local.isDownloadingCompleted) {
+      } else if (isComplete(candidate.file)) {
         entries.remove();
         if (exporting.add(candidate.key())) {
           ready.add(candidate);
@@ -204,8 +205,7 @@ public final class GalleryAutosave {
     if (!eligible(message) || message.chatId != candidate.chat || message.id != candidate.message) {
       return false;
     }
-    TdApi.File file = mediaFile(message.content);
-    return file != null && file.id == candidate.file.id && canPublish(candidate);
+    return containsMediaFile(message.content, candidate.file.id) && canPublish(candidate);
   }
 
   private synchronized void finish (Candidate candidate) {
@@ -221,11 +221,22 @@ public final class GalleryAutosave {
 
   private synchronized boolean canPublish (Candidate candidate) {
     return enabled() && tdlib.isAuthorized() && candidate.account == tdlib.myUserId() &&
-      category(tdlib.chat(candidate.chat)) == candidate.category && allowed(candidate);
+      category(tdlib.chat(candidate.chat)) == candidate.category && canQueue(candidate);
   }
 
-  private boolean allowed (Candidate candidate) {
-    return isAllowed(effectiveRules(rules, candidate.chat, candidate.category), candidate.video, candidate.file.size);
+  private boolean canQueue (Candidate candidate) {
+    TdApi.ScopeAutosaveSettings rule = effectiveRules(rules, candidate.chat, candidate.category);
+    return canQueue(rule, candidate.video, candidate.file.size);
+  }
+
+  static boolean canQueue (TdApi.ScopeAutosaveSettings rule, boolean video, long size) {
+    // TDLib may not know a video's exact size until it downloads. Verify the disk length before saving.
+    return video && size == 0 ? rule != null && rule.autosaveVideos && rule.maxVideoFileSize > 0 :
+      isAllowed(rule, video, size);
+  }
+
+  private static boolean isComplete (TdApi.File file) {
+    return file.local != null && file.local.isDownloadingCompleted;
   }
 
   private void export (Candidate candidate) {
@@ -301,10 +312,25 @@ public final class GalleryAutosave {
 
   private static TdApi.File mediaFile (TdApi.MessageContent content) {
     if (content instanceof TdApi.MessagePhoto photo) {
-      TdApi.PhotoSize largest = Td.findBiggest(photo.photo);
-      return largest != null ? largest.photo : null;
+      TdApi.PhotoSize target = MediaWrapper.buildTargetFile(photo.photo);
+      if (target == null && photo.photo.sizes.length == 1) {
+        target = Td.findBiggest(photo.photo);
+      }
+      return target != null ? target.photo : null;
     }
     return content instanceof TdApi.MessageVideo video ? video.video.video : null;
+  }
+
+  static boolean containsMediaFile (TdApi.MessageContent content, int id) {
+    if (content instanceof TdApi.MessagePhoto photo) {
+      for (TdApi.PhotoSize size : photo.photo.sizes) {
+        if (size.photo.id == id) {
+          return true;
+        }
+      }
+      return false;
+    }
+    return content instanceof TdApi.MessageVideo video && video.video.video.id == id;
   }
 
   @RequiresApi(Build.VERSION_CODES.Q)
