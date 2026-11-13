@@ -166,4 +166,6 @@
   <string name="TgxStarsGiftMarketMonth">Precio medio de venta del último mes: %1$s</string>
   <string name="TgxStarsGiftLastFragmentSale">Última venta en Fragment: %1$s</string>
   <string name="TgxStarsGiftLastSale">Última venta: %1$s</string>
+  <string name="TgxStarsDropGiftDetails">Quitar datos originales</string>
+  <string name="TgxStarsDropGiftDetailsConfirm">¿Quitar permanentemente el remitente, el destinatario y el mensaje originales por %1$s estrellas?</string>
 </resources>

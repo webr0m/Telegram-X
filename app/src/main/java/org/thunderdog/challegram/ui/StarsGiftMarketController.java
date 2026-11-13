@@ -326,6 +326,9 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
         received.nextTransferDate <= tdlib.currentTime(TimeUnit.SECONDS)) {
       options.item(new OptionItem(5, Lang.getString(R.string.TgxStarsTransferGift), OptionColor.NORMAL, 0));
     }
+    if (canDropOriginalDetails(received, received)) {
+      options.item(new OptionItem(6, Lang.getString(R.string.TgxStarsDropGiftDetails), OptionColor.RED, 0));
+    }
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
       if (id == 1 || id == 2) {
@@ -333,6 +336,9 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
       } else if (id == 3) {
         showConfirm(Lang.getString(R.string.TgxStarsUnlistConfirm), Lang.getString(R.string.TgxStarsUnlist),
           () -> setListing(received, gift, null));
+      } else if (id == 6) {
+        showConfirm(Lang.getString(R.string.TgxStarsDropGiftDetailsConfirm, Lang.formatNumber(received.dropOriginalDetailsStarCount)),
+          Lang.getString(R.string.TgxStarsDropGiftDetails), () -> dropOriginalDetails(received));
       } else if (id == 5) {
         pickTransferRecipient(received);
       } else if (id == 4) {
@@ -341,6 +347,26 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
       }
       return true;
     });
+  }
+
+  static boolean canDropOriginalDetails (TdApi.ReceivedGift expected, TdApi.ReceivedGift fresh) {
+    return sameOwnedGift(expected, fresh) && fresh.gift instanceof TdApi.SentGiftUpgraded upgraded &&
+      upgraded.gift.originalDetails != null && fresh.dropOriginalDetailsStarCount > 0 &&
+      expected.dropOriginalDetailsStarCount == fresh.dropOriginalDetailsStarCount;
+  }
+
+  private void dropOriginalDetails (TdApi.ReceivedGift expected) {
+    if (!begin()) {
+      return;
+    }
+    tdlib.send(new TdApi.GetReceivedGift(expected.receivedGiftId), (fresh, error) -> runOnUiThreadOptional(() -> {
+      if (!current() || error != null || !canDropOriginalDetails(expected, fresh)) {
+        afterMutation(error, false);
+        return;
+      }
+      tdlib.send(new TdApi.DropGiftOriginalDetails(fresh.receivedGiftId, fresh.dropOriginalDetailsStarCount),
+        (ok, dropError) -> runOnUiThreadOptional(() -> afterMutation(dropError, dropError == null)));
+    }));
   }
 
   private void pickTransferRecipient (TdApi.ReceivedGift expected) {
