@@ -27,6 +27,7 @@ import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.tool.UI;
+import org.thunderdog.challegram.util.SenderPickerDelegate;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.math.BigDecimal;
@@ -214,6 +215,10 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
     }
     options.item(new OptionItem(4, Lang.getString(received.isSaved ? R.string.TgxStarsHideGift : R.string.TgxStarsShowGift),
       OptionColor.NORMAL, 0));
+    if (received.canBeTransferred && received.transferStarCount >= 0 &&
+        received.nextTransferDate <= tdlib.currentTime(TimeUnit.SECONDS)) {
+      options.item(new OptionItem(5, Lang.getString(R.string.TgxStarsTransferGift), OptionColor.NORMAL, 0));
+    }
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
       if (id == 1 || id == 2) {
@@ -221,12 +226,83 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
       } else if (id == 3) {
         showConfirm(Lang.getString(R.string.TgxStarsUnlistConfirm), Lang.getString(R.string.TgxStarsUnlist),
           () -> setListing(received, gift, null));
+      } else if (id == 5) {
+        pickTransferRecipient(received);
       } else if (id == 4) {
         showConfirm(Lang.getString(received.isSaved ? R.string.TgxStarsHideGiftConfirm : R.string.TgxStarsShowGiftConfirm),
           Lang.getString(R.string.Save), () -> toggleVisibility(received));
       }
       return true;
     });
+  }
+
+  private void pickTransferRecipient (TdApi.ReceivedGift expected) {
+    ContactsController picker = new ContactsController(context(), tdlib);
+    picker.setArguments(new ContactsController.Args(new SenderPickerDelegate() {
+      private boolean sending;
+
+      @Override
+      public boolean allowGlobalSearch () { return true; }
+
+      @Override
+      public String getUserPickTitle () { return Lang.getString(R.string.TgxStarsGiftRecipient); }
+
+      @Override
+      public boolean onSenderPick (ContactsController origin, View view, TdApi.MessageSender sender) {
+        if (!sending && origin.isFocused() && tdlib.myUserId() == account && sender instanceof TdApi.MessageSenderUser user) {
+          TdApi.User recipient = tdlib.cache().user(user.userId);
+          if (recipient != null && recipient.id != account && recipient.type instanceof TdApi.UserTypeRegular) {
+            origin.showConfirm(Lang.getString(R.string.TgxStarsTransferGiftConfirm, tdlib.senderName(sender),
+              Lang.formatNumber(expected.transferStarCount)), Lang.getString(R.string.TgxStarsTransferGift), () -> {
+              if (sending || !origin.isFocused() || account != tdlib.myUserId()) {
+                return;
+              }
+              sending = true;
+              tdlib.send(new TdApi.GetReceivedGift(expected.receivedGiftId), (fresh, error) -> origin.runOnUiThreadOptional(() -> {
+                if (!origin.isFocused() || account != tdlib.myUserId() || error != null ||
+                    !canTransfer(expected, fresh, tdlib.currentTime(TimeUnit.SECONDS))) {
+                  sending = false;
+                  if (origin.isFocused() && account == tdlib.myUserId()) {
+                    if (error != null) {
+                      UI.showError(error);
+                    } else {
+                      UI.showToast(R.string.TgxStarsGiftChanged, Toast.LENGTH_SHORT);
+                    }
+                  }
+                  return;
+                }
+                tdlib.send(new TdApi.TransferGift("", fresh.receivedGiftId, sender, fresh.transferStarCount),
+                  (ok, sendError) -> origin.runOnUiThreadOptional(() -> {
+                    sending = false;
+                    if (account == tdlib.myUserId()) {
+                      if (sendError != null) {
+                        UI.showError(sendError);
+                      } else {
+                        entries.remove(expected.receivedGiftId);
+                        render();
+                        UI.showToast(R.string.TgxStarsMarketSaved, Toast.LENGTH_SHORT);
+                        if (origin.isFocused()) {
+                          origin.navigateBack();
+                        }
+                      }
+                    }
+                  }));
+              }));
+            });
+          } else {
+            UI.showToast(R.string.TgxStarsGiftRecipientError, Toast.LENGTH_SHORT);
+          }
+        }
+        return false;
+      }
+    }));
+    navigateTo(picker);
+  }
+
+  static boolean canTransfer (TdApi.ReceivedGift expected, TdApi.ReceivedGift fresh, long now) {
+    return sameOwnedGift(expected, fresh) && expected.gift instanceof TdApi.SentGiftUpgraded &&
+      fresh.canBeTransferred && fresh.transferStarCount >= 0 && expected.transferStarCount == fresh.transferStarCount &&
+      fresh.nextTransferDate <= now && expected.nextTransferDate == fresh.nextTransferDate;
   }
 
   private void toggleVisibility (TdApi.ReceivedGift expected) {

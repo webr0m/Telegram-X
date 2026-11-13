@@ -6738,4 +6738,6 @@
   <string name="TgxStarsShowGift">Show on profile</string>
   <string name="TgxStarsHideGiftConfirm">Hide this gift from your public profile?</string>
   <string name="TgxStarsShowGiftConfirm">Display this gift on your public profile?</string>
+  <string name="TgxStarsTransferGift">Transfer collectible</string>
+  <string name="TgxStarsTransferGiftConfirm">Transfer this collectible to %1$s for %2$s Stars? They will become its owner.</string>
 </resources>

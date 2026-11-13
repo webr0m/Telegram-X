@@ -150,4 +150,6 @@
   <string name="TgxStarsShowGift">Mostrar en el perfil</string>
   <string name="TgxStarsHideGiftConfirm">¿Ocultar este regalo de tu perfil público?</string>
   <string name="TgxStarsShowGiftConfirm">¿Mostrar este regalo en tu perfil público?</string>
+  <string name="TgxStarsTransferGift">Transferir coleccionable</string>
+  <string name="TgxStarsTransferGiftConfirm">¿Transferir este coleccionable a %1$s por %2$s estrellas? Pasará a ser de su propiedad.</string>
 </resources>
