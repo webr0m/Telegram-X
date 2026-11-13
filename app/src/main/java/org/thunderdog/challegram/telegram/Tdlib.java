@@ -7916,7 +7916,9 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   @TdlibThread
   private void updateSavedMessagesTags (TdApi.UpdateSavedMessagesTags update) {
-
+    for (Runnable listener : savedMessagesTopicListeners) {
+      listener.run();
+    }
   }
 
   private volatile TdApi.GiftAuctionState[] activeGiftAuctions = new TdApi.GiftAuctionState[0];

@@ -6801,4 +6801,9 @@
   <string name="SavedMessagesReorder">Reorder pinned topics</string>
   <string name="SavedMessagesReorderPosition">Choose the new position</string>
   <string name="SavedMessagesPosition">Position %1$s</string>
+  <string name="SavedMessagesTagsTitle">Filter by tag</string>
+  <string name="SavedMessagesNoTags">No tags in this view.</string>
+  <string name="SavedMessagesClearTag">Clear tag filter</string>
+  <string name="SavedMessagesTagCount">%1$s · %2$s</string>
+  <string name="SavedMessagesCustomTag">Custom emoji (%1$s)</string>
 </resources>

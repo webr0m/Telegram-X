@@ -1690,5 +1690,7 @@
   <item type="id" name="btn_savedMessagesNewNote" />
   <item type="id" name="btn_savedMessagesDate" />
   <item type="id" name="btn_savedMessagesReorder" />
+  <item type="id" name="btn_savedMessagesTags" />
+  <item type="id" name="btn_savedMessagesClearTag" />
 </resources>
 <!-- endregion -->

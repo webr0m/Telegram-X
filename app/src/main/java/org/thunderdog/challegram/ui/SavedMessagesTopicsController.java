@@ -56,7 +56,8 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private long cursor;
   private int generation;
   private String query = "";
-  private boolean loading, end, failed, saving;
+  private TdApi.ReactionType activeTag;
+  private boolean loading, end, failed, saving, topicListEnd;
 
   SavedMessagesTopicsController (Context context, Tdlib tdlib, long chatId, long topicId) {
     super(context, tdlib);
@@ -102,7 +103,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       render();
     } else {
       TdApi.SavedMessagesTopic fresh = tdlib.savedMessagesTopic(topicId);
-      if (fresh != null && openedTopic != null && lastId(fresh) != lastId(openedTopic) && query.isEmpty()) {
+      if (fresh != null && openedTopic != null && lastId(fresh) != lastId(openedTopic) && query.isEmpty() && activeTag == null) {
         openedTopic = fresh;
         restart("");
         return;
@@ -145,11 +146,11 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     loading = true;
     failed = false;
     render();
-    if (topicId == 0) {
+    if (showingTopicList()) {
       tdlib.send(new TdApi.LoadSavedMessagesTopics(30), (ok, error) -> runOnUiThreadOptional(() -> {
         if (currentAccount()) {
           loading = false;
-          end = error != null && error.code == 404;
+          end = topicListEnd = error != null && error.code == 404;
           failed = error != null && !end;
           render();
         }
@@ -158,7 +159,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     }
     int request = generation;
     long from = cursor;
-    if (query.isEmpty()) {
+    if (query.isEmpty() && activeTag == null) {
       tdlib.send(new TdApi.GetSavedMessagesTopicHistory(topicId, from, 0, 40), (result, error) -> runOnUiThreadOptional(() -> {
         long next = 0;
         if (result != null) {
@@ -172,7 +173,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
         finishPage(request, result != null ? result.messages : null, next, error);
       }));
     } else {
-      tdlib.send(new TdApi.SearchSavedMessages(topicId, null, query, from, 0, 40),
+      tdlib.send(new TdApi.SearchSavedMessages(topicId, activeTag, query, from, 0, 40),
         (result, error) -> runOnUiThreadOptional(() -> finishPage(request,
           result != null ? result.messages : null, result != null ? result.nextFromMessageId : 0, error)));
     }
@@ -183,6 +184,15 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       message.topicId instanceof TdApi.MessageTopicSavedMessages saved && saved.savedMessagesTopicId == topicId;
   }
 
+  static boolean matchesScope (TdApi.Message message, long chatId, long topicId) {
+    return topicId == 0 ? message != null && message.id > 0 && message.chatId == chatId :
+      belongsToTopic(message, chatId, topicId);
+  }
+
+  private boolean showingTopicList () {
+    return topicId == 0 && activeTag == null;
+  }
+
   private void finishPage (int request, TdApi.Message[] page, long next, TdApi.Error error) {
     if (request != generation || !currentAccount()) {
       return;
@@ -191,7 +201,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     failed = error != null;
     if (!failed && page != null) {
       for (TdApi.Message message : page) {
-        if (belongsToTopic(message, chatId, topicId)) {
+        if (matchesScope(message, chatId, topicId)) {
           messages.put(message.id, message);
         }
       }
@@ -208,12 +218,24 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     cursors.clear();
     cursor = 0;
     query = nextQuery;
-    load();
+    if (showingTopicList() && topicListEnd) {
+      end = true;
+      render();
+    } else {
+      load();
+    }
   }
 
   private void render () {
     ArrayList<ListItem> rows = new ArrayList<>();
-    if (topicId == 0) {
+    if (topicId == 0 || openedTopic != null) {
+      rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesTags, 0,
+        activeTag == null ? Lang.getString(R.string.SavedMessagesTagsTitle) : reactionLabel(activeTag)));
+      if (activeTag != null) {
+        rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesClearTag, 0, R.string.SavedMessagesClearTag));
+      }
+    }
+    if (showingTopicList()) {
       ArrayList<TdApi.SavedMessagesTopic> sorted = sortedTopics();
       if (!loading && pinnedIds(sorted).length > 1) {
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesReorder, 0, R.string.SavedMessagesReorder));
@@ -233,6 +255,8 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesResetSearch, 0, R.string.SavedMessagesClearSearch));
       }
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesTopicActions, 0, R.string.SavedMessagesTopicActions));
+    }
+    if (!showingTopicList() && (topicId == 0 || openedTopic != null)) {
       for (TdApi.Message message : messages.values()) {
         ContentPreview preview = ContentPreview.getChatListPreview(tdlib, chatId, message, false);
         String date = Lang.dateYearShortTime(message.date, TimeUnit.SECONDS);
@@ -245,7 +269,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     } else if (!end) {
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesMore, 0,
         failed ? R.string.RetryChatList : R.string.SavedMessagesLoadMore));
-    } else if (topicId == 0 ? tdlib.savedMessagesTopics().isEmpty() : messages.isEmpty()) {
+    } else if (showingTopicList() ? tdlib.savedMessagesTopics().isEmpty() : messages.isEmpty()) {
       rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.SavedMessagesTopicEmpty));
     }
     adapter.setItems(rows, false);
@@ -257,7 +281,12 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       return;
     }
     int id = view.getId();
-    if (id == R.id.btn_savedMessagesMore) {
+    if (id == R.id.btn_savedMessagesTags) {
+      chooseTag();
+    } else if (id == R.id.btn_savedMessagesClearTag) {
+      activeTag = null;
+      restart(query);
+    } else if (id == R.id.btn_savedMessagesMore) {
       load();
     } else if (id == R.id.btn_savedMessagesReorder) {
       choosePinnedTopic();
@@ -265,8 +294,12 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
         row.getData() instanceof TdApi.SavedMessagesTopic topic && tdlib.savedMessagesTopic(topic.id) != null) {
       navigateTo(new SavedMessagesTopicsController(context(), tdlib, chatId, topic.id));
     } else if (id == R.id.btn_savedMessagesItem && view.getTag() instanceof ListItem row &&
-        row.getData() instanceof TdApi.Message message && belongsToTopic(message, chatId, topicId)) {
-      showMessageActions(message);
+        row.getData() instanceof TdApi.Message message && matchesScope(message, chatId, topicId)) {
+      if (topicId != 0) {
+        showMessageActions(message);
+      } else {
+        openMessage(message);
+      }
     } else if (id == R.id.btn_savedMessagesDate) {
       chooseDate();
     } else if (id == R.id.btn_savedMessagesNewNote) {
@@ -286,6 +319,48 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     } else if (id == R.id.btn_savedMessagesTopicActions) {
       showTopicActions();
     }
+  }
+
+  private String reactionLabel (TdApi.ReactionType reaction) {
+    if (reaction instanceof TdApi.ReactionTypeEmoji emoji) {
+      return emoji.emoji;
+    }
+    if (reaction instanceof TdApi.ReactionTypeCustomEmoji custom) {
+      return Lang.getString(R.string.SavedMessagesCustomTag, Long.toString(custom.customEmojiId));
+    }
+    return Lang.getString(R.string.SavedMessagesTagsTitle);
+  }
+
+  private void chooseTag () {
+    tdlib.send(new TdApi.GetSavedMessagesTags(topicId), (result, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || !currentAccount() || (topicId != 0 && tdlib.savedMessagesTopic(topicId) == null)) {
+        return;
+      }
+      if (error != null) {
+        UI.showError(error);
+        return;
+      }
+      if (result.tags.length == 0) {
+        UI.showToast(R.string.SavedMessagesNoTags, Toast.LENGTH_SHORT);
+        return;
+      }
+      TdApi.SavedMessagesTag[] tags = result.tags.clone();
+      Arrays.sort(tags, Comparator.comparingInt((TdApi.SavedMessagesTag tag) -> tag.count).reversed());
+      Options.Builder options = new Options.Builder().info(Lang.getString(R.string.SavedMessagesTagsTitle));
+      for (int i = 0; i < tags.length; i++) {
+        TdApi.SavedMessagesTag tag = tags[i];
+        options.item(new OptionItem(i + 1, Lang.getString(R.string.SavedMessagesTagCount,
+          tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label, Lang.formatNumber(tag.count)), OptionColor.NORMAL, 0));
+      }
+      options.cancelItem();
+      showOptions(options.build(), (view, id) -> {
+        if (id > 0 && id <= tags.length) {
+          activeTag = tags[id - 1].tag;
+          restart(query);
+        }
+        return true;
+      });
+    }));
   }
 
   private void openMessage (TdApi.Message message) {

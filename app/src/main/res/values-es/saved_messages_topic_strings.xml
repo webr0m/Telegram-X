@@ -29,4 +29,9 @@
   <string name="SavedMessagesReorder">Reordenar temas fijados</string>
   <string name="SavedMessagesReorderPosition">Elige la nueva posición</string>
   <string name="SavedMessagesPosition">Posición %1$s</string>
+  <string name="SavedMessagesTagsTitle">Filtrar por etiqueta</string>
+  <string name="SavedMessagesNoTags">No hay etiquetas en esta vista.</string>
+  <string name="SavedMessagesClearTag">Quitar filtro de etiqueta</string>
+  <string name="SavedMessagesTagCount">%1$s · %2$s</string>
+  <string name="SavedMessagesCustomTag">Emoji personalizado (%1$s)</string>
 </resources>
