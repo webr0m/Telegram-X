@@ -146,4 +146,8 @@
   <string name="TgxStarsRejoin">Volver a unirme al canal</string>
   <string name="TgxStarsRejoinConfirm">¿Volver a unirte al canal con el período que ya pagaste?</string>
   <string name="TgxStarsOpenRenewal">Ver oferta de suscripción</string>
+  <string name="TgxStarsHideGift">Ocultar del perfil</string>
+  <string name="TgxStarsShowGift">Mostrar en el perfil</string>
+  <string name="TgxStarsHideGiftConfirm">¿Ocultar este regalo de tu perfil público?</string>
+  <string name="TgxStarsShowGiftConfirm">¿Mostrar este regalo en tu perfil público?</string>
 </resources>

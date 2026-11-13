@@ -212,6 +212,8 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
     if (listed) {
       options.item(new OptionItem(3, Lang.getString(R.string.TgxStarsUnlist), OptionColor.RED, 0));
     }
+    options.item(new OptionItem(4, Lang.getString(received.isSaved ? R.string.TgxStarsHideGift : R.string.TgxStarsShowGift),
+      OptionColor.NORMAL, 0));
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
       if (id == 1 || id == 2) {
@@ -219,9 +221,38 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
       } else if (id == 3) {
         showConfirm(Lang.getString(R.string.TgxStarsUnlistConfirm), Lang.getString(R.string.TgxStarsUnlist),
           () -> setListing(received, gift, null));
+      } else if (id == 4) {
+        showConfirm(Lang.getString(received.isSaved ? R.string.TgxStarsHideGiftConfirm : R.string.TgxStarsShowGiftConfirm),
+          Lang.getString(R.string.Save), () -> toggleVisibility(received));
       }
       return true;
     });
+  }
+
+  private void toggleVisibility (TdApi.ReceivedGift expected) {
+    if (!begin()) {
+      return;
+    }
+    tdlib.send(new TdApi.GetReceivedGift(expected.receivedGiftId), (fresh, error) -> runOnUiThreadOptional(() -> {
+      if (!current() || error != null || !sameOwnedGift(expected, fresh) || expected.isSaved != fresh.isSaved) {
+        afterMutation(error, false);
+        return;
+      }
+      tdlib.send(new TdApi.ToggleGiftIsSaved(fresh.receivedGiftId, !expected.isSaved),
+        (ok, saveError) -> runOnUiThreadOptional(() -> afterMutation(saveError, saveError == null)));
+    }));
+  }
+
+  static boolean sameOwnedGift (TdApi.ReceivedGift expected, TdApi.ReceivedGift fresh) {
+    if (fresh == null || fresh.wasRefunded || expected.receivedGiftId == null ||
+        !expected.receivedGiftId.equals(fresh.receivedGiftId)) {
+      return false;
+    }
+    if (expected.gift instanceof TdApi.SentGiftUpgraded a && fresh.gift instanceof TdApi.SentGiftUpgraded b) {
+      return a.gift.id == b.gift.id;
+    }
+    return expected.gift instanceof TdApi.SentGiftRegular a && fresh.gift instanceof TdApi.SentGiftRegular b &&
+      a.gift.id == b.gift.id;
   }
 
   private long minimum (boolean ton) {

@@ -6734,4 +6734,8 @@
   <string name="TgxStarsRejoin">Rejoin channel</string>
   <string name="TgxStarsRejoinConfirm">Rejoin this channel using your current paid period?</string>
   <string name="TgxStarsOpenRenewal">View subscription offer</string>
+  <string name="TgxStarsHideGift">Hide from profile</string>
+  <string name="TgxStarsShowGift">Show on profile</string>
+  <string name="TgxStarsHideGiftConfirm">Hide this gift from your public profile?</string>
+  <string name="TgxStarsShowGiftConfirm">Display this gift on your public profile?</string>
 </resources>
