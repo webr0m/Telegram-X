@@ -1715,5 +1715,6 @@
   <item name="controller_tonOnRamp" type="id" />
   <item name="btn_tonBuyOnChain" type="id" />
   <item name="btn_tonOnRampProvider" type="id" />
+  <item name="btn_tonRevenueDays" type="id" />
 </resources>
 <!-- endregion -->

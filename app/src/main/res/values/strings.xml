@@ -6892,4 +6892,7 @@
   <string name="TgxTonOnRampQuote">Provider quote: %1$s TON for %2$s %3$s</string>
   <string name="TgxTonOnRampOpen">Continue to %1$s in your browser to review and complete the purchase?</string>
   <string name="TgxTonOnRampExpired">The quote or checkout expired. Start again to get a new one.</string>
+  <string name="TgxTonDailyRevenue">Daily revenue (UTC)</string>
+  <string name="TgxTonRevenueRecentDays">Show recent days</string>
+  <string name="TgxTonRevenueAllDays">Show all days</string>
 </resources>

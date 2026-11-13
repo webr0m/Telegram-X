@@ -71,4 +71,7 @@
   <string name="TgxTonOnRampQuote">Cotización del proveedor: %1$s TON por %2$s %3$s</string>
   <string name="TgxTonOnRampOpen">¿Continuar a %1$s en el navegador para revisar y completar la compra?</string>
   <string name="TgxTonOnRampExpired">La cotización o la sesión de pago venció. Vuelve a iniciar la compra.</string>
+  <string name="TgxTonDailyRevenue">Ingresos diarios (UTC)</string>
+  <string name="TgxTonRevenueRecentDays">Ver días recientes</string>
+  <string name="TgxTonRevenueAllDays">Ver todos los días</string>
 </resources>

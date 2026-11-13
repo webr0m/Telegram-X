@@ -23,6 +23,9 @@ import android.view.View;
 import android.widget.Toast;
 
 import org.drinkless.tdlib.TdApi;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.navigation.ViewController;
@@ -35,13 +38,22 @@ import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.List;
+import java.util.TimeZone;
 
 public final class TonRevenueController extends RecyclerViewController<Void> implements View.OnClickListener, TdlibOptionListener {
   private static final long MIN_WITHDRAWAL = 10_000_000_000L;
   private final long userId;
   private SettingsAdapter adapter;
   private TdApi.GramRevenueStatus status;
+  private record RevenuePoint(long dayMillis, long amount) { }
+  private List<RevenuePoint> dailyRevenue = Collections.emptyList();
+  private boolean allDays;
+  private static final int RECENT_DAYS = 7;
   private long revision;
   private boolean busy, failed;
 
@@ -112,8 +124,11 @@ public final class TonRevenueController extends RecyclerViewController<Void> imp
       }
       busy = false;
       failed = stats == null;
-      if (stats != null && revision == expected) {
-        status = stats.status;
+      if (stats != null) {
+        if (revision == expected) {
+          status = stats.status;
+        }
+        dailyRevenue = readDailyRevenue(stats.revenueByDayGraph);
       }
       render();
       if (withdraw && isFocused()) {
@@ -126,6 +141,64 @@ public final class TonRevenueController extends RecyclerViewController<Void> imp
         }
       }
     }));
+  }
+
+  static List<RevenuePoint> readDailyRevenue (TdApi.StatisticalGraph graph) {
+    if (!(graph instanceof TdApi.StatisticalGraphData data) || data.jsonData == null) {
+      return Collections.emptyList();
+    }
+    try {
+      JSONObject json = new JSONObject(data.jsonData);
+      JSONArray columns = json.getJSONArray("columns");
+      JSONObject types = json.getJSONObject("types");
+      JSONArray dates = null;
+      JSONArray values = null;
+      for (int index = 0; index < columns.length(); index++) {
+        JSONArray column = columns.getJSONArray(index);
+        String type = types.optString(column.getString(0));
+        if ("x".equals(type) && dates == null) {
+          dates = column;
+        } else if ("line".equals(type) || "bar".equals(type) || "area".equals(type)) {
+          if (values != null) {
+            return Collections.emptyList();
+          }
+          values = column;
+        }
+      }
+      if (dates == null || values == null || dates.length() != values.length()) {
+        return Collections.emptyList();
+      }
+      ArrayList<RevenuePoint> points = new ArrayList<>();
+      for (int index = 1; index < dates.length(); index++) {
+        long day = Long.parseLong(dates.getString(index));
+        long amount = Long.parseLong(values.getString(index));
+        if (day <= 0 || (index > 1 && day <= points.get(index - 2).dayMillis)) {
+          return Collections.emptyList();
+        }
+        points.add(new RevenuePoint(day, amount));
+      }
+      return points;
+    } catch (JSONException | NumberFormatException error) {
+      return Collections.emptyList();
+    }
+  }
+
+  private void addDailyRevenue (ArrayList<ListItem> rows) {
+    if (dailyRevenue.isEmpty()) {
+      return;
+    }
+    rows.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.TgxTonDailyRevenue));
+    DateFormat format = DateFormat.getDateInstance(DateFormat.MEDIUM, Lang.dateFormatLocale());
+    format.setTimeZone(TimeZone.getTimeZone("UTC"));
+    int limit = allDays ? dailyRevenue.size() : Math.min(dailyRevenue.size(), RECENT_DAYS);
+    for (int index = dailyRevenue.size() - 1; index >= dailyRevenue.size() - limit; index--) {
+      RevenuePoint point = dailyRevenue.get(index);
+      addAmount(rows, format.format(new Date(point.dayMillis)), point.amount);
+    }
+    if (dailyRevenue.size() > RECENT_DAYS) {
+      rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonRevenueDays, 0,
+        allDays ? R.string.TgxTonRevenueRecentDays : R.string.TgxTonRevenueAllDays));
+    }
   }
 
   private void promptPassword () {
@@ -198,6 +271,7 @@ public final class TonRevenueController extends RecyclerViewController<Void> imp
           rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.TgxTonWithdrawalUnavailable));
         }
       }
+      addDailyRevenue(rows);
       if (failed) {
         rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.TgxTonRevenueError));
       }
@@ -216,6 +290,11 @@ public final class TonRevenueController extends RecyclerViewController<Void> imp
     rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getString(label, formatted)));
   }
 
+  private static void addAmount (ArrayList<ListItem> rows, String caption, long amount) {
+    String formatted = Lang.getString(R.string.TgxTonAmount, TonWalletController.amount(amount));
+    rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, Lang.getString(R.string.TgxTonEntry, caption, formatted)));
+  }
+
   @Override
   public void onClick (View view) {
     if (!isFocused() || !sameAccount() || busy) {
@@ -223,6 +302,9 @@ public final class TonRevenueController extends RecyclerViewController<Void> imp
     }
     if (view.getId() == R.id.btn_tonRefresh) {
       refresh(false);
+    } else if (view.getId() == R.id.btn_tonRevenueDays) {
+      allDays = !allDays;
+      render();
     } else if (view.getId() == R.id.btn_tonWithdraw && !failed && canWithdraw(status)) {
       showConfirm(Lang.getString(R.string.TgxTonWithdrawalConfirm), Lang.getString(R.string.Continue), () -> refresh(true));
     }
