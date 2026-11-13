@@ -1043,6 +1043,10 @@ public class MediaItem implements MessageSourceProvider, InvalidateContentProvid
       case TdApi.MessageAnimation.CONSTRUCTOR: {
         return new MediaItem(context, tdlib, msg.chatId, msg.id, msg.senderId, msg.date, (TdApi.MessageAnimation) msg.content).setMessage(msg);
       }
+      case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR: {
+        TdApi.ChatPhoto photo = ((TdApi.MessageSuggestProfilePhoto) msg.content).photo;
+        return photo != null ? new MediaItem(context, tdlib, msg.chatId, msg.id, photo).setMessage(msg) : null;
+      }
       case TdApi.MessageChatChangePhoto.CONSTRUCTOR: {
         return new MediaItem(context, tdlib, msg.chatId, msg.id, ((TdApi.MessageChatChangePhoto) msg.content).photo).setMessage(msg);
       }

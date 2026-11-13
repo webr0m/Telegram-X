@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="ReceivedProfilePhotoSuggestion">Sugirió una nueva foto de perfil. Toca para revisarla.</string>
+  <string name="ReceivedBirthdateSuggestion">Cumpleaños sugerido: **%1$s**. Toca para revisarlo.</string>
+  <string name="SentBirthdateSuggestion">Sugeriste un cumpleaños: **%1$s**.</string>
+  <string name="ApplyBirthdateSuggestion">¿Establecer %1$s como tu cumpleaños en Telegram? Reemplazará la fecha actual.</string>
+  <string name="ApplyProfilePhotoSuggestion">¿Establecer la foto sugerida como tu foto de perfil principal?</string>
+  <string name="ProfileSuggestionUnavailable">Esta sugerencia ya no está disponible.</string>
+  <string name="ProfileSuggestionApplied">Perfil actualizado</string>
+  <string name="ProfilePhotoSuggestionPreview">Sugerencia de foto de perfil</string>
+  <string name="BirthdateSuggestionPreview">Sugerencia de cumpleaños</string>
+  <string name="SavedBirthdateSuggestion">Cumpleaños sugerido: **%1$s**.</string>
+</resources>

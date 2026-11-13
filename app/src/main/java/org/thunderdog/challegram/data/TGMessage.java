@@ -8720,20 +8720,22 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         }
         // unsupported
         case TdApi.MessageRichMessage.CONSTRUCTOR:
-        case TdApi.MessageInvoice.CONSTRUCTOR:
-        case TdApi.MessagePassportDataSent.CONSTRUCTOR:
-        case TdApi.MessageStory.CONSTRUCTOR:
-        case TdApi.MessageChatSetBackground.CONSTRUCTOR:
         case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
+          return new TGMessageService(context, msg, (TdApi.MessageSuggestProfilePhoto) content);
         case TdApi.MessageSuggestBirthdate.CONSTRUCTOR:
-        case TdApi.MessageUsersShared.CONSTRUCTOR:
-        case TdApi.MessageChatShared.CONSTRUCTOR:
-        case TdApi.MessagePaidMedia.CONSTRUCTOR:
+          return new TGMessageService(context, msg, (TdApi.MessageSuggestBirthdate) content);
         case TdApi.MessageUpgradedGift.CONSTRUCTOR:
         case TdApi.MessageUpgradedGiftPurchaseOffer.CONSTRUCTOR:
         case TdApi.MessageUpgradedGiftPurchaseOfferRejected.CONSTRUCTOR:
           return new TGMessageService(context, msg, content);
 
+        case TdApi.MessageInvoice.CONSTRUCTOR:
+        case TdApi.MessagePassportDataSent.CONSTRUCTOR:
+        case TdApi.MessageStory.CONSTRUCTOR:
+        case TdApi.MessageChatSetBackground.CONSTRUCTOR:
+        case TdApi.MessageUsersShared.CONSTRUCTOR:
+        case TdApi.MessageChatShared.CONSTRUCTOR:
+        case TdApi.MessagePaidMedia.CONSTRUCTOR:
         case TdApi.MessageGiveawayPrizeStars.CONSTRUCTOR:
         case TdApi.MessageGift.CONSTRUCTOR:
         case TdApi.MessageRefundedUpgradedGift.CONSTRUCTOR:

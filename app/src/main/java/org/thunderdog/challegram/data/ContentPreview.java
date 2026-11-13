@@ -1605,11 +1605,13 @@ public class ContentPreview {
       case TdApi.MessagePaymentRefunded.CONSTRUCTOR:
         throw new IllegalArgumentException(Integer.toString(type));
         
+      case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
+        return new ContentPreview(null, isOutgoing ? R.string.ProfilePhotoSuggested : R.string.ProfilePhotoSuggestionPreview);
+      case TdApi.MessageSuggestBirthdate.CONSTRUCTOR:
+        return new ContentPreview(null, R.string.BirthdateSuggestionPreview);
       case TdApi.MessageStory.CONSTRUCTOR:
       case TdApi.MessageUsersShared.CONSTRUCTOR:
       case TdApi.MessageChatShared.CONSTRUCTOR:
-      case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
-      case TdApi.MessageSuggestBirthdate.CONSTRUCTOR:
       case TdApi.MessageForumTopicCreated.CONSTRUCTOR:
       case TdApi.MessageForumTopicEdited.CONSTRUCTOR:
       case TdApi.MessageForumTopicIsClosedToggled.CONSTRUCTOR:

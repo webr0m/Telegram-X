@@ -74,6 +74,93 @@ public final class TGMessageService extends TGMessageServiceImpl {
     });
   }
 
+  TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessageSuggestProfilePhoto suggestion) {
+    super(context, msg);
+    setDisplayChatPhoto(suggestion.photo);
+    boolean actionable = canApplySuggestion(msg) && suggestion.photo != null && suggestion.photo.id != 0;
+    setTextCreator(() -> getText(msg.isOutgoing ? R.string.ProfilePhotoSuggested :
+      actionable ? R.string.ReceivedProfilePhotoSuggestion : R.string.ProfilePhotoSuggestionPreview));
+    if (actionable) {
+      setOnClickListener(() -> confirmSuggestion(msg, suggestion));
+    }
+  }
+
+  TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessageSuggestBirthdate suggestion) {
+    super(context, msg);
+    boolean actionable = suggestion.birthdate != null && canApplySuggestion(msg);
+    setTextCreator(() -> suggestion.birthdate == null ? getText(R.string.BirthdateSuggestionPreview) :
+      getText(msg.isOutgoing ? R.string.SentBirthdateSuggestion :
+        actionable ? R.string.ReceivedBirthdateSuggestion : R.string.SavedBirthdateSuggestion,
+        new BoldArgument(Lang.getBirthdate(suggestion.birthdate, false, false).toString())));
+    if (actionable) {
+      setOnClickListener(() -> confirmSuggestion(msg, suggestion));
+    }
+  }
+
+  static boolean canApplySuggestion (TdApi.Message message) {
+    return message != null && message.id > 0 && !message.isOutgoing && message.forwardInfo == null &&
+      message.sendingState == null &&
+      message.senderId instanceof TdApi.MessageSenderUser user && user.userId > 0 &&
+      message.chatId == ChatId.fromUserId(user.userId);
+  }
+
+  static boolean sameSuggestion (TdApi.MessageContent expected, TdApi.MessageContent fresh) {
+    if (expected instanceof TdApi.MessageSuggestProfilePhoto a && fresh instanceof TdApi.MessageSuggestProfilePhoto b) {
+      return a.photo != null && b.photo != null && a.photo.id != 0 && a.photo.id == b.photo.id;
+    }
+    return expected instanceof TdApi.MessageSuggestBirthdate a && fresh instanceof TdApi.MessageSuggestBirthdate b &&
+      a.birthdate != null && b.birthdate != null && a.birthdate.year == b.birthdate.year &&
+      a.birthdate.month == b.birthdate.month && a.birthdate.day == b.birthdate.day;
+  }
+
+  private boolean applyingSuggestion;
+
+  private void confirmSuggestion (TdApi.Message message, TdApi.MessageContent expected) {
+    var screen = controller();
+    if (screen == null || !screen.isFocused() || applyingSuggestion || !canApplySuggestion(message)) {
+      return;
+    }
+    long account = tdlib.myUserId();
+    CharSequence confirmation = expected instanceof TdApi.MessageSuggestBirthdate birthday ?
+      Lang.getString(R.string.ApplyBirthdateSuggestion, Lang.getBirthdate(birthday.birthdate, false, false).toString()) :
+      Lang.getString(R.string.ApplyProfilePhotoSuggestion);
+    screen.showConfirm(confirmation, Lang.getString(R.string.Save), () -> {
+      if (applyingSuggestion || !screen.isFocused() || account == 0 || account != tdlib.myUserId()) {
+        return;
+      }
+      applyingSuggestion = true;
+      tdlib.send(new TdApi.GetMessage(message.chatId, message.id), (fresh, error) -> tdlib.ui().post(() -> {
+        if (!screen.isFocused() || account != tdlib.myUserId()) {
+          applyingSuggestion = false;
+          return;
+        }
+        if (error != null || !canApplySuggestion(fresh) || fresh.chatId != message.chatId ||
+            fresh.id != message.id || !sameSuggestion(expected, fresh.content)) {
+          applyingSuggestion = false;
+          if (error != null) {
+            UI.showError(error);
+          } else {
+            UI.showToast(R.string.ProfileSuggestionUnavailable, android.widget.Toast.LENGTH_SHORT);
+          }
+          return;
+        }
+        TdApi.Function<TdApi.Ok> request = fresh.content instanceof TdApi.MessageSuggestProfilePhoto photo ?
+          new TdApi.SetProfilePhoto(new TdApi.InputChatPhotoPrevious(photo.photo.id), false) :
+          new TdApi.SetBirthdate(((TdApi.MessageSuggestBirthdate) fresh.content).birthdate);
+        tdlib.send(request, (ok, saveError) -> tdlib.ui().post(() -> {
+          applyingSuggestion = false;
+          if (screen.isFocused() && account == tdlib.myUserId()) {
+            if (saveError != null) {
+              UI.showError(saveError);
+            } else {
+              UI.showToast(R.string.ProfileSuggestionApplied, android.widget.Toast.LENGTH_SHORT);
+            }
+          }
+        }));
+      }));
+    });
+  }
+
   TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessageContent initialGift) {
     super(context, msg);
     setTextCreator(() -> {
