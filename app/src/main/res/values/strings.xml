@@ -6806,4 +6806,8 @@
   <string name="SavedMessagesClearTag">Clear tag filter</string>
   <string name="SavedMessagesTagCount">%1$s · %2$s</string>
   <string name="SavedMessagesCustomTag">Custom emoji (%1$s)</string>
+  <string name="SavedMessagesManageTags">Manage tags</string>
+  <string name="SavedMessagesTagsUnavailable">Tags are unavailable for this message or have changed.</string>
+  <string name="SavedMessagesAddTag">Add %1$s</string>
+  <string name="SavedMessagesRemoveTag">Remove %1$s</string>
 </resources>

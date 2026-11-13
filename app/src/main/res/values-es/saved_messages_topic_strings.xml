@@ -34,4 +34,8 @@
   <string name="SavedMessagesClearTag">Quitar filtro de etiqueta</string>
   <string name="SavedMessagesTagCount">%1$s · %2$s</string>
   <string name="SavedMessagesCustomTag">Emoji personalizado (%1$s)</string>
+  <string name="SavedMessagesManageTags">Gestionar etiquetas</string>
+  <string name="SavedMessagesTagsUnavailable">Las etiquetas no están disponibles para este mensaje o cambiaron.</string>
+  <string name="SavedMessagesAddTag">Añadir %1$s</string>
+  <string name="SavedMessagesRemoveTag">Quitar %1$s</string>
 </resources>

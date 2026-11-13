@@ -57,6 +57,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private int generation;
   private String query = "";
   private TdApi.ReactionType activeTag;
+  private String activeTagLabel;
   private boolean loading, end, failed, saving, topicListEnd;
 
   SavedMessagesTopicsController (Context context, Tdlib tdlib, long chatId, long topicId) {
@@ -146,9 +147,10 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     loading = true;
     failed = false;
     render();
+    int request = generation;
     if (showingTopicList()) {
       tdlib.send(new TdApi.LoadSavedMessagesTopics(30), (ok, error) -> runOnUiThreadOptional(() -> {
-        if (currentAccount()) {
+        if (currentAccount() && request == generation) {
           loading = false;
           end = topicListEnd = error != null && error.code == 404;
           failed = error != null && !end;
@@ -157,7 +159,6 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       }));
       return;
     }
-    int request = generation;
     long from = cursor;
     if (query.isEmpty() && activeTag == null) {
       tdlib.send(new TdApi.GetSavedMessagesTopicHistory(topicId, from, 0, 40), (result, error) -> runOnUiThreadOptional(() -> {
@@ -230,7 +231,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     ArrayList<ListItem> rows = new ArrayList<>();
     if (topicId == 0 || openedTopic != null) {
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesTags, 0,
-        activeTag == null ? Lang.getString(R.string.SavedMessagesTagsTitle) : reactionLabel(activeTag)));
+        activeTag == null ? Lang.getString(R.string.SavedMessagesTagsTitle) : activeTagLabel));
       if (activeTag != null) {
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesClearTag, 0, R.string.SavedMessagesClearTag));
       }
@@ -355,12 +356,148 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       options.cancelItem();
       showOptions(options.build(), (view, id) -> {
         if (id > 0 && id <= tags.length) {
-          activeTag = tags[id - 1].tag;
+          TdApi.SavedMessagesTag tag = tags[id - 1];
+          activeTag = tag.tag;
+          activeTagLabel = tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label;
           restart(query);
         }
         return true;
       });
     }));
+  }
+
+  private void chooseMessageTag (long messageId) {
+    if (!isFocused() || !currentAccount() || saving || !tdlib.hasPremium()) {
+      return;
+    }
+    tdlib.send(new TdApi.GetMessage(chatId, messageId), (message, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || !currentAccount() || saving || !tdlib.hasPremium()) {
+        return;
+      }
+      if (error != null) {
+        UI.showError(error);
+        return;
+      }
+      if (!belongsToTopic(message, chatId, topicId) || !supportsTags(message)) {
+        UI.showToast(R.string.SavedMessagesTagsUnavailable, Toast.LENGTH_SHORT);
+        return;
+      }
+      tdlib.send(new TdApi.GetMessageAvailableReactions(chatId, messageId, 8), (result, reactionError) ->
+        runOnUiThreadOptional(() -> {
+          if (!isFocused() || !currentAccount() || saving || !tdlib.hasPremium()) {
+            return;
+          }
+          if (reactionError != null) {
+            UI.showError(reactionError);
+          } else if (!result.areTags) {
+            UI.showToast(R.string.SavedMessagesTagsUnavailable, Toast.LENGTH_SHORT);
+          } else {
+            showMessageTags(message, result);
+          }
+        }));
+    }));
+  }
+
+  static boolean supportsTags (TdApi.Message message) {
+    TdApi.MessageReactions reactions = message.interactionInfo != null ? message.interactionInfo.reactions : null;
+    return reactions == null || reactions.areTags || reactions.reactions.length == 0;
+  }
+
+  private static boolean isTagSelected (TdApi.Message message, TdApi.ReactionType tag) {
+    TdApi.MessageReactions reactions = message.interactionInfo != null ? message.interactionInfo.reactions : null;
+    if (reactions != null && reactions.areTags) {
+      for (TdApi.MessageReaction reaction : reactions.reactions) {
+        if (reaction.isChosen && Td.equalsTo(reaction.type, tag)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  private void showMessageTags (TdApi.Message message, TdApi.AvailableReactions result) {
+    ArrayList<TdApi.ReactionType> tags = new ArrayList<>();
+    TdApi.MessageReactions reactions = message.interactionInfo != null ? message.interactionInfo.reactions : null;
+    if (reactions != null && reactions.areTags) {
+      for (TdApi.MessageReaction reaction : reactions.reactions) {
+        if (reaction.isChosen) {
+          addTag(tags, reaction.type);
+        }
+      }
+    }
+    for (TdApi.AvailableReaction[] choices : new TdApi.AvailableReaction[][] {
+        result.topReactions, result.recentReactions, result.popularReactions}) {
+      for (TdApi.AvailableReaction reaction : choices) {
+        addTag(tags, reaction.type);
+      }
+    }
+    if (tags.isEmpty()) {
+      UI.showToast(R.string.SavedMessagesNoTags, Toast.LENGTH_SHORT);
+      return;
+    }
+    Options.Builder options = new Options.Builder().info(Lang.getString(R.string.SavedMessagesManageTags));
+    for (int i = 0; i < tags.size(); i++) {
+      TdApi.ReactionType tag = tags.get(i);
+      options.item(new OptionItem(i + 1, Lang.getString(isTagSelected(message, tag) ?
+        R.string.SavedMessagesRemoveTag : R.string.SavedMessagesAddTag, reactionLabel(tag)), OptionColor.NORMAL, 0));
+    }
+    options.cancelItem();
+    showOptions(options.build(), (view, id) -> {
+      if (id > 0 && id <= tags.size()) {
+        TdApi.ReactionType tag = tags.get(id - 1);
+        changeTag(message.id, tag, isTagSelected(message, tag));
+      }
+      return true;
+    });
+  }
+
+  private static void addTag (ArrayList<TdApi.ReactionType> tags, TdApi.ReactionType candidate) {
+    if (!(candidate instanceof TdApi.ReactionTypeEmoji || candidate instanceof TdApi.ReactionTypeCustomEmoji)) {
+      return;
+    }
+    for (TdApi.ReactionType tag : tags) {
+      if (Td.equalsTo(tag, candidate)) {
+        return;
+      }
+    }
+    tags.add(candidate);
+  }
+
+  private void changeTag (long messageId, TdApi.ReactionType tag, boolean remove) {
+    if (saving || !isFocused() || !currentAccount() || !tdlib.hasPremium()) {
+      return;
+    }
+    saving = true;
+    render();
+    tdlib.send(new TdApi.GetMessage(chatId, messageId), (fresh, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || !currentAccount() || !tdlib.hasPremium() || error != null ||
+          !belongsToTopic(fresh, chatId, topicId) || !supportsTags(fresh) || isTagSelected(fresh, tag) != remove) {
+        finishTagChange(error, false);
+        return;
+      }
+      TdApi.Function<TdApi.Ok> request = remove ? new TdApi.RemoveMessageReaction(chatId, messageId, tag) :
+        new TdApi.AddMessageReaction(chatId, messageId, tag, false, true);
+      tdlib.send(request, (ok, changeError) -> runOnUiThreadOptional(() -> finishTagChange(changeError, changeError == null)));
+    }));
+  }
+
+  private void finishTagChange (TdApi.Error error, boolean success) {
+    saving = false;
+    if (!currentAccount()) {
+      return;
+    }
+    if (success) {
+      restart(query);
+    } else {
+      render();
+      if (isFocused()) {
+        if (error != null) {
+          UI.showError(error);
+        } else {
+          UI.showToast(R.string.SavedMessagesTagsUnavailable, Toast.LENGTH_SHORT);
+        }
+      }
+    }
   }
 
   private void openMessage (TdApi.Message message) {
@@ -432,6 +569,9 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     Options.Builder options = new Options.Builder();
     options.item(new OptionItem(1, Lang.getString(R.string.SavedMessagesOpenMessage), OptionColor.NORMAL, 0));
     options.item(new OptionItem(2, Lang.getString(R.string.Reply), OptionColor.NORMAL, 0));
+    if (tdlib.hasPremium()) {
+      options.item(new OptionItem(3, Lang.getString(R.string.SavedMessagesManageTags), OptionColor.NORMAL, 0));
+    }
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
       if (id == 1) {
@@ -447,6 +587,8 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
             }
           }
         });
+      } else if (id == 3) {
+        tdlib.ui().post(() -> chooseMessageTag(message.id));
       }
       return true;
     });
@@ -542,9 +684,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
               saveDraft("", 0);
             }
             render();
-            if (isFocused() && sent != null && replyId != 0 && !isNotes()) {
-              openMessage(sent);
-            }
+
           }
         }
       }));
