@@ -38,4 +38,18 @@
   <string name="TgxTonWithdraw">Retirar Grams</string>
   <string name="TgxTonWithdrawalConfirm">¿Continuar a Fragment para revisar las opciones de retiro?</string>
   <string name="TgxTonRevenueError">No se pudieron cargar los ingresos en Grams.</string>
+  <string name="TgxTonGiftDeposit">Regalo recibido de Fragment</string>
+  <string name="TgxTonFragmentDeposit">Depósito de Fragment</string>
+  <string name="TgxTonFragmentWithdrawal">Retiro a Fragment</string>
+  <string name="TgxTonSuggestedPostPayment">Pago por publicación sugerida</string>
+  <string name="TgxTonGiftOffer">Oferta de compra de regalo</string>
+  <string name="TgxTonGiftPurchase">Compra de regalo coleccionable</string>
+  <string name="TgxTonGiftSale">Venta de regalo coleccionable</string>
+  <string name="TgxTonDiceStake">Apuesta de dados</string>
+  <string name="TgxTonDicePayout">Premio de dados</string>
+  <string name="TgxTonTransaction">Transacción de TON</string>
+  <string name="TgxTonPending">Pendiente</string>
+  <string name="TgxTonGaslessTransaction">Telegram pagó la comisión de red.</string>
+  <string name="TgxTonEncryptedComment">Comentario cifrado</string>
+  <string name="TgxTonCommission">Comisión de Telegram: %1$s</string>
 </resources>

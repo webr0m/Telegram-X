@@ -92,9 +92,13 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     if (sameAccount() && selection == Page.OVERVIEW) {
       int expected = generation;
       tdlib.send(new TdApi.GetTonTransactions(null, "", 1), (result, error) -> runOnUiThreadOptional(() -> {
-        if (sameAccount() && expected == generation && result != null) {
-          balance = result.gramAmount;
-          render();
+        if (sameAccount() && expected == generation) {
+          if (result != null) {
+            balance = result.gramAmount;
+            render();
+          } else if (error != null && isFocused() && tdlib.ownedGramAmount() == null) {
+            UI.showError(error);
+          }
         }
       }));
       if (tdlib.options().canUseTonWallet) {
@@ -250,7 +254,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       for (TdApi.Object entry : entries.values()) {
         CharSequence label;
         if (entry instanceof TdApi.TonTransaction ledger) {
-          label = Lang.getString(R.string.TgxTonEntry, date(ledger.date), ton(ledger.gramAmount));
+          label = Lang.getString(R.string.TgxTonEntry, Lang.getString(ledgerType(ledger.type)), ton(ledger.gramAmount));
         } else if (entry instanceof TdApi.TonWalletTransaction wallet) {
           label = Lang.getString(R.string.TgxTonEntry, date(wallet.date), walletLabel(wallet));
         } else if (entry instanceof TdApi.TonConnectSession session) {
@@ -275,6 +279,29 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
 
   private static String date (int date) {
     return Lang.dateYearShortTime(date, TimeUnit.SECONDS);
+  }
+
+  static int ledgerType (TdApi.TonTransactionType type) {
+    return switch (type) {
+      case TdApi.TonTransactionTypeFragmentDeposit deposit -> deposit.isGift ? R.string.TgxTonGiftDeposit : R.string.TgxTonFragmentDeposit;
+      case TdApi.TonTransactionTypeFragmentWithdrawal ignored -> R.string.TgxTonFragmentWithdrawal;
+      case TdApi.TonTransactionTypeSuggestedPostPayment ignored -> R.string.TgxTonSuggestedPostPayment;
+      case TdApi.TonTransactionTypeGiftPurchaseOffer ignored -> R.string.TgxTonGiftOffer;
+      case TdApi.TonTransactionTypeUpgradedGiftPurchase ignored -> R.string.TgxTonGiftPurchase;
+      case TdApi.TonTransactionTypeUpgradedGiftSale ignored -> R.string.TgxTonGiftSale;
+      case TdApi.TonTransactionTypeStakeDiceStake ignored -> R.string.TgxTonDiceStake;
+      case TdApi.TonTransactionTypeStakeDicePayout ignored -> R.string.TgxTonDicePayout;
+      case null, default -> R.string.TgxTonTransaction;
+    };
+  }
+
+  static TdApi.UpgradedGift transactionGift (TdApi.TonTransactionType type) {
+    return switch (type) {
+      case TdApi.TonTransactionTypeGiftPurchaseOffer offer -> offer.gift;
+      case TdApi.TonTransactionTypeUpgradedGiftPurchase purchase -> purchase.gift;
+      case TdApi.TonTransactionTypeUpgradedGiftSale sale -> sale.gift;
+      case null, default -> null;
+    };
   }
 
   private String walletLabel (TdApi.TonWalletTransaction transaction) {
@@ -360,8 +387,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
 
   private void showDetails (Object data) {
     if (data instanceof TdApi.TonTransaction telegram) {
-      showCopyDetails(Lang.getString(R.string.TgxTonEntry, date(telegram.date), ton(telegram.gramAmount)) +
-        (telegram.isRefund ? "\n" + Lang.getString(R.string.TgxTonRefund) : ""), telegram.id);
+      showLedgerDetails(telegram);
     } else if (data instanceof TdApi.TonWalletTransaction wallet) {
       String info = Lang.getString(R.string.TgxTonEntry, date(wallet.date), walletLabel(wallet)) + "\n" +
         Lang.getString(R.string.TgxTonFee, ton(wallet.feeAmount)) + "\n" +
@@ -370,7 +396,22 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       if (!StringUtils.isEmpty(wallet.peerAddress)) {
         info += "\n" + wallet.peerAddress;
       }
-      showCopyDetails(info, wallet.id);
+      String copyId = wallet.id;
+      if (wallet.state instanceof TdApi.TonWalletTransactionStateSucceeded succeeded && !StringUtils.isEmpty(succeeded.txHash)) {
+        copyId = succeeded.txHash;
+      }
+      if (!StringUtils.isEmpty(wallet.peerDomain)) {
+        info += "\n" + wallet.peerDomain;
+      }
+      if (wallet.type instanceof TdApi.TonWalletTransactionTypeTransfer transfer) {
+        info = addComment(info, transfer.comment, transfer.isCommentEncrypted);
+        if (transfer.isGasless) {
+          info += "\n" + Lang.getString(R.string.TgxTonGaslessTransaction);
+        }
+      } else if (wallet.type instanceof TdApi.TonWalletTransactionTypeNftTransfer transfer) {
+        info = addComment(info, transfer.comment, transfer.isCommentEncrypted);
+      }
+      showCopyDetails(info, copyId);
     } else if (data instanceof TdApi.TonConnectSession session && tdlib.options().canUseTonWallet) {
       String info = sessionName(session) + "\n" + sessionState(session.state);
       if (session.manifest instanceof TdApi.TonConnectManifestInfo app && !StringUtils.isEmpty(app.url)) {
@@ -400,7 +441,63 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     }
   }
 
+  private static String addComment (String info, String comment, boolean encrypted) {
+    if (encrypted) {
+      return info + "\n" + Lang.getString(R.string.TgxTonEncryptedComment);
+    }
+    return StringUtils.isEmpty(comment) ? info : info + "\n" + comment;
+  }
+
+  private void showLedgerDetails (TdApi.TonTransaction transaction) {
+    StringBuilder info = new StringBuilder(Lang.getString(ledgerType(transaction.type)))
+      .append('\n').append(Lang.getString(R.string.TgxTonEntry, date(transaction.date), ton(transaction.gramAmount)));
+    if (transaction.isRefund) {
+      info.append('\n').append(Lang.getString(R.string.TgxTonRefund));
+    }
+    if (transaction.type instanceof TdApi.TonTransactionTypeFragmentWithdrawal withdrawal && withdrawal.withdrawalState != null) {
+      int state = switch (withdrawal.withdrawalState) {
+        case TdApi.RevenueWithdrawalStatePending ignored -> R.string.TgxTonPending;
+        case TdApi.RevenueWithdrawalStateSucceeded ignored -> R.string.TgxTonCompleted;
+        default -> R.string.TgxTonFailed;
+      };
+      info.append('\n').append(Lang.getString(state));
+    } else if (transaction.type instanceof TdApi.TonTransactionTypeUpgradedGiftSale sale && sale.commissionGramAmount > 0) {
+      info.append('\n').append(Lang.getString(R.string.TgxTonCommission, ton(sale.commissionGramAmount)));
+    }
+    if (transaction.type instanceof TdApi.TonTransactionTypeSuggestedPostPayment payment) {
+      TdApi.Chat chat = tdlib.chat(payment.chatId);
+      if (chat != null && !StringUtils.isEmpty(chat.title)) {
+        info.append('\n').append(chat.title);
+      }
+    }
+    TdApi.UpgradedGift gift = transactionGift(transaction.type);
+    if (gift == null || StringUtils.isEmpty(gift.name)) {
+      showCopyDetails(info.toString(), transaction.id);
+      return;
+    }
+    if (!StringUtils.isEmpty(gift.title)) {
+      info.append('\n').append(gift.title);
+    }
+    Options.Builder options = new Options.Builder().info(info)
+      .item(new OptionItem(1, Lang.getString(R.string.TgxStarsViewCollectible), OptionColor.NORMAL, 0));
+    if (!StringUtils.isEmpty(transaction.id)) {
+      options.item(new OptionItem(2, Lang.getString(R.string.Copy), OptionColor.NORMAL, 0));
+    }
+    showOptions(options.cancelItem().build(), (view, id) -> {
+      if (sameAccount() && id == 1) {
+        navigateTo(new StarsCollectibleController(context(), tdlib, gift.name, account));
+      } else if (sameAccount() && id == 2) {
+        UI.copyText(transaction.id, R.string.CopiedText);
+      }
+      return true;
+    });
+  }
+
   private void showCopyDetails (String caption, String id) {
+    if (StringUtils.isEmpty(id)) {
+      showOptions(new Options.Builder().info(caption).cancelItem().build(), (view, choice) -> true);
+      return;
+    }
     showConfirm(caption + "\n" + id, Lang.getString(R.string.Copy), () -> {
       if (sameAccount()) {
         UI.copyText(id, R.string.CopiedText);

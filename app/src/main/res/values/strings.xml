@@ -6859,4 +6859,18 @@
   <string name="TgxTonWithdraw">Withdraw Grams</string>
   <string name="TgxTonWithdrawalConfirm">Continue to Fragment to review withdrawal options?</string>
   <string name="TgxTonRevenueError">Could not load Gram revenue.</string>
+  <string name="TgxTonGiftDeposit">Gift received from Fragment</string>
+  <string name="TgxTonFragmentDeposit">Fragment deposit</string>
+  <string name="TgxTonFragmentWithdrawal">Fragment withdrawal</string>
+  <string name="TgxTonSuggestedPostPayment">Suggested post payment</string>
+  <string name="TgxTonGiftOffer">Gift purchase offer</string>
+  <string name="TgxTonGiftPurchase">Collectible gift purchase</string>
+  <string name="TgxTonGiftSale">Collectible gift sale</string>
+  <string name="TgxTonDiceStake">Dice stake</string>
+  <string name="TgxTonDicePayout">Dice payout</string>
+  <string name="TgxTonTransaction">TON transaction</string>
+  <string name="TgxTonPending">Pending</string>
+  <string name="TgxTonGaslessTransaction">Telegram paid the network fee.</string>
+  <string name="TgxTonEncryptedComment">Encrypted comment</string>
+  <string name="TgxTonCommission">Telegram commission: %1$s</string>
 </resources>
