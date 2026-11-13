@@ -6810,4 +6810,7 @@
   <string name="SavedMessagesTagsUnavailable">Tags are unavailable for this message or have changed.</string>
   <string name="SavedMessagesAddTag">Add %1$s</string>
   <string name="SavedMessagesRemoveTag">Remove %1$s</string>
+  <string name="SavedMessagesRenameTag">Rename tag</string>
+  <string name="SavedMessagesTagLabelHint">Up to 12 characters. Leave it blank to remove the label.</string>
+  <string name="SavedMessagesDraftTooLong">This draft exceeds the Telegram message length limit.</string>
 </resources>

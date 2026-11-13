@@ -357,12 +357,97 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       showOptions(options.build(), (view, id) -> {
         if (id > 0 && id <= tags.length) {
           TdApi.SavedMessagesTag tag = tags[id - 1];
-          activeTag = tag.tag;
-          activeTagLabel = tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label;
-          restart(query);
+          if (tdlib.hasPremium()) {
+            tdlib.ui().post(() -> showTagActions(tag));
+          } else {
+            filterTag(tag);
+          }
         }
         return true;
       });
+    }));
+  }
+
+  private void filterTag (TdApi.SavedMessagesTag tag) {
+    if (isFocused() && currentAccount()) {
+      activeTag = tag.tag;
+      activeTagLabel = tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label;
+      restart(query);
+    }
+  }
+
+  private void showTagActions (TdApi.SavedMessagesTag tag) {
+    if (!isFocused() || !currentAccount() || saving) {
+      return;
+    }
+    showOptions(tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label, new int[] {1, 2, R.id.btn_cancel},
+      new String[] {Lang.getString(R.string.SavedMessagesTagsTitle), Lang.getString(R.string.SavedMessagesRenameTag),
+        Lang.getString(R.string.Cancel)}, (view, id) -> {
+        if (id == 1) {
+          filterTag(tag);
+        } else if (id == 2) {
+          tdlib.ui().post(() -> editTagLabel(tag));
+        }
+        return true;
+      });
+  }
+
+  private void editTagLabel (TdApi.SavedMessagesTag tag) {
+    if (!isFocused() || !currentAccount() || saving || !tdlib.hasPremium()) {
+      return;
+    }
+    openInputAlert(Lang.getString(R.string.SavedMessagesRenameTag), Lang.getString(R.string.SavedMessagesTagLabelHint),
+      R.string.Save, R.string.Cancel, tag.label, (field, value) -> {
+        String label = value.trim();
+        if (!validTagLabel(label)) {
+          UI.showToast(R.string.SavedMessagesTagLabelHint, Toast.LENGTH_SHORT);
+          return false;
+        }
+        tdlib.ui().post(() -> saveTagLabel(tag, label));
+        return true;
+      }, true);
+  }
+
+  static boolean validTagLabel (String label) {
+    return label.codePointCount(0, label.length()) <= 12;
+  }
+
+  private void saveTagLabel (TdApi.SavedMessagesTag expected, String label) {
+    if (!isFocused() || !currentAccount() || saving || !tdlib.hasPremium() || label.equals(expected.label)) {
+      return;
+    }
+    saving = true;
+    render();
+    tdlib.send(new TdApi.GetSavedMessagesTags(0), (result, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || !currentAccount() || !tdlib.hasPremium()) {
+        saving = false;
+        if (currentAccount()) {
+          render();
+        }
+        return;
+      }
+      if (error != null) {
+        finishTagChange(error, false);
+        return;
+      }
+      for (TdApi.SavedMessagesTag tag : result.tags) {
+        if (Td.equalsTo(tag.tag, expected.tag) && tag.label.equals(expected.label)) {
+          tdlib.send(new TdApi.SetSavedMessagesTagLabel(tag.tag, label), (ok, changeError) -> runOnUiThreadOptional(() -> {
+            if (changeError == null && currentAccount() && activeTag != null && Td.equalsTo(activeTag, tag.tag)) {
+              activeTagLabel = label.isEmpty() ? reactionLabel(tag.tag) : label;
+            }
+            saving = false;
+            if (currentAccount()) {
+              render();
+              if (isFocused() && changeError != null) {
+                UI.showError(changeError);
+              }
+            }
+          }));
+          return;
+        }
+      }
+      finishTagChange(null, false);
     }));
   }
 
@@ -644,6 +729,10 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private void sendDraft (String text, long replyId) {
     if (!matchesDraft(text, replyId) || !isFocused() || saving || tdlib.savedMessagesTopic(topicId) == null ||
         (!isNotes() && replyId == 0)) {
+      return;
+    }
+    if (text.codePointCount(0, text.length()) > tdlib.options().messageTextLengthMax) {
+      UI.showToast(R.string.SavedMessagesDraftTooLong, Toast.LENGTH_SHORT);
       return;
     }
     saving = true;

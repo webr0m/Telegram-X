@@ -38,4 +38,7 @@
   <string name="SavedMessagesTagsUnavailable">Las etiquetas no están disponibles para este mensaje o cambiaron.</string>
   <string name="SavedMessagesAddTag">Añadir %1$s</string>
   <string name="SavedMessagesRemoveTag">Quitar %1$s</string>
+  <string name="SavedMessagesRenameTag">Renombrar etiqueta</string>
+  <string name="SavedMessagesTagLabelHint">Hasta 12 caracteres. Deja el nombre en blanco para quitarlo.</string>
+  <string name="SavedMessagesDraftTooLong">Este borrador supera el límite de longitud de Telegram.</string>
 </resources>
