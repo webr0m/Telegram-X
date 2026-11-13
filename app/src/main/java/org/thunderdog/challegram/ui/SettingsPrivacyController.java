@@ -871,21 +871,63 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
       options.item(new OptionItem(ViewCompat.generateViewId(), Lang.getDuration(currentSeconds, R.string.Off),
         OptionColor.NORMAL, R.drawable.baseline_check_24));
     }
+    int customId = ViewCompat.generateViewId();
+    options.item(new OptionItem(customId, Lang.getString(R.string.DefaultMessageAutoDeleteCustom), OptionColor.NORMAL, 0));
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
+      if (id == customId) {
+        tdlib.ui().post(() -> {
+          if (isFocused()) {
+            editDefaultMessageAutoDeleteDays(currentSeconds);
+          }
+        });
+        return true;
+      }
       for (int i = 0; i < ids.length; i++) {
         if (id == ids[i]) {
           int seconds = TdConstants.CHAT_TTL_OPTIONS[i];
           if (seconds != currentSeconds) {
-            showConfirm(Lang.getString(R.string.DefaultMessageAutoDeleteConfirm,
-              Lang.getDuration(seconds, R.string.Off)), Lang.getString(R.string.Save),
-              () -> saveDefaultMessageAutoDelete(currentSeconds, seconds));
+            confirmDefaultMessageAutoDelete(currentSeconds, seconds);
           }
           break;
         }
       }
       return true;
     });
+  }
+
+  private void editDefaultMessageAutoDeleteDays (int currentSeconds) {
+    var input = openInputAlert(Lang.getString(R.string.DefaultMessageAutoDeleteCustom),
+      Lang.getString(R.string.DefaultMessageAutoDeleteDaysRange), R.string.Continue, R.string.Cancel,
+      currentSeconds > 0 ? Integer.toString(currentSeconds / 86400) : null, (edit, value) -> {
+        int seconds = autoDeleteDaysToSeconds(value);
+        if (seconds == 0) {
+          UI.showToast(R.string.DefaultMessageAutoDeleteDaysRange, Toast.LENGTH_SHORT);
+          return false;
+        }
+        tdlib.ui().post(() -> {
+          if (isFocused() && seconds != currentSeconds) {
+            confirmDefaultMessageAutoDelete(currentSeconds, seconds);
+          }
+        });
+        return true;
+      }, true);
+    input.getEditText().setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
+  }
+
+  static int autoDeleteDaysToSeconds (String input) {
+    try {
+      int days = Integer.parseInt(input.trim());
+      return days >= 1 && days <= 365 ? days * 86400 : 0;
+    } catch (NumberFormatException ignored) {
+      return 0;
+    }
+  }
+
+  private void confirmDefaultMessageAutoDelete (int currentSeconds, int selected) {
+    showConfirm(Lang.getString(R.string.DefaultMessageAutoDeleteConfirm,
+      Lang.getDuration(selected, R.string.Off)), Lang.getString(R.string.Save),
+      () -> saveDefaultMessageAutoDelete(currentSeconds, selected));
   }
 
   private void saveDefaultMessageAutoDelete (int expected, int selected) {

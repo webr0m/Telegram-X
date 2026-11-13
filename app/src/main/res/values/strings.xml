@@ -6729,4 +6729,6 @@
   <string name="TgxBusinessQuickReplyPartial">Some messages were queued before sending stopped. Check the chat before trying again.</string>
   <string name="TgxStarsEditInStars">Change price in Stars</string>
   <string name="TgxStarsEditInTon">Change price in TON</string>
+  <string name="DefaultMessageAutoDeleteCustom">Custom duration</string>
+  <string name="DefaultMessageAutoDeleteDaysRange">Enter a duration from 1 to 365 days.</string>
 </resources>
