@@ -143,4 +143,7 @@
   <string name="TgxStarsListingPriceConfirm">¿Anunciar %1$s #%2$s por %3$s?</string>
   <string name="TgxStarsEditInStars">Cambiar precio en estrellas</string>
   <string name="TgxStarsEditInTon">Cambiar precio en TON</string>
+  <string name="TgxStarsRejoin">Volver a unirme al canal</string>
+  <string name="TgxStarsRejoinConfirm">¿Volver a unirte al canal con el período que ya pagaste?</string>
+  <string name="TgxStarsOpenRenewal">Ver oferta de suscripción</string>
 </resources>

@@ -6731,4 +6731,7 @@
   <string name="TgxStarsEditInTon">Change price in TON</string>
   <string name="DefaultMessageAutoDeleteCustom">Custom duration</string>
   <string name="DefaultMessageAutoDeleteDaysRange">Enter a duration from 1 to 365 days.</string>
+  <string name="TgxStarsRejoin">Rejoin channel</string>
+  <string name="TgxStarsRejoinConfirm">Rejoin this channel using your current paid period?</string>
+  <string name="TgxStarsOpenRenewal">View subscription offer</string>
 </resources>

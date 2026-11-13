@@ -43,4 +43,12 @@ final class StarsHistory {
       fresh.expirationDate > now && shown.pricing != null && fresh.pricing != null &&
       shown.pricing.starCount == fresh.pricing.starCount && shown.pricing.period == fresh.pricing.period;
   }
+  static boolean sameChannelSubscription (TdApi.StarSubscription shown, TdApi.StarSubscription fresh) {
+    return shown.id.equals(fresh.id) && shown.chatId == fresh.chatId && shown.expirationDate == fresh.expirationDate &&
+      shown.pricing != null && fresh.pricing != null && shown.pricing.starCount == fresh.pricing.starCount &&
+      shown.pricing.period == fresh.pricing.period &&
+      shown.type instanceof TdApi.StarSubscriptionTypeChannel a && fresh.type instanceof TdApi.StarSubscriptionTypeChannel b &&
+      a.canReuse == b.canReuse && java.util.Objects.equals(a.inviteLink, b.inviteLink);
+  }
+
 }
