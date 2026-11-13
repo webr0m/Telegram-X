@@ -938,6 +938,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         quickReplyMessages.clear();
         activeGiftAuctions = new TdApi.GiftAuctionState[0];
         savedMessagesTopics.clear();
+        savedMessagesTags.clear();
         quickReplyShortcutOrder = null;
         incrementJobReferenceCount(JOB_ID_CLEAN_UP);
         deleteAllFiles(success -> {
@@ -7914,8 +7915,16 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
   }
 
+  private final java.util.concurrent.ConcurrentHashMap<Long, TdApi.SavedMessagesTags> savedMessagesTags =
+    new java.util.concurrent.ConcurrentHashMap<>();
+
+  public @Nullable TdApi.SavedMessagesTags savedMessagesTags (long topicId) {
+    return savedMessagesTags.get(topicId);
+  }
+
   @TdlibThread
   private void updateSavedMessagesTags (TdApi.UpdateSavedMessagesTags update) {
+    savedMessagesTags.put(update.savedMessagesTopicId, update.tags);
     for (Runnable listener : savedMessagesTopicListeners) {
       listener.run();
     }

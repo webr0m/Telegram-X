@@ -43,6 +43,7 @@ final class SavedTagEmojiPicker extends RecyclerViewController<Void> implements 
   private final String title;
   private final LongConsumer selected;
   private CustomRecyclerView recycler;
+  private androidx.recyclerview.widget.RecyclerView.LayoutManager listLayout;
   private SettingsAdapter list;
   private boolean loading, picking;
 
@@ -59,6 +60,7 @@ final class SavedTagEmojiPicker extends RecyclerViewController<Void> implements 
   @Override
   protected void onCreateView (Context context, CustomRecyclerView recycler) {
     this.recycler = recycler;
+    listLayout = recycler.getLayoutManager();
     list = new SettingsAdapter(this);
     recycler.setAdapter(list);
     load();
@@ -160,6 +162,20 @@ final class SavedTagEmojiPicker extends RecyclerViewController<Void> implements 
       packId = pack.id;
       load();
     }
+  }
+
+  @Override
+  public boolean performOnBackPressed (boolean fromTop, boolean commit) {
+    if (packId == 0 || loading || picking) {
+      return super.performOnBackPressed(fromTop, commit);
+    }
+    if (commit) {
+      packId = 0;
+      recycler.setLayoutManager(listLayout);
+      recycler.setAdapter(list);
+      load();
+    }
+    return true;
   }
 
   @Override

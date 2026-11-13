@@ -106,6 +106,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private String query = "";
   private TdApi.ReactionType activeTag;
   private String activeTagLabel;
+  private TdApi.SavedMessagesTags shownTagUpdate;
   private long customTagMessageId, selectedCustomEmoji;
   private boolean loading, end, failed, saving, topicListEnd;
 
@@ -150,6 +151,14 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private void onTopicsChanged () {
     if (!currentAccount() || adapter == null) {
       return;
+    }
+    if (activeTag != null) {
+      TdApi.SavedMessagesTags updated = tdlib.savedMessagesTags(topicId);
+      if (updated != null && updated != shownTagUpdate) {
+        shownTagUpdate = updated;
+        updateActiveTagLabel(updated);
+        requestFilteredRefresh();
+      }
     }
     if (topicId != 0) {
       TdApi.SavedMessagesTopic before = openedTopic;
@@ -540,9 +549,20 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     }));
   }
 
+  private void updateActiveTagLabel (TdApi.SavedMessagesTags updated) {
+    for (TdApi.SavedMessagesTag tag : updated.tags) {
+      if (Td.equalsTo(tag.tag, activeTag)) {
+        activeTagLabel = tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label;
+        return;
+      }
+    }
+    activeTagLabel = reactionLabel(activeTag);
+  }
+
   private void filterTag (TdApi.SavedMessagesTag tag) {
     if (isFocused() && currentAccount()) {
       activeTag = tag.tag;
+      shownTagUpdate = tdlib.savedMessagesTags(topicId);
       activeTagLabel = tag.label.isEmpty() ? reactionLabel(tag.tag) : tag.label;
       restart(query);
     }
