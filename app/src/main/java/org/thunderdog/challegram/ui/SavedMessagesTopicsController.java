@@ -29,6 +29,7 @@ import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.ContentPreview;
 import org.thunderdog.challegram.support.ViewSupport;
+import org.thunderdog.challegram.telegram.MessageListener;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.Theme;
@@ -52,6 +53,19 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private final HashSet<Long> cursors = new HashSet<>();
   private final Runnable topicListener = () -> runOnUiThreadOptional(this::onTopicsChanged);
   private SettingsAdapter adapter;
+  private final MessageListener sendListener = new MessageListener() {
+    @Override
+    public void onMessageSendSucceeded (TdApi.Message message, long oldMessageId) {
+      runOnUiThreadOptional(() -> onDraftSendFinished(oldMessageId, null));
+    }
+
+    @Override
+    public void onMessageSendFailed (TdApi.Message message, long oldMessageId, TdApi.Error error) {
+      runOnUiThreadOptional(() -> onDraftSendFinished(oldMessageId, error));
+    }
+  };
+  private long pendingDraftId, pendingReplyId;
+  private String pendingDraftText;
   private TdApi.SavedMessagesTopic openedTopic;
   private long cursor;
   private int generation;
@@ -83,12 +97,18 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     adapter = new SettingsAdapter(this);
     recycler.setAdapter(adapter);
     tdlib.addSavedMessagesTopicListener(topicListener);
+    if (topicId != 0) {
+      tdlib.listeners().subscribeToMessageUpdates(chatId, sendListener);
+    }
     load();
   }
 
   @Override
   public void destroy () {
     tdlib.removeSavedMessagesTopicListener(topicListener);
+    if (topicId != 0) {
+      tdlib.listeners().unsubscribeFromMessageUpdates(chatId, sendListener);
+    }
     super.destroy();
   }
 
@@ -763,20 +783,52 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       new TdApi.FormattedText(text, new TdApi.TextEntity[0]), null, false);
     tdlib.send(new TdApi.SendMessage(chatId, null, reply, Td.newSendOptions(), null, input),
       (sent, error) -> runOnUiThreadOptional(() -> {
-        saving = false;
-        if (currentAccount()) {
-          if (error != null) {
-            UI.showError(error);
-            render();
-          } else {
-            if (matchesDraft(text, replyId)) {
-              saveDraft("", 0);
-            }
-            render();
-
-          }
+        if (!currentAccount()) {
+          saving = false;
+          return;
+        }
+        if (error != null) {
+          finishDraftSend(text, replyId, error);
+        } else if (sent.sendingState instanceof TdApi.MessageSendingStatePending) {
+          pendingDraftId = sent.id;
+          pendingDraftText = text;
+          pendingReplyId = replyId;
+        } else if (sent.sendingState instanceof TdApi.MessageSendingStateFailed failed) {
+          finishDraftSend(text, replyId, failed.error);
+        } else {
+          finishDraftSend(text, replyId, null);
         }
       }));
+  }
+
+  private void onDraftSendFinished (long messageId, TdApi.Error error) {
+    if (pendingDraftId == 0 || pendingDraftId != messageId) {
+      return;
+    }
+    String text = pendingDraftText;
+    long replyId = pendingReplyId;
+    pendingDraftId = pendingReplyId = 0;
+    pendingDraftText = null;
+    finishDraftSend(text, replyId, error);
+  }
+
+  private void finishDraftSend (String text, long replyId, TdApi.Error error) {
+    saving = false;
+    if (!currentAccount()) {
+      return;
+    }
+    if (error != null) {
+      if (isFocused()) {
+        UI.showError(error);
+      }
+    } else if (matchesDraft(text, replyId)) {
+      saveDraft("", 0);
+    }
+    if (openedTopic != null && error == null && isNotes() && query.isEmpty() && activeTag == null) {
+      restart("");
+    } else {
+      render();
+    }
   }
 
   private ArrayList<TdApi.SavedMessagesTopic> sortedTopics () {
