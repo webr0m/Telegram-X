@@ -6798,4 +6798,7 @@
   <string name="SavedMessagesSendDraft">Send draft</string>
   <string name="SavedMessagesDiscardDraft">Discard draft</string>
   <string name="SavedMessagesReplyUnavailable">The original saved message is unavailable. Your draft is still saved.</string>
+  <string name="SavedMessagesReorder">Reorder pinned topics</string>
+  <string name="SavedMessagesReorderPosition">Choose the new position</string>
+  <string name="SavedMessagesPosition">Position %1$s</string>
 </resources>

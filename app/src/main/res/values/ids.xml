@@ -1689,5 +1689,6 @@
   <item type="id" name="btn_savedMessagesItem" />
   <item type="id" name="btn_savedMessagesNewNote" />
   <item type="id" name="btn_savedMessagesDate" />
+  <item type="id" name="btn_savedMessagesReorder" />
 </resources>
 <!-- endregion -->

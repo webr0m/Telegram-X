@@ -36,6 +36,7 @@ import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashSet;
@@ -213,9 +214,10 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
   private void render () {
     ArrayList<ListItem> rows = new ArrayList<>();
     if (topicId == 0) {
-      ArrayList<TdApi.SavedMessagesTopic> sorted = new ArrayList<>(tdlib.savedMessagesTopics());
-      sorted.sort(Comparator.comparingLong((TdApi.SavedMessagesTopic topic) -> topic.order).reversed()
-        .thenComparingLong(topic -> topic.id));
+      ArrayList<TdApi.SavedMessagesTopic> sorted = sortedTopics();
+      if (!loading && pinnedIds(sorted).length > 1) {
+        rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesReorder, 0, R.string.SavedMessagesReorder));
+      }
       for (TdApi.SavedMessagesTopic topic : sorted) {
         String label = topic.isPinned ? Lang.getString(R.string.SavedMessagesPinnedTopic, title(topic)) : title(topic);
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesTopic, 0, label).setData(topic));
@@ -257,6 +259,8 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     int id = view.getId();
     if (id == R.id.btn_savedMessagesMore) {
       load();
+    } else if (id == R.id.btn_savedMessagesReorder) {
+      choosePinnedTopic();
     } else if (id == R.id.btn_savedMessagesTopic && view.getTag() instanceof ListItem row &&
         row.getData() instanceof TdApi.SavedMessagesTopic topic && tdlib.savedMessagesTopic(topic.id) != null) {
       navigateTo(new SavedMessagesTopicsController(context(), tdlib, chatId, topic.id));
@@ -469,6 +473,92 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
           }
         }
       }));
+  }
+
+  private ArrayList<TdApi.SavedMessagesTopic> sortedTopics () {
+    ArrayList<TdApi.SavedMessagesTopic> topics = new ArrayList<>(tdlib.savedMessagesTopics());
+    topics.sort(Comparator.comparingLong((TdApi.SavedMessagesTopic topic) -> topic.order).reversed()
+      .thenComparingLong(topic -> topic.id));
+    return topics;
+  }
+
+  private static long[] pinnedIds (ArrayList<TdApi.SavedMessagesTopic> topics) {
+    return topics.stream().filter(topic -> topic.isPinned && topic.order != 0).mapToLong(topic -> topic.id).toArray();
+  }
+
+  private void choosePinnedTopic () {
+    long[] expected = pinnedIds(sortedTopics());
+    if (loading || expected.length < 2) {
+      return;
+    }
+    Options.Builder options = new Options.Builder().info(Lang.getString(R.string.SavedMessagesReorder));
+    for (int i = 0; i < expected.length; i++) {
+      TdApi.SavedMessagesTopic topic = tdlib.savedMessagesTopic(expected[i]);
+      if (topic == null || !topic.isPinned) {
+        return;
+      }
+      options.item(new OptionItem(i + 1, title(topic), OptionColor.NORMAL, 0));
+    }
+    options.cancelItem();
+    showOptions(options.build(), (view, id) -> {
+      if (id > 0 && id <= expected.length) {
+        tdlib.ui().post(() -> choosePinnedPosition(expected, id - 1));
+      }
+      return true;
+    });
+  }
+
+  private void choosePinnedPosition (long[] expected, int from) {
+    if (!isFocused() || !currentAccount() || !Arrays.equals(expected, pinnedIds(sortedTopics()))) {
+      return;
+    }
+    Options.Builder options = new Options.Builder().info(Lang.getString(R.string.SavedMessagesReorderPosition));
+    for (int i = 0; i < expected.length; i++) {
+      if (i != from) {
+        options.item(new OptionItem(i + 1, Lang.getString(R.string.SavedMessagesPosition, Lang.formatNumber(i + 1)),
+          OptionColor.NORMAL, 0));
+      }
+    }
+    options.cancelItem();
+    showOptions(options.build(), (view, id) -> {
+      if (id > 0 && id <= expected.length && id - 1 != from) {
+        savePinnedOrder(expected, movePinnedTopic(expected, from, id - 1));
+      }
+      return true;
+    });
+  }
+
+  static long[] movePinnedTopic (long[] expected, int from, int to) {
+    long[] order = expected.clone();
+    long moved = order[from];
+    if (from < to) {
+      System.arraycopy(order, from + 1, order, from, to - from);
+    } else if (from > to) {
+      System.arraycopy(order, to, order, to + 1, from - to);
+    }
+    order[to] = moved;
+    return order;
+  }
+
+  private void savePinnedOrder (long[] expected, long[] order) {
+    if (!isFocused() || !currentAccount() || saving || loading) {
+      return;
+    }
+    if (!Arrays.equals(expected, pinnedIds(sortedTopics()))) {
+      UI.showToast(R.string.SavedMessagesTopicChanged, Toast.LENGTH_SHORT);
+      return;
+    }
+    saving = true;
+    render();
+    tdlib.send(new TdApi.SetPinnedSavedMessagesTopics(order), (ok, error) -> runOnUiThreadOptional(() -> {
+      saving = false;
+      if (currentAccount()) {
+        if (isFocused() && error != null) {
+          UI.showError(error);
+        }
+        render();
+      }
+    }));
   }
 
   private void showTopicActions () {
