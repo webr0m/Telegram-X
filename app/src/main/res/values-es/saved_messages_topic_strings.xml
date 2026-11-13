@@ -18,4 +18,12 @@
   <string name="SavedMessagesNewNote">Escribir una nota</string>
   <string name="SavedMessagesJumpToDate">Ir a una fecha</string>
   <string name="SavedMessagesNoMessageByDate">No hay mensajes de este tema en esa fecha ni antes.</string>
+  <string name="SavedMessagesResumeDraft">Continuar borrador</string>
+  <string name="SavedMessagesOpenMessage">Abrir mensaje guardado</string>
+  <string name="SavedMessagesChangeDraftReply">¿Usar el texto del borrador para responder a este mensaje?</string>
+  <string name="SavedMessagesLocalDraft">Toca Guardar para conservar el borrador en este dispositivo.</string>
+  <string name="SavedMessagesReplyDestination">Envío a Mis notas como respuesta al mensaje guardado seleccionado.</string>
+  <string name="SavedMessagesSendDraft">Enviar borrador</string>
+  <string name="SavedMessagesDiscardDraft">Descartar borrador</string>
+  <string name="SavedMessagesReplyUnavailable">El mensaje original ya no está disponible. Tu borrador sigue guardado.</string>
 </resources>

@@ -6790,4 +6790,12 @@
   <string name="SavedMessagesNewNote">Write a note</string>
   <string name="SavedMessagesJumpToDate">Jump to date</string>
   <string name="SavedMessagesNoMessageByDate">No saved message on or before that date in this topic.</string>
+  <string name="SavedMessagesResumeDraft">Continue draft</string>
+  <string name="SavedMessagesOpenMessage">Open saved message</string>
+  <string name="SavedMessagesChangeDraftReply">Use the current draft text to reply to this message?</string>
+  <string name="SavedMessagesLocalDraft">Draft saved on this device when you tap Save.</string>
+  <string name="SavedMessagesReplyDestination">Send to My Notes as a reply to the selected saved message.</string>
+  <string name="SavedMessagesSendDraft">Send draft</string>
+  <string name="SavedMessagesDiscardDraft">Discard draft</string>
+  <string name="SavedMessagesReplyUnavailable">The original saved message is unavailable. Your draft is still saved.</string>
 </resources>

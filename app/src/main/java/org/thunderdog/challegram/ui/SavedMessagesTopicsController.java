@@ -19,6 +19,8 @@ package org.thunderdog.challegram.ui;
 
 import android.app.DatePickerDialog;
 import android.content.Context;
+import android.content.SharedPreferences;
+import android.text.InputType;
 import android.view.View;
 import android.widget.Toast;
 
@@ -40,9 +42,8 @@ import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.concurrent.TimeUnit;
 
-import tgx.td.Td;
-
 import tgx.td.MessageId;
+import tgx.td.Td;
 
 final class SavedMessagesTopicsController extends RecyclerViewController<Void> implements View.OnClickListener {
   private final long account, chatId, topicId;
@@ -220,8 +221,9 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesTopic, 0, label).setData(topic));
       }
     } else if (openedTopic != null) {
-      if (openedTopic.type instanceof TdApi.SavedMessagesTopicTypeMyNotes) {
-        rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesNewNote, 0, R.string.SavedMessagesNewNote));
+      if (isNotes() || !draftText().isEmpty()) {
+        rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesNewNote, 0,
+          draftText().isEmpty() ? R.string.SavedMessagesNewNote : R.string.SavedMessagesResumeDraft));
       }
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesSearch, 0, R.string.SavedMessagesSearchTopic));
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesDate, 0, R.string.SavedMessagesJumpToDate));
@@ -260,7 +262,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       navigateTo(new SavedMessagesTopicsController(context(), tdlib, chatId, topic.id));
     } else if (id == R.id.btn_savedMessagesItem && view.getTag() instanceof ListItem row &&
         row.getData() instanceof TdApi.Message message && belongsToTopic(message, chatId, topicId)) {
-      openMessage(message);
+      showMessageActions(message);
     } else if (id == R.id.btn_savedMessagesDate) {
       chooseDate();
     } else if (id == R.id.btn_savedMessagesNewNote) {
@@ -313,32 +315,143 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     ViewSupport.showDatePicker(dates);
   }
 
-  private void composeNote () {
-    TdApi.SavedMessagesTopic topic = tdlib.savedMessagesTopic(topicId);
-    if (topic == null || !(topic.type instanceof TdApi.SavedMessagesTopicTypeMyNotes)) {
-      return;
-    }
-    openInputAlert(Lang.getString(R.string.SavedMessagesNewNote), null, R.string.Save, R.string.Cancel, null,
-      (field, value) -> {
-        String text = value.trim();
-        if (text.isEmpty()) {
-          return false;
-        }
-        tdlib.ui().post(() -> sendNote(text));
-        return true;
-      }, true);
+  private boolean isNotes () {
+    return openedTopic != null && openedTopic.type instanceof TdApi.SavedMessagesTopicTypeMyNotes;
   }
 
-  private void sendNote (String text) {
-    TdApi.SavedMessagesTopic topic = tdlib.savedMessagesTopic(topicId);
-    if (!currentAccount() || !isFocused() || saving || topic == null ||
-        !(topic.type instanceof TdApi.SavedMessagesTopicTypeMyNotes)) {
+  private SharedPreferences drafts () {
+    return context().getSharedPreferences("saved_messages_topic_drafts", Context.MODE_PRIVATE);
+  }
+
+  static String draftKey (long account, long topicId) {
+    return account + ":" + topicId;
+  }
+
+  private String draftKey () {
+    return draftKey(account, topicId);
+  }
+
+  private String draftText () {
+    return drafts().getString(draftKey(), "");
+  }
+
+  private long draftReplyId () {
+    return drafts().getLong(draftKey() + ":reply", 0);
+  }
+
+  private void saveDraft (String text, long replyId) {
+    SharedPreferences.Editor editor = drafts().edit();
+    if (text.isEmpty()) {
+      editor.remove(draftKey()).remove(draftKey() + ":reply");
+    } else {
+      editor.putString(draftKey(), text).putLong(draftKey() + ":reply", replyId);
+    }
+    editor.apply();
+  }
+
+  private void showMessageActions (TdApi.Message message) {
+    Options.Builder options = new Options.Builder();
+    options.item(new OptionItem(1, Lang.getString(R.string.SavedMessagesOpenMessage), OptionColor.NORMAL, 0));
+    options.item(new OptionItem(2, Lang.getString(R.string.Reply), OptionColor.NORMAL, 0));
+    options.cancelItem();
+    showOptions(options.build(), (view, id) -> {
+      if (id == 1) {
+        openMessage(message);
+      } else if (id == 2) {
+        tdlib.ui().post(() -> {
+          if (isFocused() && currentAccount()) {
+            if (!draftText().isEmpty() && draftReplyId() != message.id) {
+              showConfirm(Lang.getString(R.string.SavedMessagesChangeDraftReply), Lang.getString(R.string.Continue),
+                () -> editDraft(message.id));
+            } else {
+              editDraft(message.id);
+            }
+          }
+        });
+      }
+      return true;
+    });
+  }
+
+  private void composeNote () {
+    editDraft(draftReplyId());
+  }
+
+  private void editDraft (long replyId) {
+    if (!isFocused() || !currentAccount() || saving || tdlib.savedMessagesTopic(topicId) == null ||
+        (!isNotes() && replyId == 0)) {
+      return;
+    }
+    var field = openInputAlert(Lang.getString(replyId != 0 ? R.string.Reply : R.string.SavedMessagesNewNote),
+      Lang.getString(R.string.SavedMessagesLocalDraft), R.string.Save, R.string.Cancel, draftText(), (edit, value) -> {
+        if (!currentAccount() || tdlib.savedMessagesTopic(topicId) == null) {
+          return false;
+        }
+        saveDraft(value, replyId);
+        render();
+        if (!value.trim().isEmpty()) {
+          tdlib.ui().post(() -> offerDraftActions(value, replyId));
+        }
+        return true;
+      }, true);
+    field.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE |
+      InputType.TYPE_TEXT_FLAG_CAP_SENTENCES);
+  }
+
+  private void offerDraftActions (String expected, long replyId) {
+    if (!isFocused() || !currentAccount()) {
+      return;
+    }
+    showOptions(Lang.getString(replyId != 0 ? R.string.SavedMessagesReplyDestination : R.string.SavedMessagesLocalDraft),
+      new int[] {1, 2, R.id.btn_cancel},
+      new String[] {Lang.getString(R.string.SavedMessagesSendDraft), Lang.getString(R.string.SavedMessagesDiscardDraft),
+        Lang.getString(R.string.Cancel)}, (view, id) -> {
+        if (id == 1) {
+          sendDraft(expected, replyId);
+        } else if (id == 2 && matchesDraft(expected, replyId)) {
+          saveDraft("", 0);
+          render();
+        }
+        return true;
+      });
+  }
+
+  private boolean matchesDraft (String text, long replyId) {
+    return currentAccount() && text.equals(draftText()) && replyId == draftReplyId();
+  }
+
+  private void sendDraft (String text, long replyId) {
+    if (!matchesDraft(text, replyId) || !isFocused() || saving || tdlib.savedMessagesTopic(topicId) == null ||
+        (!isNotes() && replyId == 0)) {
       return;
     }
     saving = true;
     render();
-    TdApi.InputMessageText input = new TdApi.InputMessageText(new TdApi.FormattedText(text, new TdApi.TextEntity[0]), null, false);
-    tdlib.send(new TdApi.SendMessage(chatId, null, null, Td.newSendOptions(), null, input),
+    if (replyId == 0) {
+      sendSavedText(text, 0);
+    } else {
+      tdlib.send(new TdApi.GetMessage(chatId, replyId), (message, error) -> runOnUiThreadOptional(() -> {
+        if (!isFocused() || !matchesDraft(text, replyId) || tdlib.savedMessagesTopic(topicId) == null ||
+            !belongsToTopic(message, chatId, topicId)) {
+          saving = false;
+          if (currentAccount()) {
+            render();
+            if (isFocused()) {
+              UI.showToast(R.string.SavedMessagesReplyUnavailable, Toast.LENGTH_SHORT);
+            }
+          }
+        } else {
+          sendSavedText(text, replyId);
+        }
+      }));
+    }
+  }
+
+  private void sendSavedText (String text, long replyId) {
+    TdApi.InputMessageReplyTo reply = replyId == 0 ? null : new TdApi.InputMessageReplyToMessage(replyId, null, 0, "");
+    TdApi.InputMessageText input = new TdApi.InputMessageText(
+      new TdApi.FormattedText(text, new TdApi.TextEntity[0]), null, false);
+    tdlib.send(new TdApi.SendMessage(chatId, null, reply, Td.newSendOptions(), null, input),
       (sent, error) -> runOnUiThreadOptional(() -> {
         saving = false;
         if (currentAccount()) {
@@ -346,7 +459,13 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
             UI.showError(error);
             render();
           } else {
-            restart(query);
+            if (matchesDraft(text, replyId)) {
+              saveDraft("", 0);
+            }
+            render();
+            if (isFocused() && sent != null && replyId != 0 && !isNotes()) {
+              openMessage(sent);
+            }
           }
         }
       }));
