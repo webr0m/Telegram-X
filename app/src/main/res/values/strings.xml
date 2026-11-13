@@ -6899,4 +6899,6 @@
   <string name="TgxTonConnectRequests">Pending requests: %1$s</string>
   <string name="TgxTonConnectNoExpiry">Request has no expiration date</string>
   <string name="TgxTonConnectExpires">Request expires on %1$s</string>
+  <string name="TgxTonSentService">Sent %1$s TON from the wallet</string>
+  <string name="TgxTonReceivedService">Received %1$s TON in the wallet</string>
 </resources>

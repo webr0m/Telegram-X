@@ -78,4 +78,6 @@
   <string name="TgxTonConnectRequests">Solicitudes pendientes: %1$s</string>
   <string name="TgxTonConnectNoExpiry">La solicitud no tiene fecha de vencimiento</string>
   <string name="TgxTonConnectExpires">La solicitud vence el %1$s</string>
+  <string name="TgxTonSentService">Envió %1$s TON desde la billetera</string>
+  <string name="TgxTonReceivedService">Recibió %1$s TON en la billetera</string>
 </resources>

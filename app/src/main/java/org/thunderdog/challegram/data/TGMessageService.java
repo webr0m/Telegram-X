@@ -33,6 +33,7 @@ import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.ui.StarsCollectibleController;
+import org.thunderdog.challegram.ui.TonWalletController;
 import org.thunderdog.challegram.ui.MapController;
 import org.thunderdog.challegram.util.text.FormattedText;
 import org.thunderdog.challegram.util.text.TextColorSet;
@@ -191,9 +192,28 @@ public final class TGMessageService extends TGMessageServiceImpl {
     });
   }
 
+  TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessageTonWalletTransfer initialTransfer) {
+    super(context, msg);
+    setTextCreator(() -> {
+      TdApi.MessageTonWalletTransfer transfer = msg.content instanceof TdApi.MessageTonWalletTransfer current ?
+        current : initialTransfer;
+      return getText(transfer.amount < 0 ? R.string.TgxTonSentService : R.string.TgxTonReceivedService,
+        new BoldArgument(TonWalletController.unsignedAmount(transfer.amount)));
+    });
+    setOnClickListener(() -> {
+      if (controller().isFocused() && tdlib.options().canUseTonWallet &&
+          msg.content instanceof TdApi.MessageTonWalletTransfer transfer &&
+          !StringUtils.isEmpty(transfer.transactionId)) {
+        controller().context().navigation().navigateTo(new TonWalletController(controller().context(),
+          tdlib, transfer.transactionId));
+      }
+    });
+  }
+
   @Override
   protected boolean updateMessageContent (TdApi.Message message, TdApi.MessageContent newContent, boolean isBottomMessage) {
-    if (newContent instanceof TdApi.MessageUpgradedGiftPurchaseOffer) {
+    if (newContent instanceof TdApi.MessageUpgradedGiftPurchaseOffer ||
+        newContent instanceof TdApi.MessageTonWalletTransfer) {
       message.content = newContent;
       updateServiceMessage();
       return true;

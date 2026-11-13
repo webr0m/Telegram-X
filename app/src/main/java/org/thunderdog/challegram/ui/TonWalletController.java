@@ -40,6 +40,8 @@ import java.util.concurrent.TimeUnit;
 import me.vkryl.core.StringUtils;
 
 public final class TonWalletController extends RecyclerViewController<Void> implements View.OnClickListener, Tdlib.TonConnectSessionListener {
+  private final String initialTransactionId;
+
   private enum Page { OVERVIEW, TELEGRAM, WALLET, NFT, CONNECTIONS }
   private enum Direction { ALL, IN, OUT }
   private final long account;
@@ -61,8 +63,13 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
   private boolean loading, failed;
 
   public TonWalletController (Context context, Tdlib tdlib) {
+    this(context, tdlib, null);
+  }
+
+  public TonWalletController (Context context, Tdlib tdlib, String initialTransactionId) {
     super(context, tdlib);
     account = tdlib.myUserId();
+    this.initialTransactionId = initialTransactionId;
   }
 
   @Override public int getId () { return R.id.controller_tonWallet; }
@@ -75,6 +82,32 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     tdlib.addTonWalletListener(listener);
     tdlib.addTonConnectSessionListener(this);
     show(Page.OVERVIEW);
+  }
+
+  private boolean openedInitialTransaction;
+
+  @Override
+  public void onFocus () {
+    super.onFocus();
+    if (!openedInitialTransaction && !StringUtils.isEmpty(initialTransactionId) &&
+        sameAccount() && tdlib.options().canUseTonWallet) {
+      openedInitialTransaction = true;
+      loadTransaction(initialTransactionId);
+    }
+  }
+
+  private void loadTransaction (String id) {
+    int expected = generation;
+    tdlib.send(new TdApi.GetTonWalletTransaction(id), (transaction, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || !sameAccount() || !tdlib.options().canUseTonWallet || expected != generation) {
+        return;
+      }
+      if (transaction != null && id.equals(transaction.id)) {
+        showDetails(transaction);
+      } else if (error != null) {
+        UI.showError(error);
+      }
+    }));
   }
 
   @Override
@@ -134,6 +167,10 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
 
   static String amount (long smallestUnits) {
     return BigDecimal.valueOf(smallestUnits, 9).stripTrailingZeros().toPlainString();
+  }
+
+  public static String unsignedAmount (long amount) {
+    return BigDecimal.valueOf(amount, 9).abs().stripTrailingZeros().toPlainString();
   }
 
   private static String ton (long amount) {
@@ -249,7 +286,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
           result.session.state instanceof TdApi.TonConnectSessionStateClosed) {
         return;
       }
-      long now = System.currentTimeMillis() / 1000L;
+      long now = tdlib.options().unixTime.currentTimeMillis() / 1000L;
       StringBuilder info = new StringBuilder(sessionName(result.session));
       int count = 0;
       for (TdApi.TonConnectRequest request : result.requests) {

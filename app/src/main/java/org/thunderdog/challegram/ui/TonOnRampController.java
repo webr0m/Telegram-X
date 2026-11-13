@@ -100,7 +100,7 @@ public final class TonOnRampController extends RecyclerViewController<Void> impl
   }
 
   private long now () {
-    return System.currentTimeMillis() / 1000L;
+    return tdlib.options().unixTime.currentTimeMillis() / 1000L;
   }
 
   private void refresh () {
