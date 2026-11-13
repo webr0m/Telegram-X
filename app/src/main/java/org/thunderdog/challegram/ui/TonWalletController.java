@@ -39,11 +39,12 @@ import java.util.concurrent.TimeUnit;
 
 import me.vkryl.core.StringUtils;
 
-public final class TonWalletController extends RecyclerViewController<Void> implements View.OnClickListener {
+public final class TonWalletController extends RecyclerViewController<Void> implements View.OnClickListener, Tdlib.TonConnectSessionListener {
   private enum Page { OVERVIEW, TELEGRAM, WALLET, NFT, CONNECTIONS }
   private enum Direction { ALL, IN, OUT }
   private final long account;
   private final LinkedHashMap<String, TdApi.Object> entries = new LinkedHashMap<>();
+  private final HashSet<Long> liveSessionIds = new HashSet<>();
   private final HashSet<String> cursors = new HashSet<>();
   private SettingsAdapter adapter;
   private final Runnable listener = () -> runOnUiThreadOptional(() -> {
@@ -72,12 +73,14 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     adapter = new SettingsAdapter(this);
     recycler.setAdapter(adapter);
     tdlib.addTonWalletListener(listener);
+    tdlib.addTonConnectSessionListener(this);
     show(Page.OVERVIEW);
   }
 
   @Override
   public void destroy () {
     tdlib.removeTonWalletListener(listener);
+    tdlib.removeTonConnectSessionListener(this);
     super.destroy();
   }
 
@@ -98,6 +101,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     walletAvailable = tdlib.options().canUseTonWallet;
     generation++;
     entries.clear();
+    liveSessionIds.clear();
     cursors.clear();
     offset = "";
     balance = null;
@@ -181,8 +185,8 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         }
         if (result != null) {
           for (TdApi.TonConnectSession session : result.sessions) {
-            if (!(session.state instanceof TdApi.TonConnectSessionStateClosed)) {
-              entries.put(Long.toString(session.id), session);
+            if (!liveSessionIds.contains(session.id)) {
+              applySession(session);
             }
           }
         }
@@ -203,7 +207,66 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     }
   }
 
+  @Override
+  public void onTonConnectSessionChanged (TdApi.TonConnectSession session) {
+    runOnUiThreadOptional(() -> {
+      if (page == Page.CONNECTIONS && sameAccount() && tdlib.options().canUseTonWallet) {
+        if (loading) {
+          liveSessionIds.add(session.id);
+        }
+        applySession(session);
+        render();
+      }
+    });
+  }
+
+  private void applySession (TdApi.TonConnectSession session) {
+    String key = Long.toString(session.id);
+    if (session.state instanceof TdApi.TonConnectSessionStateClosed) {
+      entries.remove(key);
+    } else {
+      entries.put(key, session);
+    }
+  }
+
+  static boolean pendingRequest (TdApi.TonConnectRequest request, long sessionId, long now) {
+    return request != null && request.sessionId == sessionId &&
+      (request.expirationDate == 0 || request.expirationDate > now);
+  }
+
+  private void showPendingRequests (TdApi.TonConnectSession session) {
+    int expected = generation;
+    tdlib.send(new TdApi.GetTonConnectSessionPendingRequests(session.id), (result, error) -> runOnUiThreadOptional(() -> {
+      if (!isFocused() || !sameAccount() || page != Page.CONNECTIONS || expected != generation ||
+          !tdlib.options().canUseTonWallet || !entries.containsKey(Long.toString(session.id))) {
+        return;
+      }
+      if (error != null) {
+        UI.showError(error);
+        return;
+      }
+      if (result == null || result.session == null || result.session.id != session.id ||
+          result.session.state instanceof TdApi.TonConnectSessionStateClosed) {
+        return;
+      }
+      long now = System.currentTimeMillis() / 1000L;
+      StringBuilder info = new StringBuilder(sessionName(result.session));
+      int count = 0;
+      for (TdApi.TonConnectRequest request : result.requests) {
+        if (pendingRequest(request, session.id, now)) {
+          count++;
+          info.append("\n\n").append(request.expirationDate == 0 ?
+            Lang.getString(R.string.TgxTonConnectNoExpiry) :
+            Lang.getString(R.string.TgxTonConnectExpires, date(request.expirationDate)));
+        }
+      }
+      info.insert(0, Lang.getString(R.string.TgxTonConnectRequests, Lang.formatNumber(count)) + "\n");
+      showOptions(new Options.Builder().info(info).cancelItem().build(), (view, id) -> true);
+    }));
+  }
+
   private void finish (String cursor, String next, TdApi.Error error) {
+    liveSessionIds.clear();
     loading = false;
     failed = error != null;
     if (failed) {
@@ -504,7 +567,19 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       if (session.creationDate > 0) {
         info += "\n" + Lang.getString(R.string.TgxTonConnectionCreated, date(session.creationDate));
       }
-      showOptions(new Options.Builder().info(info).cancelItem().build(), (view, id) -> true);
+      Options.Builder options = new Options.Builder().info(info);
+      if (session.state instanceof TdApi.TonConnectSessionStateReady) {
+        options.item(new OptionItem(1, Lang.getString(R.string.TgxTonConnectViewRequests), OptionColor.NORMAL, 0));
+      }
+      showOptions(options.cancelItem().build(), (view, id) -> {
+        if (id == 1 && isFocused() && sameAccount() && page == Page.CONNECTIONS &&
+            tdlib.options().canUseTonWallet &&
+            entries.get(Long.toString(session.id)) instanceof TdApi.TonConnectSession current &&
+            current.state instanceof TdApi.TonConnectSessionStateReady) {
+          showPendingRequests(current);
+        }
+        return true;
+      });
     } else if (data instanceof TdApi.TonNft nft) {
       Options.Builder options = new Options.Builder().info(nft.name + "\n" + nft.address);
       if (!StringUtils.isEmpty(nft.address)) {

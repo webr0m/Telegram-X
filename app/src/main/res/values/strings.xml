@@ -6895,4 +6895,8 @@
   <string name="TgxTonDailyRevenue">Daily revenue (UTC)</string>
   <string name="TgxTonRevenueRecentDays">Show recent days</string>
   <string name="TgxTonRevenueAllDays">Show all days</string>
+  <string name="TgxTonConnectViewRequests">View pending requests</string>
+  <string name="TgxTonConnectRequests">Pending requests: %1$s</string>
+  <string name="TgxTonConnectNoExpiry">Request has no expiration date</string>
+  <string name="TgxTonConnectExpires">Request expires on %1$s</string>
 </resources>

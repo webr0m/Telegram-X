@@ -9881,6 +9881,21 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
   }
 
+  public interface TonConnectSessionListener {
+    void onTonConnectSessionChanged (TdApi.TonConnectSession session);
+  }
+
+  private final java.util.concurrent.CopyOnWriteArrayList<TonConnectSessionListener> tonConnectListeners =
+    new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public void addTonConnectSessionListener (TonConnectSessionListener listener) {
+    tonConnectListeners.addIfAbsent(listener);
+  }
+
+  public void removeTonConnectSessionListener (TonConnectSessionListener listener) {
+    tonConnectListeners.remove(listener);
+  }
+
   private volatile Long ownedGramAmount;
   private volatile TdApi.TonWalletState tonWalletState;
   private volatile TdApi.TonWalletGaslessTransfersInfo tonGaslessTransfers;
@@ -10929,12 +10944,17 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         tonGaslessTransfers = ((TdApi.UpdateTonWalletGaslessTransfersInfo) update).info;
         notifyTonWalletListeners();
         break;
+      case TdApi.UpdateTonWalletTonConnectSession.CONSTRUCTOR:
+        TdApi.TonConnectSession session = ((TdApi.UpdateTonWalletTonConnectSession) update).session;
+        for (TonConnectSessionListener listener : tonConnectListeners) {
+          listener.onTonConnectSessionChanged(session);
+        }
+        break;
       case TdApi.UpdateLiveStoryTopDonors.CONSTRUCTOR:
       case TdApi.UpdateStakeDiceState.CONSTRUCTOR:
       case TdApi.UpdateNewOauthRequest.CONSTRUCTOR:
       case TdApi.UpdateTextCompositionStyles.CONSTRUCTOR:
       case TdApi.UpdateAllowedBotUsernamePremiumSuffixes.CONSTRUCTOR:
-      case TdApi.UpdateTonWalletTonConnectSession.CONSTRUCTOR:
       case TdApi.UpdateTonWalletTonConnectSessionDisconnectRequired.CONSTRUCTOR:
       case TdApi.UpdateWebProxyCarrierOpened.CONSTRUCTOR:
       case TdApi.UpdateWebProxyCarrierData.CONSTRUCTOR:

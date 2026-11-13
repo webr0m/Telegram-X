@@ -74,4 +74,8 @@
   <string name="TgxTonDailyRevenue">Ingresos diarios (UTC)</string>
   <string name="TgxTonRevenueRecentDays">Ver días recientes</string>
   <string name="TgxTonRevenueAllDays">Ver todos los días</string>
+  <string name="TgxTonConnectViewRequests">Ver solicitudes pendientes</string>
+  <string name="TgxTonConnectRequests">Solicitudes pendientes: %1$s</string>
+  <string name="TgxTonConnectNoExpiry">La solicitud no tiene fecha de vencimiento</string>
+  <string name="TgxTonConnectExpires">La solicitud vence el %1$s</string>
 </resources>
