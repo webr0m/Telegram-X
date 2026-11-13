@@ -23,4 +23,11 @@
   <string name="TgxTonFee">Comisión de red: %1$s</string>
   <string name="TgxTonCompleted">Completado</string>
   <string name="TgxTonFailed">Fallido</string>
+  <string name="TgxTonConnections">Aplicaciones conectadas</string>
+  <string name="TgxTonUnknownApp">Aplicación desconocida</string>
+  <string name="TgxTonConnectionReady">Conectada</string>
+  <string name="TgxTonConnectionPending">Conectando</string>
+  <string name="TgxTonConnectionClosing">Desconectando</string>
+  <string name="TgxTonConnectionClosed">Desconectada</string>
+  <string name="TgxTonConnectionCreated">Conectada desde el %1$s</string>
 </resources>

@@ -36,7 +36,7 @@ import java.util.concurrent.TimeUnit;
 import me.vkryl.core.StringUtils;
 
 public final class TonWalletController extends RecyclerViewController<Void> implements View.OnClickListener {
-  private enum Page { OVERVIEW, TELEGRAM, WALLET, NFT }
+  private enum Page { OVERVIEW, TELEGRAM, WALLET, NFT, CONNECTIONS }
   private enum Direction { ALL, IN, OUT }
   private final long account;
   private final LinkedHashMap<String, TdApi.Object> entries = new LinkedHashMap<>();
@@ -156,6 +156,20 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         }
         finish(cursor, result != null ? result.nextOffset : null, error);
       }));
+    } else if (page == Page.CONNECTIONS) {
+      tdlib.send(new TdApi.GetTonConnectSessions(), (result, error) -> runOnUiThreadOptional(() -> {
+        if (!sameAccount() || expected != generation) {
+          return;
+        }
+        if (result != null) {
+          for (TdApi.TonConnectSession session : result.sessions) {
+            if (!(session.state instanceof TdApi.TonConnectSessionStateClosed)) {
+              entries.put(Long.toString(session.id), session);
+            }
+          }
+        }
+        finish(cursor, null, error);
+      }));
     } else {
       tdlib.send(new TdApi.GetTonWalletNfts(cursor, 30), (result, error) -> runOnUiThreadOptional(() -> {
         if (!sameAccount() || expected != generation) {
@@ -217,6 +231,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
           }
           rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonWalletHistory, 0, R.string.TgxTonWalletHistory));
           rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonNfts, 0, R.string.TgxTonNfts));
+          rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonConnections, 0, R.string.TgxTonConnections));
         } else if (state == null || state.isBeingCreated) {
           rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, R.string.LoadingInformation));
         } else {
@@ -228,7 +243,7 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       if (balance != null) {
         rows.add(new ListItem(ListItem.TYPE_DESCRIPTION, 0, 0, ton(balance)));
       }
-      if (page != Page.NFT) {
+      if (page == Page.TELEGRAM || page == Page.WALLET) {
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tonDirection, 0, directionText(direction)));
       }
       for (TdApi.Object entry : entries.values()) {
@@ -237,6 +252,8 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
           label = Lang.getString(R.string.TgxTonEntry, date(ledger.date), ton(ledger.gramAmount));
         } else if (entry instanceof TdApi.TonWalletTransaction wallet) {
           label = Lang.getString(R.string.TgxTonEntry, date(wallet.date), walletLabel(wallet));
+        } else if (entry instanceof TdApi.TonConnectSession session) {
+          label = Lang.getString(R.string.TgxTonEntry, sessionName(session), sessionState(session.state));
         } else {
           TdApi.TonNft nft = (TdApi.TonNft) entry;
           label = StringUtils.isEmpty(nft.name) ? nft.address : nft.name;
@@ -275,6 +292,23 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
       direction == Direction.OUT ? R.string.TgxTonOutgoing : R.string.TgxTonAll);
   }
 
+  private static String sessionName (TdApi.TonConnectSession session) {
+    if (session.manifest instanceof TdApi.TonConnectManifestInfo app && !StringUtils.isEmpty(app.name)) {
+      return app.name;
+    }
+    return Lang.getString(R.string.TgxTonUnknownApp);
+  }
+
+  private static String sessionState (TdApi.TonConnectSessionState state) {
+    int text = switch (state) {
+      case TdApi.TonConnectSessionStateReady ignored -> R.string.TgxTonConnectionReady;
+      case TdApi.TonConnectSessionStateClosing ignored -> R.string.TgxTonConnectionClosing;
+      case TdApi.TonConnectSessionStateClosed ignored -> R.string.TgxTonConnectionClosed;
+      default -> R.string.TgxTonConnectionPending;
+    };
+    return Lang.getString(text);
+  }
+
   @Override
   public void onClick (View view) {
     if (!isFocused() || !sameAccount()) {
@@ -288,6 +322,8 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
     } else if (id == R.id.btn_tonLedger || id == R.id.btn_tonWalletHistory || id == R.id.btn_tonNfts) {
       direction = Direction.ALL;
       show(id == R.id.btn_tonLedger ? Page.TELEGRAM : id == R.id.btn_tonNfts ? Page.NFT : Page.WALLET);
+    } else if (id == R.id.btn_tonConnections && tdlib.options().canUseTonWallet) {
+      show(Page.CONNECTIONS);
     } else if (id == R.id.btn_tonMore) {
       load();
     } else if (id == R.id.btn_tonCopyAddress) {
@@ -332,6 +368,15 @@ public final class TonWalletController extends RecyclerViewController<Void> impl
         info += "\n" + wallet.peerAddress;
       }
       showCopyDetails(info, wallet.id);
+    } else if (data instanceof TdApi.TonConnectSession session && tdlib.options().canUseTonWallet) {
+      String info = sessionName(session) + "\n" + sessionState(session.state);
+      if (session.manifest instanceof TdApi.TonConnectManifestInfo app && !StringUtils.isEmpty(app.url)) {
+        info += "\n" + app.url;
+      }
+      if (session.creationDate > 0) {
+        info += "\n" + Lang.getString(R.string.TgxTonConnectionCreated, date(session.creationDate));
+      }
+      showOptions(new Options.Builder().info(info).cancelItem().build(), (view, id) -> true);
     } else if (data instanceof TdApi.TonNft nft) {
       Options.Builder options = new Options.Builder().info(nft.name + "\n" + nft.address);
       if (!StringUtils.isEmpty(nft.address)) {

@@ -6844,4 +6844,11 @@
   <string name="TgxTonFee">Network fee: %1$s</string>
   <string name="TgxTonCompleted">Completed</string>
   <string name="TgxTonFailed">Failed</string>
+  <string name="TgxTonConnections">Connected apps</string>
+  <string name="TgxTonUnknownApp">Unknown app</string>
+  <string name="TgxTonConnectionReady">Connected</string>
+  <string name="TgxTonConnectionPending">Connecting</string>
+  <string name="TgxTonConnectionClosing">Disconnecting</string>
+  <string name="TgxTonConnectionClosed">Disconnected</string>
+  <string name="TgxTonConnectionCreated">Connected since %1$s</string>
 </resources>

@@ -1707,5 +1707,6 @@
   <item type="id" name="btn_tonEntry" />
   <item type="id" name="btn_tonMore" />
   <item type="id" name="btn_tonRefresh" />
+  <item name="btn_tonConnections" type="id" />
 </resources>
 <!-- endregion -->
