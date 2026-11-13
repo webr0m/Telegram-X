@@ -6788,4 +6788,6 @@
   <string name="SavedMessagesTopicChanged">This topic changed. Open its options again.</string>
   <string name="SavedBirthdateSuggestion">Suggested birthday: **%1$s**.</string>
   <string name="SavedMessagesNewNote">Write a note</string>
+  <string name="SavedMessagesJumpToDate">Jump to date</string>
+  <string name="SavedMessagesNoMessageByDate">No saved message on or before that date in this topic.</string>
 </resources>

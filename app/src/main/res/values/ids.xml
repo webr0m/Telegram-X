@@ -1688,5 +1688,6 @@
   <item type="id" name="btn_savedMessagesTopicActions" />
   <item type="id" name="btn_savedMessagesItem" />
   <item type="id" name="btn_savedMessagesNewNote" />
+  <item type="id" name="btn_savedMessagesDate" />
 </resources>
 <!-- endregion -->

@@ -16,4 +16,6 @@
   <string name="SavedMessagesDeleteTopicConfirm">¿Eliminar permanentemente los mensajes guardados en %1$s?</string>
   <string name="SavedMessagesTopicChanged">El tema cambió. Vuelve a abrir sus opciones.</string>
   <string name="SavedMessagesNewNote">Escribir una nota</string>
+  <string name="SavedMessagesJumpToDate">Ir a una fecha</string>
+  <string name="SavedMessagesNoMessageByDate">No hay mensajes de este tema en esa fecha ni antes.</string>
 </resources>

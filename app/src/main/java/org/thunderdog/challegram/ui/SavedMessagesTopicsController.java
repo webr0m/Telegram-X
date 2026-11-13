@@ -17,6 +17,7 @@
  */
 package org.thunderdog.challegram.ui;
 
+import android.app.DatePickerDialog;
 import android.content.Context;
 import android.view.View;
 import android.widget.Toast;
@@ -25,12 +26,15 @@ import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.ContentPreview;
+import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibUi;
+import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -220,6 +224,7 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesNewNote, 0, R.string.SavedMessagesNewNote));
       }
       rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesSearch, 0, R.string.SavedMessagesSearchTopic));
+      rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesDate, 0, R.string.SavedMessagesJumpToDate));
       if (!query.isEmpty()) {
         rows.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_savedMessagesResetSearch, 0, R.string.SavedMessagesClearSearch));
       }
@@ -255,8 +260,9 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       navigateTo(new SavedMessagesTopicsController(context(), tdlib, chatId, topic.id));
     } else if (id == R.id.btn_savedMessagesItem && view.getTag() instanceof ListItem row &&
         row.getData() instanceof TdApi.Message message && belongsToTopic(message, chatId, topicId)) {
-      tdlib.ui().openChat(this, chatId, new TdlibUi.ChatOpenParameters().keepStack()
-        .highlightMessage(new MessageId(chatId, message.id)).ensureHighlightAvailable());
+      openMessage(message);
+    } else if (id == R.id.btn_savedMessagesDate) {
+      chooseDate();
     } else if (id == R.id.btn_savedMessagesNewNote) {
       composeNote();
     } else if (id == R.id.btn_savedMessagesSearch && openedTopic != null) {
@@ -274,6 +280,37 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
     } else if (id == R.id.btn_savedMessagesTopicActions) {
       showTopicActions();
     }
+  }
+
+  private void openMessage (TdApi.Message message) {
+    tdlib.ui().openChat(this, chatId, new TdlibUi.ChatOpenParameters().keepStack()
+      .highlightMessage(new MessageId(chatId, message.id)).ensureHighlightAvailable());
+  }
+
+  private void chooseDate () {
+    Calendar now = Calendar.getInstance();
+    DatePickerDialog dates = new DatePickerDialog(context(), Theme.dialogTheme(), (view, year, month, day) -> {
+      if (!isFocused() || !currentAccount() || tdlib.savedMessagesTopic(topicId) == null) {
+        return;
+      }
+      Calendar endOfDay = Calendar.getInstance();
+      endOfDay.clear();
+      endOfDay.set(year, month, day, 23, 59, 59);
+      int date = (int) Math.min(Integer.MAX_VALUE, endOfDay.getTimeInMillis() / 1000L);
+      tdlib.send(new TdApi.GetSavedMessagesTopicMessageByDate(topicId, date), (message, error) -> runOnUiThreadOptional(() -> {
+        if (isFocused() && currentAccount() && tdlib.savedMessagesTopic(topicId) != null) {
+          if (belongsToTopic(message, chatId, topicId)) {
+            openMessage(message);
+          } else if (error != null && error.code != 404) {
+            UI.showError(error);
+          } else {
+            UI.showToast(R.string.SavedMessagesNoMessageByDate, Toast.LENGTH_SHORT);
+          }
+        }
+      }));
+    }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH));
+    dates.getDatePicker().setMaxDate(now.getTimeInMillis());
+    ViewSupport.showDatePicker(dates);
   }
 
   private void composeNote () {
