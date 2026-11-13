@@ -8718,8 +8718,6 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessageGiveaway.CONSTRUCTOR: {
           return new TGMessageGiveaway(context, msg, (TdApi.MessageGiveaway) content);
         }
-        // unsupported
-        case TdApi.MessageRichMessage.CONSTRUCTOR:
         case TdApi.MessageSuggestProfilePhoto.CONSTRUCTOR:
           return new TGMessageService(context, msg, (TdApi.MessageSuggestProfilePhoto) content);
         case TdApi.MessageSuggestBirthdate.CONSTRUCTOR:
@@ -8733,6 +8731,8 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
           return new TGMessageService(context, msg, (TdApi.MessageTonWalletTransfer) content);
         }
 
+        // unsupported
+        case TdApi.MessageRichMessage.CONSTRUCTOR:
         case TdApi.MessageInvoice.CONSTRUCTOR:
         case TdApi.MessagePassportDataSent.CONSTRUCTOR:
         case TdApi.MessageStory.CONSTRUCTOR:
