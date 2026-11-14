@@ -841,12 +841,30 @@ public class EditUsernameController extends EditBaseController<EditUsernameContr
             }
           });
         } else {
-          tdlib.send(new TdApi.SetSupergroupUsername(ChatId.toSupergroupId(chatId), username), handler);
+          checkPublicChatsLimitThen(username, () -> tdlib.send(new TdApi.SetSupergroupUsername(ChatId.toSupergroupId(chatId), username), handler));
         }
       } else {
         tdlib.send(new TdApi.SetUsername(username), handler);
       }
     }
+  }
+
+  private void checkPublicChatsLimitThen (String username, Runnable proceed) {
+    if (username.length() == 0) {
+      proceed.run();
+      return;
+    }
+    // The server reports the limit of public links only through this dedicated request
+    tdlib.send(new TdApi.CheckCreatedPublicChatsLimit(new TdApi.PublicChatTypeHasUsername()), (ok, error) -> {
+      if (error != null) {
+        runOnUiThreadOptional(() -> {
+          setInProgress(false);
+          showError(TD.toErrorString(error));
+        });
+      } else {
+        proceed.run();
+      }
+    });
   }
 
   private void showError (String error) {

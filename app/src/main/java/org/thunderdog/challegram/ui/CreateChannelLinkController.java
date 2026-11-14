@@ -387,6 +387,18 @@ public class CreateChannelLinkController extends ViewController<CreateChannelLin
     }
     usernameRequested = true;
     setEnabled(false);
+    // The server reports the limit of public links only through this dedicated request
+    tdlib.send(new TdApi.CheckCreatedPublicChatsLimit(new TdApi.PublicChatTypeHasUsername()), (ok, error) -> {
+      if (error != null) {
+        UI.showError(error);
+        UI.unlock(CreateChannelLinkController.this);
+      } else {
+        sendSetUsername(username);
+      }
+    });
+  }
+
+  private void sendSetUsername (String username) {
     tdlib.send(new TdApi.SetSupergroupUsername(getSupergroupId(), username), (ok, error) -> {
       if (error != null) {
         UI.showError(error);
