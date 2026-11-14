@@ -993,7 +993,7 @@ public class TGMessagePoll extends TGMessage implements ClickHelper.Delegate, Co
   }
 
   private boolean needShowResults (TdApi.Poll poll) {
-    if (poll.isClosed)
+    if (poll.isClosed || isVoteRestricted(poll))
       return true;
     boolean haveVoters = false;
     boolean haveChosenOption = false;
@@ -1010,6 +1010,19 @@ public class TGMessagePoll extends TGMessage implements ClickHelper.Delegate, Co
     // show results for anonymous admin
     // FIXME TDLib/server: poll information never returned to anonymous admin
     return haveVoters && tdlib.isAnonymousAdminNonCreator(msg.chatId);
+  }
+
+  private static boolean isVoteRestricted (TdApi.Poll poll) {
+    if (poll.voteRestrictionReason == null) {
+      return false;
+    }
+    // The other reasons also cover local and draft messages, where TDLib has not asked the server yet.
+    switch (poll.voteRestrictionReason.getConstructor()) {
+      case TdApi.PollVoteRestrictionReasonMembershipRequired.CONSTRUCTOR:
+      case TdApi.PollVoteRestrictionReasonCountryRestricted.CONSTRUCTOR:
+        return true;
+    }
+    return false;
   }
 
   @Override
