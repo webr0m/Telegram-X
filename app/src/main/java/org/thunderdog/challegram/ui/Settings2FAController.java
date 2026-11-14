@@ -42,6 +42,7 @@ import org.thunderdog.challegram.widget.FillingDecoration;
 import org.thunderdog.challegram.widget.MaterialEditTextGroup;
 
 import java.util.ArrayList;
+import java.util.Objects;
 
 import me.vkryl.core.StringUtils;
 
@@ -202,9 +203,12 @@ public class Settings2FAController extends RecyclerViewController<Settings2FACon
       tdlib.client().send(new TdApi.ResendRecoveryEmailAddressCode(), result -> {
         switch (result.getConstructor()) {
           case TdApi.PasswordState.CONSTRUCTOR: {
+            TdApi.PasswordState newState = (TdApi.PasswordState) result;
             tdlib.ui().post(() -> {
-              if (!isDestroyed())
+              if (!isDestroyed()) {
                 UI.showToast(R.string.RecoveryCodeResent, Toast.LENGTH_SHORT);
+                adoptRecoveryEmailCodeInfo(newState);
+              }
             });
             break;
           }
@@ -333,6 +337,23 @@ public class Settings2FAController extends RecyclerViewController<Settings2FACon
     buildCells();
   }
 
+  // checkRecoveryEmailAddressCode and resendRecoveryEmailAddressCode answer a fresh PasswordState even when the code was wrong,
+  // and only that state carries TDLib's authoritative code length; rebuilding would erase the typed code, so patch the info in place instead.
+  private void adoptRecoveryEmailCodeInfo (TdApi.PasswordState newState) {
+    TdApi.EmailAddressAuthenticationCodeInfo newInfo = newState.recoveryEmailAddressCodeInfo;
+    TdApi.EmailAddressAuthenticationCodeInfo currentInfo = state.recoveryEmailAddressCodeInfo;
+    if (newInfo == null) {
+      if (currentInfo != null) {
+        hideSoftwareKeyboard();
+        updatePasswordState(newState, currentAcceptedPassword);
+      }
+    } else if (currentInfo == null || !Objects.equals(currentInfo.emailAddressPattern, newInfo.emailAddressPattern)) {
+      updatePasswordState(newState, currentAcceptedPassword);
+    } else {
+      state.recoveryEmailAddressCodeInfo = newInfo;
+    }
+  }
+
   private ListItem codeItem;
 
   private void buildCells () {
@@ -441,14 +462,11 @@ public class Settings2FAController extends RecyclerViewController<Settings2FACon
       tdlib.client().send(new TdApi.CheckRecoveryEmailAddressCode(code), result -> {
         switch (result.getConstructor()) {
           case TdApi.PasswordState.CONSTRUCTOR:
-            TdApi.PasswordState state = (TdApi.PasswordState) result;
+            TdApi.PasswordState newState = (TdApi.PasswordState) result;
             tdlib.ui().post(() -> {
               if (!isDestroyed()) {
-                setIsVerifying(false, state.recoveryEmailAddressCodeInfo != null);
-                if (state.recoveryEmailAddressCodeInfo == null) {
-                  hideSoftwareKeyboard();
-                  updatePasswordState(state, currentAcceptedPassword);
-                }
+                setIsVerifying(false, newState.recoveryEmailAddressCodeInfo != null);
+                adoptRecoveryEmailCodeInfo(newState);
               }
             });
             break;
