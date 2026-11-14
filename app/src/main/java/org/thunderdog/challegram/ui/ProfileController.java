@@ -2747,6 +2747,13 @@ public class ProfileController extends ViewController<ProfileController.Args> im
           } else {
             view.setData(Integer.toString(value));
           }
+        } else if (itemId == R.id.btn_chatPaidMessages) {
+          long value = supergroup != null ? supergroup.paidMessageStarCount : 0L;
+          if (value == 0) {
+            view.setData(R.string.Off);
+          } else {
+            view.setData(Lang.getStringBold(R.string.TgxStarsStarAmount, value));
+          }
         } else if (itemId == R.id.btn_chatPermissions) {
           IntRange range = Td.count(chat.permissions, tdlib.isForum(chat.id));
           view.setData(Lang.plural(R.string.xPermissions, range.getStart(), range.getEndInclusive()));
@@ -4628,6 +4635,38 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       }));
   }
 
+  private void openChatPaidMessageStarCountSettings () {
+    if (supergroup == null) {
+      return;
+    }
+    long current = supergroup.paidMessageStarCount;
+    long max = tdlib.options().paidMessageStarCountMax;
+    openInputAlert(Lang.getString(R.string.TgxPremiumFeaturePaidMessages), Lang.getString(R.string.TgxChatPaidMessagesInfo),
+      R.string.Done, R.string.Cancel, Long.toString(current), (inputView, result) -> {
+        long value;
+        try {
+          value = Long.parseLong(result.trim());
+        } catch (NumberFormatException e) {
+          value = -1L;
+        }
+        if (value < 0 || value > max) {
+          UI.showToast(Lang.getStringBold(R.string.TgxChatPaidMessagesInvalid, max), Toast.LENGTH_SHORT);
+          return false;
+        }
+        final long chatId = getChatId();
+        final long starCount = value;
+        tdlib.send(new TdApi.SetChatPaidMessageStarCount(chatId, starCount), (ok, error) -> runOnUiThreadOptional(() -> {
+          if (error != null) {
+            UI.showError(error);
+          } else if (isFocused() && getChatId() == chatId && supergroup != null) {
+            supergroup.paidMessageStarCount = starCount;
+            updateValuedItem(R.id.btn_chatPaidMessages);
+          }
+        }));
+        return true;
+      }, false);
+  }
+
   private void togglePrehistoryMode () {
     boolean currentValue;
     if (supergroupFull != null)
@@ -5418,6 +5457,12 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     if (supergroup != null && tdlib.canRestrictMembers(chat.id)) {
       items.add(new ListItem(added ? ListItem.TYPE_SEPARATOR_FULL : ListItem.TYPE_SHADOW_TOP));
       items.add(new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_unrestrictBoostCount, 0, R.string.BoostUnrestrictTitle));
+      added = true;
+    }
+
+    if (supergroup != null && supergroupFull != null && supergroupFull.canEnablePaidMessages && tdlib.canRestrictMembers(chat.id)) {
+      items.add(new ListItem(added ? ListItem.TYPE_SEPARATOR_FULL : ListItem.TYPE_SHADOW_TOP));
+      items.add(new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_chatPaidMessages, 0, R.string.TgxPremiumFeaturePaidMessages));
       added = true;
     }
 
@@ -6319,6 +6364,8 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       togglePrehistoryMode();
     } else if (viewId == R.id.btn_unrestrictBoostCount) {
       openUnrestrictBoostCountSettings();
+    } else if (viewId == R.id.btn_chatPaidMessages) {
+      openChatPaidMessageStarCountSettings();
     } else if (viewId == R.id.btn_chatPermissions) {
       openChatPermissions();
     } else if (viewId == R.id.btn_recentActions) {
