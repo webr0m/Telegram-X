@@ -853,10 +853,7 @@ public final class ForumTopicUi implements ChatListener {
                                   context,
                                   tdlib,
                                   R.drawable.baseline_error_24,
-                                  error != null &&
-                                    TD.ERROR_USER_PRIVACY.equals(error.message) ?
-                                      Lang.getString(R.string.errorPrivacyAddMember) :
-                                        TD.toErrorString(error)
+                                  TD.memberStatusChangeError(tdlib, error, failedToAdd)
                                 );
                             }
                           }

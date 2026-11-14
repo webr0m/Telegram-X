@@ -448,10 +448,7 @@ public class EditRightsController extends EditBaseController<EditRightsControlle
         }
         onSaveCompleted();
       } else {
-        showError(error != null && TD.ERROR_USER_PRIVACY.equals(error.message) ?
-          Lang.getString(R.string.errorPrivacyAddMember) :
-          TD.toErrorString(error)
-        );
+        showError(TD.memberStatusChangeError(tdlib, error, failedToAddMember));
       }
     });
 

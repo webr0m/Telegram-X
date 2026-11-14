@@ -2503,6 +2503,18 @@ public class TD {
     return "not an error";
   }
 
+  public static String memberStatusChangeError (Tdlib tdlib, @Nullable TdApi.Error error, @Nullable TdApi.FailedToAddMember failedToAddMember) {
+    if (failedToAddMember != null) {
+      return failedToAddMember.premiumWouldAllowInvite ?
+        Lang.getString(R.string.PremiumRequiredToAddMember, tdlib.cache().userName(failedToAddMember.userId)) :
+        Lang.getString(R.string.errorPrivacyAddMember);
+    }
+    if (error != null && ERROR_USER_PRIVACY.equals(error.message)) {
+      return Lang.getString(R.string.errorPrivacyAddMember);
+    }
+    return toErrorString(error);
+  }
+
   public static final String ERROR_USER_PRIVACY = "USER_PRIVACY_RESTRICTED";
   public static final String ERROR_USER_CHANNELS_TOO_MUCH = "USER_CHANNELS_TOO_MUCH";
   public static final String ERROR_CHANNELS_ADMIN_PUBLIC_TOO_MUCH = "CHANNELS_ADMIN_PUBLIC_TOO_MUCH";
