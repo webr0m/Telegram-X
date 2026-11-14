@@ -708,8 +708,11 @@ public class ContentPreview {
       }
       case TdApi.MessagePaymentSuccessful.CONSTRUCTOR: {
         TdApi.MessagePaymentSuccessful successful = (TdApi.MessagePaymentSuccessful) message.content;
-        // TODO: recurring payment strings
-        return new ContentPreview(EMOJI_INVOICE, 0, Lang.getString(R.string.PaymentSuccessfullyPaidNoItem, CurrencyUtils.buildAmount(successful.currency, successful.totalAmount), tdlib.chatTitle(message.chatId)), true);
+        String amount = CurrencyUtils.buildAmount(successful.currency, successful.totalAmount);
+        if (successful.subscriptionUntilDate != 0) {
+          return new ContentPreview(EMOJI_INVOICE, 0, Lang.getString(R.string.PaymentSuccessfullyPaidSubscriptionNoItem, amount, tdlib.chatTitle(message.chatId), Lang.getDatestamp(successful.subscriptionUntilDate, TimeUnit.SECONDS)), true);
+        }
+        return new ContentPreview(EMOJI_INVOICE, 0, Lang.getString(R.string.PaymentSuccessfullyPaidNoItem, amount, tdlib.chatTitle(message.chatId)), true);
       }
       case TdApi.MessagePaymentRefunded.CONSTRUCTOR: {
         TdApi.MessagePaymentRefunded refunded = (TdApi.MessagePaymentRefunded) message.content;

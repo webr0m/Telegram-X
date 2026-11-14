@@ -2939,6 +2939,8 @@
   <string name="Beginning">Beginning</string>
   <string name="PaymentSuccessfullyPaid">You successfully transferred %1$s to %2$s for %3$s</string>
   <string name="PaymentSuccessfullyPaidNoItem">You successfully transferred %1$s to %2$s</string>
+  <string name="PaymentSuccessfullyPaidSubscription">You successfully transferred %1$s to %2$s for %3$s, subscription valid until %4$s</string>
+  <string name="PaymentSuccessfullyPaidSubscriptionNoItem">You successfully transferred %1$s to %2$s, subscription valid until %3$s</string>
   <string name="PaymentRefunded">%1$s refunded %2$s</string>
   <string name="YouReceivedXStars_one">You received %1$s star for %2$s</string>
   <string name="YouReceivedXStars_other">You received %1$s stars for %2$s</string>

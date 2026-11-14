@@ -1264,17 +1264,26 @@ public final class TGMessageService extends TGMessageServiceImpl {
   }
 
   public TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessagePaymentSuccessful paymentSuccessful) {
-    super(context, msg); // TODO: recurring payment strings
+    super(context, msg);
     // TODO click to view receipt
     String amount = CurrencyUtils.buildAmount(paymentSuccessful.currency, paymentSuccessful.totalAmount);
     TdlibSender targetSender = new TdlibSender(tdlib, msg.chatId, tdlib.sender(msg.chatId));
-    setTextCreator(() ->
-      getText(
+    String subscriptionDate = paymentSuccessful.subscriptionUntilDate != 0 ? Lang.getDatestamp(paymentSuccessful.subscriptionUntilDate, TimeUnit.SECONDS) : null;
+    setTextCreator(() -> {
+      if (subscriptionDate != null) {
+        return getText(
+          R.string.PaymentSuccessfullyPaidSubscriptionNoItem,
+          new BoldArgument(amount),
+          new SenderArgument(targetSender),
+          new BoldArgument(subscriptionDate)
+        );
+      }
+      return getText(
         R.string.PaymentSuccessfullyPaidNoItem,
         new BoldArgument(amount),
         new SenderArgument(targetSender)
-      )
-    );
+      );
+    });
     if (paymentSuccessful.invoiceChatId != 0 && paymentSuccessful.invoiceMessageId != 0) {
       setDisplayMessage(
         paymentSuccessful.invoiceChatId,
@@ -1283,14 +1292,23 @@ public final class TGMessageService extends TGMessageServiceImpl {
           if (!Td.isInvoice(message.content)) {
             return false;
           }
-          setTextCreator(() ->
-            getText(
+          setTextCreator(() -> {
+            if (subscriptionDate != null) {
+              return getText(
+                R.string.PaymentSuccessfullyPaidSubscription,
+                new BoldArgument(amount),
+                new SenderArgument(targetSender),
+                new InvoiceArgument(message),
+                new BoldArgument(subscriptionDate)
+              );
+            }
+            return getText(
               R.string.PaymentSuccessfullyPaid,
               new BoldArgument(amount),
               new SenderArgument(targetSender),
               new InvoiceArgument(message)
-            )
-          );
+            );
+          });
           return true;
         }
       );

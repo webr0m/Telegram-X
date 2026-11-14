@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="PaymentSuccessfullyPaidSubscriptionNoItem">Has transferido correctamente %1$s a %2$s; la suscripción está vigente hasta %3$s</string>
+  <string name="PaymentSuccessfullyPaidSubscription">Has transferido correctamente %1$s a %2$s por %3$s; la suscripción está vigente hasta %4$s</string>
+</resources>
