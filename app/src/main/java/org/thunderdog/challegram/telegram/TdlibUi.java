@@ -2724,6 +2724,18 @@ public class TdlibUi extends Handler {
         case TdApi.SupergroupFullInfo.CONSTRUCTOR:
           openChat(context, ((TdApi.SupergroupFullInfo) object).linkedChatId, params);
           break;
+        case TdApi.ChatJoinResultSuccess.CONSTRUCTOR:
+          openChat(context, ((TdApi.ChatJoinResultSuccess) object).chatId, params);
+          break;
+        case TdApi.ChatJoinResultRequestSent.CONSTRUCTOR: {
+          TdApi.ChatInviteLinkInfo inviteLinkInfo = params.inviteLinkInfo;
+          if (inviteLinkInfo != null) {
+            showLinkTooltip(tdlib, R.drawable.baseline_error_24, Lang.getStringBold(TD.isChannel(inviteLinkInfo.type) ?
+              R.string.RequestJoinChannelSent : R.string.RequestJoinGroupSent, inviteLinkInfo.title), params.urlOpenParameters);
+          }
+          tdlib.ui().post(params::onDone);
+          break;
+        }
         case TdApi.Error.CONSTRUCTOR:
           showChatOpenError(createRequest, (TdApi.Error) object, params);
           if (params != null)
