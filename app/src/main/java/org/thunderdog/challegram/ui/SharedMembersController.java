@@ -16,6 +16,7 @@ package org.thunderdog.challegram.ui;
 
 import android.content.Context;
 import android.view.View;
+import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.Nullable;
@@ -26,13 +27,16 @@ import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.DoubleTextWrapper;
 import org.thunderdog.challegram.data.TD;
+import org.thunderdog.challegram.emoji.Emoji;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibCache;
 import org.thunderdog.challegram.telegram.TdlibUi;
+import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.util.StringList;
 import org.thunderdog.challegram.v.MediaRecyclerView;
 import org.thunderdog.challegram.widget.CheckBoxView;
 import org.thunderdog.challegram.widget.EmptySmartView;
+import org.thunderdog.challegram.widget.MaterialEditTextGroup;
 import org.thunderdog.challegram.widget.SmallChatView;
 
 import java.util.ArrayList;
@@ -44,6 +48,7 @@ import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.IntList;
 import tgx.td.ChatId;
 import tgx.td.Td;
+import tgx.td.TdConstants;
 
 public class SharedMembersController extends SharedBaseController<DoubleTextWrapper> implements
   TdlibCache.BasicGroupDataChangeListener,
@@ -381,6 +386,13 @@ public class SharedMembersController extends SharedBaseController<DoubleTextWrap
       }
     }
 
+    if (tdlib.isSelfUserId(content.getUserId()) && canEditOwnTag()) {
+      ids.append(R.id.btn_editMemberTag);
+      colors.append(OptionColor.NORMAL);
+      icons.append(R.drawable.baseline_label_24);
+      strings.append(R.string.EditMemberTag);
+    }
+
     if (!isChannel() || TD.isAdmin(member.status)) {
       ids.append(R.id.btn_messageViewList);
       if (tdlib.isSelfUserId(content.getUserId())) {
@@ -444,6 +456,8 @@ public class SharedMembersController extends SharedBaseController<DoubleTextWrap
           }
         } else if (id == R.id.btn_editRights) {
           editMember(content, false);
+        } else if (id == R.id.btn_editMemberTag) {
+          editOwnTag(member);
         } else if (id == R.id.btn_restrictMember) {
           editMember(content, true);
         } else if (id == R.id.btn_blockSender) {
@@ -486,6 +500,45 @@ public class SharedMembersController extends SharedBaseController<DoubleTextWrap
     EditRightsController c = new EditRightsController(context, tdlib);
     c.setArguments(new EditRightsController.Args(chatId, content.getSenderId(), restrict, myStatus, member));
     parent.navigateTo(c);
+  }
+
+  private boolean canEditOwnTag () {
+    TdApi.Chat chat = tdlib.chat(chatId);
+    TdApi.ChatMemberStatus status = tdlib.chatStatus(chatId);
+    if (chat == null || chat.permissions == null || status == null) {
+      return false;
+    }
+    switch (status.getConstructor()) {
+      case TdApi.ChatMemberStatusMember.CONSTRUCTOR:
+        return chat.permissions.canEditTag;
+      case TdApi.ChatMemberStatusRestricted.CONSTRUCTOR: {
+        TdApi.ChatMemberStatusRestricted restricted = (TdApi.ChatMemberStatusRestricted) status;
+        return restricted.isMember && restricted.permissions.canEditTag && chat.permissions.canEditTag;
+      }
+    }
+    // Administrators and the owner change their tag through the rights screen, where it is the custom title
+    return false;
+  }
+
+  private void editOwnTag (TdApi.ChatMember member) {
+    MaterialEditTextGroup input = openInputAlert(Lang.getString(R.string.EditMemberTag), Lang.getString(R.string.CustomTitle), R.string.Done, R.string.Cancel, member.tag, (inputView, result) -> {
+      String tag = result.trim();
+      if (!tag.isEmpty() && tag.length() > TdConstants.MAX_CUSTOM_TITLE_LENGTH) {
+        UI.showToast(R.string.CustomTitleTooBig, Toast.LENGTH_SHORT);
+        return false;
+      }
+      if (Emoji.instance().hasEmoji(tag)) {
+        UI.showToast(R.string.CustomTitleEmoji, Toast.LENGTH_SHORT);
+        return false;
+      }
+      tdlib.setChatMemberTag(chatId, tdlib.myUserId(), tag, tagError -> {
+        if (tagError != null) {
+          UI.showError(tagError);
+        }
+      });
+      return true;
+    }, false);
+    input.setMaxLength(TdConstants.MAX_CUSTOM_TITLE_LENGTH);
   }
 
   @Override

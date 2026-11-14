@@ -1468,6 +1468,7 @@
   <item type="id" name="btn_appLogs" />
 
   <item type="id" name="btn_editRights" />
+  <item type="id" name="btn_editMemberTag" />
   <item type="id" name="btn_makePrivate" />
   <item type="id" name="btn_makePublic" />
   <item type="id" name="btn_restrictMember" />
