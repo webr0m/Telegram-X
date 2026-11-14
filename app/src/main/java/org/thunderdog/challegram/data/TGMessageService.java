@@ -2447,7 +2447,7 @@ public final class TGMessageService extends TGMessageServiceImpl {
       getText(
         customEmojiStickerSetChanged.newStickerSetId != 0 ?
           R.string.XChangedGroupEmojiSet :
-          R.string.XRemovedGroupStickerSet,
+          R.string.XRemovedGroupEmojiSet,
         new SenderArgument(sender)
       )
     );
