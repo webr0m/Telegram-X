@@ -147,6 +147,7 @@ import org.thunderdog.challegram.ui.SettingsController;
 import org.thunderdog.challegram.ui.SettingsDataController;
 import org.thunderdog.challegram.ui.SettingsFoldersController;
 import org.thunderdog.challegram.ui.SettingsLanguageController;
+import org.thunderdog.challegram.ui.SettingsLanguageTranslateController;
 import org.thunderdog.challegram.ui.SettingsLogOutController;
 import org.thunderdog.challegram.ui.SettingsNetworkStatsController;
 import org.thunderdog.challegram.ui.SettingsNotificationController;
@@ -4964,14 +4965,19 @@ public class TdlibUi extends Handler {
               break;
             }
             case TdApi.SettingsSectionLanguage.CONSTRUCTOR: {
-              TdApi.SettingsSectionLanguage language = (TdApi.SettingsSectionLanguage) section;
-              switch (language.subsection) {
-                case "": break;
-                case "show-button": break; // for Show Translate Button toggle
-                case "translate-chats": break; // for Translate Entire Chats toggle,
-                case "do-not-translate": break; // for Do Not Translate language list.
+              String subsection = ((TdApi.SettingsSectionLanguage) section).subsection;
+              switch (subsection != null ? subsection : "") {
+                case "show-button":
+                case "translate-chats":
+                case "do-not-translate": {
+                  result = new SettingsLanguageTranslateController(context.context(), context.tdlib());
+                  break;
+                }
+                default: {
+                  result = new SettingsLanguageController(context.context(), context.tdlib());
+                  break;
+                }
               }
-              result = new SettingsLanguageController(context.context(), context.tdlib());
               break;
             }
             case TdApi.SettingsSectionFaq.CONSTRUCTOR: {
