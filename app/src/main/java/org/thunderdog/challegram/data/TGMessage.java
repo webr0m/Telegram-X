@@ -5348,9 +5348,10 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
     }
   }
 
-  public final boolean canViewStatistics () {
+  public final boolean needViewStatistics () {
     TdApi.MessageProperties properties = lastMessageProperties();
-    return properties.canGetStatistics;
+    // canGetStatistics only says getMessageStatistics would answer; needShowStatistics is the menu verdict.
+    return properties.needShowStatistics;
   }
 
   public final boolean canGetViewers () {
