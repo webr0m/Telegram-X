@@ -6549,6 +6549,7 @@
   <string name="TgxBusinessQuickReplyCount">%1$s messages</string>
   <string name="TgxBusinessAddQuickReply">Create Quick Reply</string>
   <string name="TgxBusinessAppendQuickReply">Add Text Message</string>
+  <string name="TgxBusinessRenameQuickReply">Rename Shortcut</string>
   <string name="TgxBusinessQuickReplyMedia">Media or other non-text message.</string>
   <string name="TgxBusinessQuickReplyName">Shortcut Name</string>
   <string name="TgxBusinessQuickReplyNameInvalid">Enter a new shortcut name.</string>

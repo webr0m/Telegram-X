@@ -42,6 +42,7 @@
   <string name="TgxBusinessQuickReplyCount">%1$s mensajes</string>
   <string name="TgxBusinessAddQuickReply">Crear respuesta rápida</string>
   <string name="TgxBusinessAppendQuickReply">Añadir mensaje de texto</string>
+  <string name="TgxBusinessRenameQuickReply">Renombrar acceso directo</string>
   <string name="TgxBusinessQuickReplyMedia">Mensaje multimedia o de otro tipo.</string>
   <string name="TgxBusinessQuickReplyName">Nombre del atajo</string>
   <string name="TgxBusinessQuickReplyNameInvalid">Introduce un nombre de atajo nuevo.</string>

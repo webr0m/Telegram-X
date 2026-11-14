@@ -306,14 +306,64 @@ public final class BusinessSettingsController extends RecyclerViewController<Voi
       if (id == R.id.btn_tgxBusinessAddQuickReply) {
         editShortcut(null);
       } else if (id > 0 && id <= shortcuts.length) {
-        TdApi.QuickReplyShortcut shortcut = shortcuts[id - 1];
-        TdApi.MessageContent content = shortcut.firstMessage != null ? shortcut.firstMessage.content : null;
-        String preview = content instanceof TdApi.MessageText text ? text.text.text :
-          Lang.getString(R.string.TgxBusinessQuickReplyMedia);
-        showConfirm("/" + shortcut.name + "\n" + preview, Lang.getString(R.string.TgxBusinessAppendQuickReply),
-          () -> editShortcut(shortcut));
+        showShortcutActions(shortcuts[id - 1]);
       }
       return true;
+    });
+  }
+
+  private void showShortcutActions (TdApi.QuickReplyShortcut shortcut) {
+    TdApi.MessageContent content = shortcut.firstMessage != null ? shortcut.firstMessage.content : null;
+    String preview = content instanceof TdApi.MessageText text ? text.text.text :
+      Lang.getString(R.string.TgxBusinessQuickReplyMedia);
+    showOptions("/" + shortcut.name + "\n" + preview,
+      new int[] {R.id.btn_tgxBusinessAppendQuickReply, R.id.btn_tgxBusinessRenameQuickReply, R.id.btn_cancel},
+      new String[] {
+        Lang.getString(R.string.TgxBusinessAppendQuickReply),
+        Lang.getString(R.string.TgxBusinessRenameQuickReply),
+        Lang.getString(R.string.Cancel)
+      }, (view, id) -> {
+        if (id == R.id.btn_tgxBusinessAppendQuickReply) {
+          editShortcut(shortcut);
+        } else if (id == R.id.btn_tgxBusinessRenameQuickReply) {
+          renameShortcut(shortcut);
+        }
+        return true;
+      });
+  }
+
+  private void renameShortcut (TdApi.QuickReplyShortcut shortcut) {
+    askText(R.string.TgxBusinessQuickReplyName, shortcut.name, false, name -> {
+      String slug = name.trim();
+      if (slug.isEmpty() || slug.equalsIgnoreCase(shortcut.name)) {
+        return;
+      }
+      if (Arrays.stream(tdlib.quickReplyShortcuts()).anyMatch(other -> other.id != shortcut.id && other.name.equalsIgnoreCase(slug))) {
+        UI.showToast(R.string.TgxBusinessQuickReplyNameInvalid, Toast.LENGTH_SHORT);
+        return;
+      }
+      tdlib.send(new TdApi.CheckQuickReplyShortcutName(slug), (ok, error) -> runOnUiThreadOptional(() -> {
+        if (!isFocused()) {
+          return;
+        }
+        if (error != null) {
+          UI.showError(error);
+          return;
+        }
+        TdApi.QuickReplyShortcut current = Arrays.stream(tdlib.quickReplyShortcuts())
+          .filter(item -> item.id == shortcut.id).findFirst().orElse(null);
+        if (current == null || !current.name.equals(shortcut.name)) {
+          UI.showToast(R.string.TgxBusinessChanged, Toast.LENGTH_SHORT);
+          return;
+        }
+        tdlib.send(new TdApi.SetQuickReplyShortcutName(shortcut.id, slug), (done, changeError) -> runOnUiThreadOptional(() -> {
+          if (changeError != null) {
+            UI.showError(changeError);
+          } else {
+            render();
+          }
+        }));
+      }));
     });
   }
 
