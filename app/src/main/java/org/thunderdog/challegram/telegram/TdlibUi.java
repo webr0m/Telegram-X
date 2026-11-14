@@ -4850,10 +4850,23 @@ public class TdlibUi extends Handler {
                 }
 
                 case "your-color/profile":
+                case "your-color/profile/reset":
+                case "your-color/name": {
+                  ViewController<?> current = context.context().navigation().getCurrentStackItem();
+                  if (current == null || current.tdlib() != tdlib || !tdlib.hasPremium()) {
+                    unsupported.run();
+                  } else if ("your-color/profile/reset".equals(appearance.subsection)) {
+                    setUserProfileAccentColor(-1);
+                  } else if ("your-color/profile".equals(appearance.subsection)) {
+                    showUserProfileAccentColorOptions(current);
+                  } else {
+                    showUserAccentColorOptions(current);
+                  }
+                  break;
+                }
+
                 case "your-color/profile/add-icons":
                 case "your-color/profile/use-gift":
-                case "your-color/profile/reset":
-                case "your-color/name":
                 case "your-color/name/add-icons":
                 case "your-color/name/use-gift":
                 case "app-icon":
