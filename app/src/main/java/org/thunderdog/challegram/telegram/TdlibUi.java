@@ -7205,7 +7205,7 @@ public class TdlibUi extends Handler {
     }
     tdlib.send(new TdApi.GetChatFolder(chatFolderId), (chatFolder, error) -> {
       if (error != null) {
-        UI.showError(chatFolder);
+        UI.showError(error);
       } else {
         addChatsToChatFolderImpl(delegate, chatFolderId, chatFolder, chatIds);
       }
