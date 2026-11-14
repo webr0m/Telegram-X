@@ -5378,7 +5378,17 @@ public class TdlibUi extends Handler {
               result = new TonWalletController(context.context(), tdlib);
               break;
             }
-            case TdApi.SettingsSectionQrCode.CONSTRUCTOR:
+            case TdApi.SettingsSectionQrCode.CONSTRUCTOR: {
+              String subsection = ((TdApi.SettingsSectionQrCode) section).subsection;
+              if ("scan".equals(subsection)) {
+                SettingsSessionsController sessions = new SettingsSessionsController(context.context(), tdlib);
+                sessions.addOneShotFocusListener(() -> sessions.openQrCodeScanner(null));
+                result = sessions;
+              } else {
+                unsupported.run();
+              }
+              break;
+            }
             case TdApi.SettingsSectionSearch.CONSTRUCTOR:
             case TdApi.SettingsSectionPowerSaving.CONSTRUCTOR:
             case TdApi.SettingsSectionSendGift.CONSTRUCTOR:
