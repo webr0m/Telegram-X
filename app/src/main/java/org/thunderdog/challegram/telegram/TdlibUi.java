@@ -4915,7 +4915,19 @@ public class TdlibUi extends Handler {
               break;
             }
             case TdApi.SettingsSectionDevices.CONSTRUCTOR: {
+              String subsection = ((TdApi.SettingsSectionDevices) section).subsection;
               SettingsSessionsController sessions = new SettingsSessionsController(context.context(), context.tdlib());
+              switch (subsection != null ? subsection : "") {
+                case "link-desktop":
+                  sessions.addOneShotFocusListener(() -> sessions.openQrCodeScanner(null));
+                  break;
+                case "terminate-sessions":
+                  sessions.addOneShotFocusListener(sessions::showTerminateAllSessionsAlert);
+                  break;
+                case "auto-terminate":
+                  sessions.addOneShotFocusListener(sessions::showSessionTtlOptions);
+                  break;
+              }
               SettingsWebsitesController websites = new SettingsWebsitesController(context.context(), context.tdlib());
               result = new SimpleViewPagerController(context.context(), context.tdlib(), new ViewController<?>[] {sessions, websites}, new String[] {Lang.uppercase(Lang.getString(R.string.Devices)), Lang.getString(R.string.Websites)}, false);
               break;

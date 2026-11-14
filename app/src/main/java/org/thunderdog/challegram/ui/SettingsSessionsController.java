@@ -595,65 +595,11 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
   public void onClick (View v) {
     final int viewId = v.getId();
     if (viewId == R.id.btn_terminateAllSessions) {
-      showOptions(Lang.getString(R.string.AreYouSureSessions), new int[] {R.id.btn_terminateAllSessions, R.id.btn_cancel}, new String[] {Lang.getString(R.string.TerminateAllSessions), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
-        if (id == R.id.btn_terminateAllSessions) {
-          terminateOtherSessions();
-        }
-        return true;
-      });
+      showTerminateAllSessionsAlert();
     } else if (viewId == R.id.btn_qrLogin) {
-      openInAppCamera(new CameraOpenOptions().anchor(v).noTrace(true).allowSystem(false).optionalMicrophone(true).mode(CameraController.MODE_QR).qrCodeListener(this));
+      openQrCodeScanner(v);
     } else if (viewId == R.id.btn_sessionTtl) {
-      IntList ids = new IntList(4);
-      StringList strings = new StringList(4);
-
-      RunnableInt act = (days) -> {
-        if (days == 0) return;
-        tdlib.setInactiveSessionTtl(days, err -> {
-        });
-      };
-
-      ids.append(R.id.btn_terminateIn1w);
-      strings.append(Lang.plural(R.string.SessionTerminatesInWeeks, 1));
-
-      ids.append(R.id.btn_terminateIn1m);
-      strings.append(Lang.plural(R.string.SessionTerminatesInMonths, 1));
-
-      ids.append(R.id.btn_terminateIn3m);
-      strings.append(Lang.plural(R.string.SessionTerminatesInMonths, 3));
-
-      ids.append(R.id.btn_terminateIn6m);
-      strings.append(Lang.plural(R.string.SessionTerminatesInMonths, 6));
-
-      ids.append(R.id.btn_terminateInCustom);
-      strings.append(Lang.getString(R.string.SessionTerminatesCustom));
-
-      showOptions(null, ids.get(), strings.get(), null, null, (optionItemView, id) -> {
-        int days = 0;
-
-        if (id == R.id.btn_terminateIn1w) {
-          days = 7;
-        } else if (id == R.id.btn_terminateIn1m) {
-          days = 31;
-        } else if (id == R.id.btn_terminateIn3m) {
-          days = 31 * 3;
-        } else if (id == R.id.btn_terminateIn6m) {
-          days = 31 * 6;
-        } else if (id == R.id.btn_terminateInCustom) {
-          openInputAlert(Lang.getString(R.string.SessionTerminatesCustomAlertTitle), Lang.getString(R.string.SessionTerminatesCustomAlertHint), R.string.Done, R.string.Cancel, String.valueOf(inactiveSessionTtlDays), (inputView, result) -> {
-            int data = StringUtils.parseInt(result, -1);
-            if (data < 1 || data > 366)
-              return false;
-
-            act.runWithInt(data);
-            return true;
-          }, true).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
-          return true;
-        }
-
-        act.runWithInt(days);
-        return true;
-      });
+      showSessionTtlOptions();
     } else if (viewId == R.id.btn_currentSession || viewId == R.id.btn_session) {
       Object tag = v.getTag();
       if (tag instanceof TdApi.Session) {
@@ -672,6 +618,72 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
         context.navigation().navigateTo(esc);
       }
     }
+  }
+
+  public void showTerminateAllSessionsAlert () {
+    showOptions(Lang.getString(R.string.AreYouSureSessions), new int[] {R.id.btn_terminateAllSessions, R.id.btn_cancel}, new String[] {Lang.getString(R.string.TerminateAllSessions), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+      if (id == R.id.btn_terminateAllSessions) {
+        terminateOtherSessions();
+      }
+      return true;
+    });
+  }
+
+  public void openQrCodeScanner (View anchor) {
+    openInAppCamera(new CameraOpenOptions().anchor(anchor).noTrace(true).allowSystem(false).optionalMicrophone(true).mode(CameraController.MODE_QR).qrCodeListener(this));
+  }
+
+  public void showSessionTtlOptions () {
+    IntList ids = new IntList(4);
+    StringList strings = new StringList(4);
+
+    RunnableInt act = (days) -> {
+      if (days == 0) return;
+      tdlib.setInactiveSessionTtl(days, err -> {
+      });
+    };
+
+    ids.append(R.id.btn_terminateIn1w);
+    strings.append(Lang.plural(R.string.SessionTerminatesInWeeks, 1));
+
+    ids.append(R.id.btn_terminateIn1m);
+    strings.append(Lang.plural(R.string.SessionTerminatesInMonths, 1));
+
+    ids.append(R.id.btn_terminateIn3m);
+    strings.append(Lang.plural(R.string.SessionTerminatesInMonths, 3));
+
+    ids.append(R.id.btn_terminateIn6m);
+    strings.append(Lang.plural(R.string.SessionTerminatesInMonths, 6));
+
+    ids.append(R.id.btn_terminateInCustom);
+    strings.append(Lang.getString(R.string.SessionTerminatesCustom));
+
+    showOptions(null, ids.get(), strings.get(), null, null, (optionItemView, id) -> {
+      int days = 0;
+
+      if (id == R.id.btn_terminateIn1w) {
+        days = 7;
+      } else if (id == R.id.btn_terminateIn1m) {
+        days = 31;
+      } else if (id == R.id.btn_terminateIn3m) {
+        days = 31 * 3;
+      } else if (id == R.id.btn_terminateIn6m) {
+        days = 31 * 6;
+      } else if (id == R.id.btn_terminateInCustom) {
+        openInputAlert(Lang.getString(R.string.SessionTerminatesCustomAlertTitle), Lang.getString(R.string.SessionTerminatesCustomAlertHint), R.string.Done, R.string.Cancel, String.valueOf(inactiveSessionTtlDays), (inputView, result) -> {
+          int data = StringUtils.parseInt(result, -1);
+          if (data < 1 || data > 366)
+            return false;
+
+          act.runWithInt(data);
+          return true;
+        }, true).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+        return true;
+      }
+
+      act.runWithInt(days);
+      return true;
+    });
   }
 
   @Override
