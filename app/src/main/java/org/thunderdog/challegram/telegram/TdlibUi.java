@@ -2047,7 +2047,7 @@ public class TdlibUi extends Handler {
     if (TD.isBot(user)) {
       String text = Lang.getString(R.string.ShareTextLink, name, url);
       ShareController c = new ShareController(context.context(), context.tdlib());
-      c.setArguments(new ShareController.Args(text).setShare(Lang.getString(R.string.ShareTextBotLink, url), Lang.getString(R.string.ShareBtnBot)));
+      c.setArguments(new ShareController.Args(text).setShare(Lang.getString(R.string.ShareTextBotLink, name, url), Lang.getString(R.string.ShareBtnBot)));
       c.show();
     } else {
       ShareController c = new ShareController(context.context(), context.tdlib());
