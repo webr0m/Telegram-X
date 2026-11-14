@@ -140,6 +140,7 @@ import org.thunderdog.challegram.ui.ProfileController;
 import org.thunderdog.challegram.ui.RequestController;
 import org.thunderdog.challegram.ui.SettingHolder;
 import org.thunderdog.challegram.ui.Settings2FAController;
+import org.thunderdog.challegram.ui.SettingsArchiveChatListController;
 import org.thunderdog.challegram.ui.SettingsBlockedController;
 import org.thunderdog.challegram.ui.SettingsCacheController;
 import org.thunderdog.challegram.ui.SettingsController;
@@ -5145,9 +5146,12 @@ public class TdlibUi extends Handler {
                   break;
                 }
                 case "messages/set-price":
-                case "messages/exceptions":
-                  unsupported.run();
+                case "messages/exceptions": {
+                  SettingsPrivacyKeyController c = new SettingsPrivacyKeyController(context.context(), tdlib);
+                  c.setArguments(SettingsPrivacyKeyController.Args.newChatsPrivacy());
+                  result = c;
                   break;
+                }
 
                 case "auto-delete": {
                   SettingsPrivacyController privacy = new SettingsPrivacyController(context.context(), tdlib);
@@ -5189,8 +5193,12 @@ public class TdlibUi extends Handler {
                 case "data-settings/link-previews":
                 case "data-settings/bot-settings":
                 case "data-settings/map-provider":
-                case "archive-and-mute":
                   break;
+
+                case "archive-and-mute": {
+                  result = new SettingsArchiveChatListController(context.context(), tdlib);
+                  break;
+                }
 
                 case "":
                 default: {
