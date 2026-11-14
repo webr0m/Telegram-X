@@ -12747,7 +12747,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
           TdApi.FormattedText caption = file.getCaption(true, !disableMarkdown);
 
           if (asFiles) {
-            content = tdlib.filegen().createThumbnail(new TdApi.InputMessageDocument(new TdApi.InputDocument(inputFile, null, false), caption), isSecretChat);
+            // Without this the server re-detects the media type and the message stops being a file.
+            content = tdlib.filegen().createThumbnail(new TdApi.InputMessageDocument(new TdApi.InputDocument(inputFile, null, true), caption), isSecretChat);
           } else {
             content = tdlib.filegen().createThumbnail(new TdApi.InputMessagePhoto(new TdApi.InputPhoto(inputFile, null, null, null, width, height), caption, showCaptionAboveMedia, file.getSelfDestructType(), hasSpoiler), isSecretChat);
           }

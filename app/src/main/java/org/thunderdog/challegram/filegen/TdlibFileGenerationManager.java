@@ -1600,6 +1600,10 @@ public final class TdlibFileGenerationManager {
       case TdApi.InputMessageDocument.CONSTRUCTOR: {
         TdApi.InputMessageDocument inputMessageDocument = (TdApi.InputMessageDocument) content;
         TdApi.InputDocument document = inputMessageDocument.document;
+        if (isSecret && !document.disableContentTypeDetection) {
+          // TDLib requires files sent to secret chats to never go through content type detection.
+          document.disableContentTypeDetection = true;
+        }
         if (document.thumbnail == null) {
           TdApi.InputFileGenerated thumbnail = newThumbnailFile(document.document, file, (originalPath, originalConversion) -> {
             String mimeType = U.resolveMimeType(originalPath);
