@@ -5296,9 +5296,15 @@ public class TdlibUi extends Handler {
               switch (subsection != null ? subsection : "") {
                 case "storage", "storage/edit", "storage/auto-remove", "storage/clear-cache", "storage/max-cache" ->
                   result = new SettingsCacheController(context.context(), tdlib);
-                case "usage", "usage/reset" -> {
+                case "usage" -> {
                   SettingsDataController usage = new SettingsDataController(context.context(), tdlib);
                   usage.setArguments(new SettingsDataController.Args(SettingsDataController.MODE_STATISTICS));
+                  result = usage;
+                }
+                case "usage/reset" -> {
+                  SettingsDataController usage = new SettingsDataController(context.context(), tdlib);
+                  usage.setArguments(new SettingsDataController.Args(SettingsDataController.MODE_STATISTICS));
+                  usage.addOneShotFocusListener(usage::showResetNetworkStatsAlert);
                   result = usage;
                 }
                 case "usage/mobile", "usage/roaming", "usage/wifi" -> {

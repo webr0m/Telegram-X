@@ -474,29 +474,33 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
     }
   }
 
+  public void showResetNetworkStatsAlert () {
+    showOptions(Lang.getString(R.string.ResetStatsHint), new int[] {R.id.btn_delete, R.id.btn_cancel}, new String[] {Lang.getString(R.string.Reset), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (itemView, optionId) -> {
+      if (optionId == R.id.btn_delete) {
+        tdlib.client().send(new TdApi.ResetNetworkStatistics(), object -> {
+          switch (object.getConstructor()) {
+            case TdApi.Ok.CONSTRUCTOR: {
+              tdlib.client().send(new TdApi.GetNetworkStatistics(), SettingsDataController.this);
+              break;
+            }
+            case TdApi.Error.CONSTRUCTOR: {
+              UI.showError(object);
+              break;
+            }
+          }
+        });
+      }
+      return true;
+    });
+  }
+
   @Override
   public void onClick (View v) {
     final int id = v.getId();
     final boolean toggleResult = adapter.toggleView(v);
 
     if (id == R.id.btn_resetNetworkStats) {
-      showOptions(Lang.getString(R.string.ResetStatsHint), new int[] {R.id.btn_delete, R.id.btn_cancel}, new String[] {Lang.getString(R.string.Reset), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_forever_24, R.drawable.baseline_cancel_24}, (itemView, optionId) -> {
-        if (optionId == R.id.btn_delete) {
-          tdlib.client().send(new TdApi.ResetNetworkStatistics(), object -> {
-            switch (object.getConstructor()) {
-              case TdApi.Ok.CONSTRUCTOR: {
-                tdlib.client().send(new TdApi.GetNetworkStatistics(), SettingsDataController.this);
-                break;
-              }
-              case TdApi.Error.CONSTRUCTOR: {
-                UI.showError(object);
-                break;
-              }
-            }
-          });
-        }
-        return true;
-      });
+      showResetNetworkStatsAlert();
     } else if (id == R.id.btn_storageUsage) {
       SettingsCacheController cacheController = new SettingsCacheController(context, tdlib);
       cacheController.setArguments(this);
