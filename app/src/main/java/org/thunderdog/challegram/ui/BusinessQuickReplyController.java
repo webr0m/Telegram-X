@@ -19,6 +19,7 @@ package org.thunderdog.challegram.ui;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.text.InputType;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Toast;
@@ -177,6 +178,9 @@ final class BusinessQuickReplyController extends RecyclerViewController<Void> im
           Lang.getString(R.string.TgxBusinessQuickReplySendSelected, Lang.formatNumber(selected.size()))));
         rows.add(new ListItem(ListItem.TYPE_BUTTON, R.id.btn_tgxQuickReplyDeleteSelected, 0,
           Lang.getString(R.string.TgxBusinessQuickReplyDeleteSelected, Lang.formatNumber(selected.size()))));
+        if (editableTextMessage() != null) {
+          rows.add(new ListItem(ListItem.TYPE_BUTTON, R.id.btn_tgxQuickReplyEditSelected, 0, R.string.TgxBusinessQuickReplyEditSelected));
+        }
       }
     }
     adapter.setItems(rows, false);
@@ -225,7 +229,62 @@ final class BusinessQuickReplyController extends RecyclerViewController<Void> im
       }
       showConfirm(Lang.getString(R.string.TgxBusinessQuickReplyDeleteConfirm, Lang.formatNumber(messageIds.length)),
         Lang.getString(R.string.Delete), () -> deleteMessages(messageIds));
+    } else if (messages != null && id == R.id.btn_tgxQuickReplyEditSelected) {
+      TdApi.QuickReplyMessage message = editableTextMessage();
+      if (message != null) {
+        editTextMessage(message);
+      }
     }
+  }
+
+  private TdApi.QuickReplyMessage editableTextMessage () {
+    if (messages == null || selected.size() != 1) {
+      return null;
+    }
+    long id = selected.iterator().next();
+    for (TdApi.QuickReplyMessage message : messages) {
+      if (message.id == id) {
+        // The input of this screen is plain text, so formatted messages stay untouched
+        return message.canBeEdited && message.content instanceof TdApi.MessageText text && text.text.entities.length == 0 ? message : null;
+      }
+    }
+    return null;
+  }
+
+  private void editTextMessage (TdApi.QuickReplyMessage message) {
+    TdApi.MessageText current = (TdApi.MessageText) message.content;
+    var input = openInputAlert(Lang.getString(R.string.TgxBusinessQuickReplyMessage), Lang.getString(R.string.TgxBusinessQuickReplyMessage),
+      R.string.Done, R.string.Cancel, current.text.text, (view, value) -> {
+        if (value == null || value.trim().isEmpty()) {
+          UI.showToast(R.string.TgxBusinessQuickReplyTextEmpty, Toast.LENGTH_SHORT);
+          return false;
+        }
+        TdApi.FormattedText text = new TdApi.FormattedText(value, new TdApi.TextEntity[0]);
+        editMessage(message.id, new TdApi.InputMessageText(text, current.linkPreviewOptions, false));
+        return true;
+      }, true);
+    input.getEditText().setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_MULTI_LINE);
+    input.getEditText().setMaxLines(8);
+  }
+
+  private void editMessage (long messageId, TdApi.InputMessageContent content) {
+    if (!current() || sending || messages == null) {
+      return;
+    }
+    sending = true;
+    render();
+    tdlib.send(new TdApi.EditQuickReplyMessage(shortcutId, messageId, content), (ok, error) -> runOnUiThreadOptional(() -> {
+      sending = false;
+      if (!current()) {
+        return;
+      }
+      if (error != null) {
+        UI.showError(error);
+        render();
+      } else {
+        load();
+      }
+    }));
   }
 
   private void deleteMessages (long[] messageIds) {
