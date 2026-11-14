@@ -5907,6 +5907,28 @@ public class MessagesController extends ViewController<MessagesController.Argume
       .build();
   }
 
+  @Nullable
+  private static OptionItem readDateItem (Tdlib tdlib, TdApi.MessageReadDate readDate) {
+    switch (readDate.getConstructor()) {
+      case TdApi.MessageReadDateRead.CONSTRUCTOR:
+        return readItem(tdlib, ((TdApi.MessageReadDateRead) readDate).readDate);
+      case TdApi.MessageReadDateMyPrivacyRestricted.CONSTRUCTOR:
+        return new OptionItem.Builder()
+          .name(R.string.TgxReadDateHiddenByYou)
+          .icon(R.drawable.baseline_eye_off_24)
+          .color(OptionColor.LIGHT)
+          .build();
+      case TdApi.MessageReadDateUnread.CONSTRUCTOR:
+      case TdApi.MessageReadDateTooOld.CONSTRUCTOR:
+      case TdApi.MessageReadDateUserPrivacyRestricted.CONSTRUCTOR:
+        return null;
+      default: {
+        Td.assertMessageReadDate_5a6e5fbf();
+        throw Td.unsupported(readDate);
+      }
+    }
+  }
+
   public void showMessageOptions (MessageContext messageContext, int[] ids, String[] options, int[] icons) {
     final TGMessage msg = messageContext.message;
     SpannableStringBuilder b = new SpannableStringBuilder();
@@ -6000,7 +6022,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
           TdApi.MessageReadDate readDate = msg.getReadDate();
 
           if (shown.getAndSet(true)) {
-            if (!expectAgain && readDate != null && readDate.getConstructor() == TdApi.MessageReadDateRead.CONSTRUCTOR) {
+            if (!expectAgain && readDate != null && readDateItem(tdlib, readDate) != null) {
               RunnableData<TdApi.MessageReadDate> act = inject.get();
               if (act != null) {
                 act.runWithData(readDate);
@@ -6014,24 +6036,9 @@ public class MessagesController extends ViewController<MessagesController.Argume
             .info(StringUtils.isEmpty(text) ? null : text)
             .items(ids, options, null, icons);
           if (readDate != null) {
-            switch (readDate.getConstructor()) {
-              case TdApi.MessageReadDateRead.CONSTRUCTOR: {
-                int date = ((TdApi.MessageReadDateRead) readDate).readDate;
-                messageOptionsBuilder.subtitle(readItem(tdlib, date));
-                break;
-              }
-              // Nothing to show
-              case TdApi.MessageReadDateUnread.CONSTRUCTOR:
-              case TdApi.MessageReadDateTooOld.CONSTRUCTOR:
-              case TdApi.MessageReadDateUserPrivacyRestricted.CONSTRUCTOR:
-              // TODO?: "View read date by allowing X to see yours or by subscribing to Telegram Premium."
-              case TdApi.MessageReadDateMyPrivacyRestricted.CONSTRUCTOR: {
-                break;
-              }
-              default: {
-                Td.assertMessageReadDate_5a6e5fbf();
-                throw Td.unsupported(readDate);
-              }
+            OptionItem item = readDateItem(tdlib, readDate);
+            if (item != null) {
+              messageOptionsBuilder.subtitle(item);
             }
           }
           Options messageOptions = messageOptionsBuilder.build();
@@ -6039,8 +6046,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             PopupLayout popupLayout = showMessageOptions(messageOptions, messageContext.message, null, messageHandler);
             if (expectAgain && popupLayout != null) {
               inject.set((loadedReadDate) -> {
-                if (!popupLayout.isDestroyed() && loadedReadDate.getConstructor() == TdApi.MessageReadDateRead.CONSTRUCTOR) {
-                  OptionItem item = readItem(tdlib, ((TdApi.MessageReadDateRead) loadedReadDate).readDate);
+                OptionItem item = readDateItem(tdlib, loadedReadDate);
+                if (!popupLayout.isDestroyed() && item != null) {
                   messageOptionsBuilder.subtitle(item);
                   MessageOptionsController c = ((MessageOptionsPagerController) popupLayout.getBoundController()).findOptionsController();
                   if (c != null) {
@@ -6055,8 +6062,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             patchUsedEmojiPacks(popupLayout, messageContext);
             if (expectAgain && popupLayout != null) {
               inject.set((loadedReadDate) -> {
-                if (!popupLayout.isDestroyed() && loadedReadDate.getConstructor() == TdApi.MessageReadDateRead.CONSTRUCTOR) {
-                  OptionItem item = readItem(tdlib, ((TdApi.MessageReadDateRead) loadedReadDate).readDate);
+                OptionItem item = readDateItem(tdlib, loadedReadDate);
+                if (!popupLayout.isDestroyed() && item != null) {
                   ((OptionsLayout) popupLayout.getBoundView()).setSubtitle(item);
                 }
               });
