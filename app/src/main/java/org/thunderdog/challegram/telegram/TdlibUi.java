@@ -2116,13 +2116,22 @@ public class TdlibUi extends Handler {
           UI.showToast(R.string.YouCantInviteMembers, Toast.LENGTH_SHORT);
           return false;
         }
-        if (chat.type.getConstructor() == TdApi.ChatTypePrivate.CONSTRUCTOR) {
-          tdlib.send(new TdApi.AddChatMember(chat.id, userId, 0), tdlib.errorHandler());
+        TdApi.Function<TdApi.FailedToAddMembers> request;
+        if (chat.type.getConstructor() == TdApi.ChatTypeBasicGroup.CONSTRUCTOR) {
+          request = new TdApi.AddChatMember(chat.id, userId, 0);
         } else if (chat.type.getConstructor() == TdApi.ChatTypeSupergroup.CONSTRUCTOR) {
-          tdlib.send(new TdApi.AddChatMembers(chat.id, new long[] {userId}), tdlib.errorHandler());
+          request = new TdApi.AddChatMembers(chat.id, new long[] {userId});
         } else {
           return false;
         }
+        // Both requests answer FailedToAddMembers and resolve without an error when the invitee refused
+        tdlib.send(request, (failedToAddMembers, error) -> {
+          if (error != null) {
+            UI.showError(error);
+          } else if (failedToAddMembers.failedToAddMembers.length > 0) {
+            UI.showToast(TD.memberStatusChangeError(tdlib, null, failedToAddMembers.failedToAddMembers[0]), Toast.LENGTH_SHORT);
+          }
+        });
         return true;
       }
 
