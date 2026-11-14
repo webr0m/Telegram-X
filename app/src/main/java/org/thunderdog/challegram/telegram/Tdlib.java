@@ -927,6 +927,13 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         if (after != null)
           after.run();
       } else {
+        // region @MadeByLLM("gpt-6", id = "stars-development")
+        ownedStarAmount = null;
+        ownedGramAmount = null;
+        tonWalletState = null;
+        tonGaslessTransfers = null;
+        activeGiftAuctions = new TdApi.GiftAuctionState[0];
+        // endregion
         incrementJobReferenceCount(JOB_ID_CLEAN_UP);
         deleteAllFiles(success -> {
           if (success) {
@@ -9576,15 +9583,86 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     // TODO ?
   }
 
+  // region @MadeByLLM("gpt-6", id = "stars-development")
+  private volatile TdApi.GiftAuctionState[] activeGiftAuctions = new TdApi.GiftAuctionState[0];
+  private final java.util.concurrent.CopyOnWriteArrayList<RunnableData<TdApi.GiftAuctionState>> giftAuctionListeners =
+    new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public TdApi.GiftAuctionState[] activeGiftAuctions () {
+    return activeGiftAuctions.clone();
+  }
+
+  public void addGiftAuctionListener (RunnableData<TdApi.GiftAuctionState> listener) {
+    giftAuctionListeners.addIfAbsent(listener);
+  }
+
+  public void removeGiftAuctionListener (RunnableData<TdApi.GiftAuctionState> listener) {
+    giftAuctionListeners.remove(listener);
+  }
+
+  private volatile TdApi.StarAmount ownedStarAmount;
+  private final java.util.concurrent.CopyOnWriteArrayList<RunnableData<TdApi.StarAmount>> starAmountListeners =
+    new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public TdApi.StarAmount ownedStarAmount () {
+    return ownedStarAmount;
+  }
+
+  public void addStarAmountListener (RunnableData<TdApi.StarAmount> listener) {
+    starAmountListeners.addIfAbsent(listener);
+  }
+
+  public void removeStarAmountListener (RunnableData<TdApi.StarAmount> listener) {
+    starAmountListeners.remove(listener);
+  }
+
   @TdlibThread
   private void updateOwnedStarCount (TdApi.UpdateOwnedStarCount update) {
-    // TODO(stars)
+    ownedStarAmount = update.starAmount;
+    for (RunnableData<TdApi.StarAmount> listener : starAmountListeners) {
+      listener.runWithData(update.starAmount);
+    }
+  }
+
+  public interface TonConnectSessionListener {
+    void onTonConnectSessionChanged (TdApi.TonConnectSession session);
+  }
+
+  private final java.util.concurrent.CopyOnWriteArrayList<TonConnectSessionListener> tonConnectListeners =
+    new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public void addTonConnectSessionListener (TonConnectSessionListener listener) {
+    tonConnectListeners.addIfAbsent(listener);
+  }
+
+  public void removeTonConnectSessionListener (TonConnectSessionListener listener) {
+    tonConnectListeners.remove(listener);
+  }
+
+  private volatile Long ownedGramAmount;
+  private volatile TdApi.TonWalletState tonWalletState;
+  private volatile TdApi.TonWalletGaslessTransfersInfo tonGaslessTransfers;
+  private final java.util.concurrent.CopyOnWriteArrayList<Runnable> tonWalletListeners = new java.util.concurrent.CopyOnWriteArrayList<>();
+
+  public Long ownedGramAmount () { return ownedGramAmount; }
+  public TdApi.TonWalletState tonWalletState () { return tonWalletState; }
+  public TdApi.TonWalletGaslessTransfersInfo tonGaslessTransfers () { return tonGaslessTransfers; }
+  public void addTonWalletListener (Runnable listener) { tonWalletListeners.addIfAbsent(listener); }
+  public void removeTonWalletListener (Runnable listener) { tonWalletListeners.remove(listener); }
+
+  private void notifyTonWalletListeners () {
+    for (Runnable listener : tonWalletListeners) {
+      listener.run();
+    }
   }
 
   @TdlibThread
   private void updateOwnedGramCount (TdApi.UpdateOwnedGramCount update) {
-    // TODO(gram)
+    ownedGramAmount = update.gramAmount;
+    notifyTonWalletListeners();
   }
+
+  // endregion
 
   @TdlibThread
   private void updateOption (ClientHolder context, TdApi.UpdateOption update) {
@@ -9592,6 +9670,15 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
     final String name = update.name;
     switch (name) {
+      // region @MadeByLLM("gpt-6", id = "stars-development")
+      case "gram_top_up_url":
+      case "ton_blockchain_explorer_url":
+      case "can_use_ton_wallet":
+        if (updateResult == TdlibOptions.UpdateResult.VALUE_UPDATED) {
+          notifyTonWalletListeners();
+        }
+        break;
+      // endregion
       case "version":
         context().setTdlibVersion(Td.stringValue(update.value));
         break;
@@ -10542,16 +10629,37 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         break;
       }
 
-      case TdApi.UpdateLiveStoryTopDonors.CONSTRUCTOR:
-      case TdApi.UpdateGiftAuctionState.CONSTRUCTOR:
+      // region @MadeByLLM("gpt-6", id = "stars-development")
+      case TdApi.UpdateGiftAuctionState.CONSTRUCTOR: {
+        TdApi.GiftAuctionState state = ((TdApi.UpdateGiftAuctionState) update).state;
+        for (RunnableData<TdApi.GiftAuctionState> listener : giftAuctionListeners) {
+          listener.runWithData(state);
+        }
+        break;
+      }
       case TdApi.UpdateActiveGiftAuctions.CONSTRUCTOR:
+        activeGiftAuctions = ((TdApi.UpdateActiveGiftAuctions) update).states.clone();
+        break;
+      case TdApi.UpdateTonWalletState.CONSTRUCTOR:
+        tonWalletState = ((TdApi.UpdateTonWalletState) update).state;
+        notifyTonWalletListeners();
+        break;
+      case TdApi.UpdateTonWalletGaslessTransfersInfo.CONSTRUCTOR:
+        tonGaslessTransfers = ((TdApi.UpdateTonWalletGaslessTransfersInfo) update).info;
+        notifyTonWalletListeners();
+        break;
+      case TdApi.UpdateTonWalletTonConnectSession.CONSTRUCTOR:
+        TdApi.TonConnectSession session = ((TdApi.UpdateTonWalletTonConnectSession) update).session;
+        for (TonConnectSessionListener listener : tonConnectListeners) {
+          listener.onTonConnectSessionChanged(session);
+        }
+        break;
+      // endregion
+      case TdApi.UpdateLiveStoryTopDonors.CONSTRUCTOR:
       case TdApi.UpdateStakeDiceState.CONSTRUCTOR:
       case TdApi.UpdateNewOauthRequest.CONSTRUCTOR:
       case TdApi.UpdateTextCompositionStyles.CONSTRUCTOR:
       case TdApi.UpdateAllowedBotUsernamePremiumSuffixes.CONSTRUCTOR:
-      case TdApi.UpdateTonWalletGaslessTransfersInfo.CONSTRUCTOR:
-      case TdApi.UpdateTonWalletState.CONSTRUCTOR:
-      case TdApi.UpdateTonWalletTonConnectSession.CONSTRUCTOR:
       case TdApi.UpdateTonWalletTonConnectSessionDisconnectRequired.CONSTRUCTOR:
       case TdApi.UpdateWebProxyCarrierOpened.CONSTRUCTOR:
       case TdApi.UpdateWebProxyCarrierData.CONSTRUCTOR:
