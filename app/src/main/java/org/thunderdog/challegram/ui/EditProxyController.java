@@ -51,6 +51,8 @@ import me.vkryl.android.text.AcceptFilter;
 import me.vkryl.android.widget.FrameLayoutFix;
 import me.vkryl.core.StringUtils;
 
+import tgx.td.Td;
+
 public class EditProxyController extends EditBaseController<EditProxyController.Args> implements SettingsAdapter.TextChangeListener, Menu, View.OnClickListener {
   public static final int MODE_SOCKS5 = 1;
   public static final int MODE_MTPROTO = 2;
@@ -295,8 +297,30 @@ public class EditProxyController extends EditBaseController<EditProxyController.
 
   private void addProxy (@NonNull TdApi.Proxy proxy) {
     setInProgress(true);
-    // Calling TDLib method just to validate input
-    tdlib.send(new TdApi.AddProxy(proxy, false, ""), (addedProxy, error) -> runOnUiThreadOptional(() -> {
+    Settings.Proxy existing = getArgumentsStrict().existingProxy;
+    if (existing != null && existing.proxy != null) {
+      // AddProxy would keep the old entry in TDLib, so the proxy has to be edited through its own identifier
+      tdlib.send(new TdApi.GetProxies(), (proxies, error) -> runOnUiThreadOptional(() -> {
+        TdApi.AddedProxy found = null;
+        if (proxies != null) {
+          for (TdApi.AddedProxy added : proxies.proxies) {
+            if (Td.equalsTo(added.proxy, existing.proxy)) {
+              found = added;
+              break;
+            }
+          }
+        }
+        sendProxyRequest(found != null ?
+          new TdApi.EditProxy(found.id, proxy, found.isEnabled, found.comment) :
+          new TdApi.AddProxy(proxy, false, ""), proxy);
+      }));
+    } else {
+      sendProxyRequest(new TdApi.AddProxy(proxy, false, ""), proxy);
+    }
+  }
+
+  private void sendProxyRequest (TdApi.Function<TdApi.AddedProxy> request, TdApi.Proxy proxy) {
+    tdlib.send(request, (addedProxy, error) -> runOnUiThreadOptional(() -> {
       setInProgress(false);
       if (error != null) {
         String errorText = TD.toErrorString(error);
