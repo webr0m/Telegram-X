@@ -12463,6 +12463,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR:
       case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
       case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
+      case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
       case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR: {
         return true;
@@ -12532,7 +12533,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     ResolvableProblem.CHECK_PHONE_NUMBER,
     ResolvableProblem.SET_BIRTHDATE,
     ResolvableProblem.SET_LOGIN_EMAIL,
-    ResolvableProblem.CALLS
+    ResolvableProblem.CALLS,
+    ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS
   })
   public @interface ResolvableProblem {
     int
@@ -12543,7 +12545,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       CHECK_PHONE_NUMBER = 4,
       SET_BIRTHDATE = 5,
       SET_LOGIN_EMAIL = 6,
-      CALLS = 7;
+      CALLS = 7,
+      ARCHIVE_AND_MUTE_NEW_CHATS = 8;
   }
 
   @ResolvableProblem
@@ -12572,6 +12575,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
           return ResolvableProblem.SET_BIRTHDATE;
         case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR:
           return ResolvableProblem.SET_LOGIN_EMAIL;
+        case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
+          return ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS;
         default:
           Td.assertSuggestedAction_17e8d183();
           throw Td.unsupported(singleAction);

@@ -656,6 +656,9 @@ public class SettingsController extends ViewController<Void> implements
             case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
               view.setText(obtainWrapper(Lang.getString(R.string.TgxSuggestedSetPasswordText), action.getConstructor()));
               break;
+            case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
+              view.setText(obtainWrapper(Lang.getString(R.string.ArchiveNonContactsInfo), action.getConstructor()));
+              break;
             case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
               view.setText(obtainWrapper(Lang.getString(R.string.ReminderSetBirthdateText), action.getConstructor()));
               break;
@@ -987,6 +990,9 @@ public class SettingsController extends ViewController<Void> implements
         break;
       case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
         item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.mrgrigri_baseline_textbox_password_24, R.string.SetAdditionalPassword);
+        break;
+      case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
+        item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_archive_24, R.string.UnknownChats);
         break;
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
         item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_cake_variant_24, R.string.ReminderSetBirthdate);
@@ -1451,6 +1457,10 @@ public class SettingsController extends ViewController<Void> implements
       }
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR: {
         tdlib.ui().openBirthdateEditor(this, suggestionView, TdlibUi.BirthdateOpenOrigin.SUGGESTED_ACTION);
+        return;
+      }
+      case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR: {
+        navigateTo(new SettingsArchiveChatListController(context, tdlib));
         return;
       }
       case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR: {
