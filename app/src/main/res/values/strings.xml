@@ -6784,6 +6784,7 @@
   <string name="SavedMessagesPinTopic">Pin topic</string>
   <string name="SavedMessagesUnpinTopic">Unpin topic</string>
   <string name="SavedMessagesDeleteTopic">Delete saved messages in this topic</string>
+  <string name="SavedMessagesDeleteTopicByDate">Delete saved messages by date range</string>
   <string name="SavedMessagesDeleteTopicConfirm">Permanently delete the saved messages in %1$s?</string>
   <string name="SavedMessagesTopicChanged">This topic changed. Open its options again.</string>
   <string name="SavedBirthdateSuggestion">Suggested birthday: **%1$s**.</string>

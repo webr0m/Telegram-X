@@ -1111,8 +1111,8 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
       return;
     }
     int label = expected.isPinned ? R.string.SavedMessagesUnpinTopic : R.string.SavedMessagesPinTopic;
-    showOptions(title(expected), new int[] {1, 2, R.id.btn_cancel},
-      new String[] {Lang.getString(label), Lang.getString(R.string.SavedMessagesDeleteTopic), Lang.getString(R.string.Cancel)},
+    showOptions(title(expected), new int[] {1, 2, 3, R.id.btn_cancel},
+      new String[] {Lang.getString(label), Lang.getString(R.string.SavedMessagesDeleteTopic), Lang.getString(R.string.SavedMessagesDeleteTopicByDate), Lang.getString(R.string.Cancel)},
       (view, id) -> {
         if (id == 1) {
           mutateTopic(expected, false);
@@ -1123,9 +1123,82 @@ final class SavedMessagesTopicsController extends RecyclerViewController<Void> i
                 () -> mutateTopic(expected, true));
             }
           });
+        } else if (id == 3) {
+          tdlib.ui().post(() -> showTopicDeleteFromRange(expected));
         }
         return true;
       });
+  }
+
+  private void showTopicDeleteFromRange (TdApi.SavedMessagesTopic expected) {
+    if (!isFocused() || !currentAccount()) {
+      return;
+    }
+    Calendar now = Calendar.getInstance();
+    DatePickerDialog fromDialog = new DatePickerDialog(context(), Theme.dialogTheme(), (view, year, month, dayOfMonth) ->
+      showTopicDeleteToRange(expected, toStartOfDay(year, month, dayOfMonth)),
+      now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH)
+    );
+    fromDialog.setTitle(Lang.getString(R.string.ClearHistoryFrom));
+    fromDialog.getDatePicker().setMaxDate(now.getTimeInMillis());
+    ViewSupport.showDatePicker(fromDialog);
+  }
+
+  private void showTopicDeleteToRange (TdApi.SavedMessagesTopic expected, int minDate) {
+    Calendar now = Calendar.getInstance();
+    DatePickerDialog toDialog = new DatePickerDialog(context(), Theme.dialogTheme(), (view, year, month, dayOfMonth) -> {
+      int maxDate = toEndOfDay(year, month, dayOfMonth);
+      showOptions(Lang.getString(R.string.ClearHistoryByDateConfirm,
+        Lang.getDatestamp(minDate, TimeUnit.SECONDS), Lang.getDatestamp(maxDate, TimeUnit.SECONDS)),
+        new int[] {R.id.btn_delete, R.id.btn_cancel},
+        new String[] {Lang.getString(R.string.Delete), Lang.getString(R.string.Cancel)},
+        new int[] {OptionColor.RED, OptionColor.NORMAL},
+        new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+          if (id == R.id.btn_delete) {
+            deleteTopicRange(expected, minDate, maxDate);
+          }
+          return true;
+        });
+    }, now.get(Calendar.YEAR), now.get(Calendar.MONTH), now.get(Calendar.DAY_OF_MONTH));
+    toDialog.setTitle(Lang.getString(R.string.ClearHistoryTo));
+    toDialog.getDatePicker().setMinDate((long) minDate * 1000L);
+    toDialog.getDatePicker().setMaxDate(now.getTimeInMillis());
+    ViewSupport.showDatePicker(toDialog);
+  }
+
+  private void deleteTopicRange (TdApi.SavedMessagesTopic expected, int minDate, int maxDate) {
+    if (saving || !isFocused() || !currentAccount()) {
+      return;
+    }
+    if (!sameTopic(expected, tdlib.savedMessagesTopic(topicId))) {
+      UI.showToast(R.string.SavedMessagesTopicChanged, Toast.LENGTH_SHORT);
+      return;
+    }
+    saving = true;
+    render();
+    tdlib.send(new TdApi.DeleteSavedMessagesTopicMessagesByDate(topicId, minDate, maxDate), (ok, error) -> runOnUiThreadOptional(() -> {
+      saving = false;
+      if (currentAccount() && isFocused()) {
+        if (error != null) {
+          UI.showError(error);
+        }
+        render();
+      }
+    }));
+  }
+
+  private static int toStartOfDay (int year, int month, int dayOfMonth) {
+    Calendar c = Calendar.getInstance();
+    c.set(year, month, dayOfMonth, 0, 0, 0);
+    c.set(Calendar.MILLISECOND, 0);
+    return (int) (c.getTimeInMillis() / 1000L);
+  }
+
+  private static int toEndOfDay (int year, int month, int dayOfMonth) {
+    Calendar c = Calendar.getInstance();
+    c.set(year, month, dayOfMonth, 23, 59, 59);
+    c.set(Calendar.MILLISECOND, 0);
+    return (int) (c.getTimeInMillis() / 1000L);
   }
 
   static boolean sameTopic (TdApi.SavedMessagesTopic expected, TdApi.SavedMessagesTopic current) {
