@@ -678,7 +678,7 @@ public class ContentPreview {
         switch (reason.getConstructor()) {
           case TdApi.BotWriteAccessAllowReasonConnectedWebsite.CONSTRUCTOR: {
             TdApi.BotWriteAccessAllowReasonConnectedWebsite connectedWebsite = (TdApi.BotWriteAccessAllowReasonConnectedWebsite) reason;
-            text = Lang.getStringBold(R.string.BotWebappAllowed, connectedWebsite.domainName);
+            text = Lang.getStringBold(R.string.BotWebsiteAllowed, connectedWebsite.domainName);
             break;
           }
           case TdApi.BotWriteAccessAllowReasonAddedToAttachmentMenu.CONSTRUCTOR: {
@@ -687,11 +687,11 @@ public class ContentPreview {
           }
           case TdApi.BotWriteAccessAllowReasonLaunchedWebApp.CONSTRUCTOR: {
             TdApi.BotWriteAccessAllowReasonLaunchedWebApp launchedWebApp = (TdApi.BotWriteAccessAllowReasonLaunchedWebApp) reason;
-            text = Lang.getStringBold(R.string.BotWebappAllowed, launchedWebApp.webApp.title);
+            text = Lang.getStringBold(R.string.BotAppAllowed, launchedWebApp.webApp.title);
             break;
           }
           case TdApi.BotWriteAccessAllowReasonAcceptedRequest.CONSTRUCTOR: {
-            text = Lang.getString(R.string.BotAppAllowed);
+            text = Lang.getString(R.string.BotWebappAllowed);
             break;
           }
           default: {
