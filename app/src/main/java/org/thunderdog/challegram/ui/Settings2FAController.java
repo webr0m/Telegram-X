@@ -181,8 +181,9 @@ public class Settings2FAController extends RecyclerViewController<Settings2FACon
     } else if (viewId == R.id.btn_abortRecoveryEmail) {
       showWarning(Lang.getString(R.string.AbortRecoveryEmailConfirm), success -> {
         if (success) {
-          tdlib.client().send(new TdApi.SetRecoveryEmailAddress(currentAcceptedPassword, currentRecoveryEmailAddress), object -> tdlib.ui().post(() -> {
-            if (object instanceof TdApi.PasswordState) {
+          // Setting the address again would only ask the server to re-verify it; this is the call that drops the pending code.
+          tdlib.client().send(new TdApi.CancelRecoveryEmailAddressVerification(), object -> tdlib.ui().post(() -> {
+            if (!isDestroyed() && object instanceof TdApi.PasswordState) {
               updatePasswordState((TdApi.PasswordState) object, currentAcceptedPassword);
             }
           }));
@@ -233,7 +234,7 @@ public class Settings2FAController extends RecyclerViewController<Settings2FACon
       getArguments().controller.updatePasswordState(state);
     }
     buildCells();
-    tdlib.client().send(new TdApi.SetRecoveryEmailAddress(null, null), object -> tdlib.ui().post(() -> {
+    tdlib.client().send(new TdApi.CancelRecoveryEmailAddressVerification(), object -> tdlib.ui().post(() -> {
       if (!isDestroyed()) {
         switch (object.getConstructor()) {
           case TdApi.PasswordState.CONSTRUCTOR: {
