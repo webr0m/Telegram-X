@@ -528,12 +528,7 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
       c.setArguments(new SettingsNetworkStatsController.Args(type, networkStats));
       navigateTo(c);
     } else if (id == R.id.btn_lessDataForCalls) {
-      showSettings(new SettingsWrapBuilder(id).addHeaderItem(new ListItem(ListItem.TYPE_INFO, 0, 0, R.string.UseLessDataForCallsDesc)).setRawItems(new ListItem[] {
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_disabled, 0, R.string.Never, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.NEVER),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_roaming, 0, R.string.OnRoaming, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.ROAMING),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_mobile, 0, R.string.OnMobileNetwork, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.MOBILE),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_always, 0, R.string.UseLessDataAlways, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.ALWAYS)
-      }).setIntDelegate(this));
+      showLessDataForCallsSettings();
     } else if (id == R.id.btn_proxy) {
       tdlib.ui().openProxySettings(this, true);
     } else if (id == R.id.btn_dataSaver) {
@@ -601,6 +596,16 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
 
   private @Nullable TdApi.AutosaveSettings autosaveSettings;
   private boolean loadingAutosaveExceptions, changingAutosaveException;
+
+  public void showLessDataForCallsSettings () {
+    final int id = R.id.btn_lessDataForCalls;
+    showSettings(new SettingsWrapBuilder(id).addHeaderItem(new ListItem(ListItem.TYPE_INFO, 0, 0, R.string.UseLessDataForCallsDesc)).setRawItems(new ListItem[] {
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_disabled, 0, R.string.Never, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.NEVER),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_roaming, 0, R.string.OnRoaming, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.ROAMING),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_mobile, 0, R.string.OnMobileNetwork, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.MOBILE),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_always, 0, R.string.UseLessDataAlways, id, tdlib.files().getVoipDataSavingOption() == DataSavingOption.ALWAYS)
+    }).setIntDelegate(this));
+  }
 
   public void showDownloadLimits (@IdRes int id) {
     int flags;

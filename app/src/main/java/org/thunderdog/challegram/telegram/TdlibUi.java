@@ -5322,6 +5322,11 @@ public class TdlibUi extends Handler {
                   downloads.addOneShotFocusListener(() -> downloads.showDownloadLimits(setting));
                   result = downloads;
                 }
+                case "less-data-calls" -> {
+                  SettingsDataController calls = new SettingsDataController(context.context(), tdlib);
+                  calls.addOneShotFocusListener(calls::showLessDataForCallsSettings);
+                  result = calls;
+                }
                 case "proxy", "proxy/edit", "proxy/use-proxy", "proxy/share-list", "proxy/use-for-calls" ->
                   result = new SettingsProxyController(context.context(), tdlib);
                 case "proxy/add-proxy" -> addNewProxy(context, true);
