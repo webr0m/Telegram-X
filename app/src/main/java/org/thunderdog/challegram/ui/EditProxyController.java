@@ -330,9 +330,12 @@ public class EditProxyController extends EditBaseController<EditProxyController.
           .show(tdlib, errorText)
           .hideDelayed();
       } else {
-        int proxyId = getArgumentsStrict().existingProxy != null ? getArgumentsStrict().existingProxy.id : Settings.PROXY_ID_NONE;
+        Settings.Proxy existing = getArgumentsStrict().existingProxy;
+        int proxyId = existing != null ? existing.id : Settings.PROXY_ID_NONE;
         // Assuming values passed to AddProxy do not differ from the received TdApi.Proxy object
-        Settings.instance().addOrUpdateProxy(proxy, null, true, proxyId);
+        String description = !StringUtils.isEmpty(addedProxy.comment) ? addedProxy.comment :
+          existing != null ? existing.description : null;
+        Settings.instance().addOrUpdateProxy(proxy, description, true, proxyId);
         if (navigationController != null) {
           ViewController<?> c = navigationController.getPreviousStackItem();
           if (c != null && c.getId() != R.id.controller_proxyList) {

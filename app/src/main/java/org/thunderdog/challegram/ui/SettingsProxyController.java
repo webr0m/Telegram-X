@@ -618,7 +618,7 @@ public class SettingsProxyController extends RecyclerViewController<Void> implem
       if (proxy.id == effectiveProxyId) {
         showProxyOptions(proxy);
       } else if (proxy.proxy != null) {
-        Settings.instance().addOrUpdateProxy(proxy.proxy, null, true);
+        Settings.instance().addOrUpdateProxy(proxy.proxy, proxy.description, true);
       }
     } else if (viewId == R.id.btn_useProxyForCalls) {
       Settings.instance().setProxySetting(Settings.PROXY_FLAG_USE_FOR_CALLS, adapter.toggleView(v));

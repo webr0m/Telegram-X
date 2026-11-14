@@ -6475,9 +6475,32 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   public void setProxy (int proxyId, @Nullable TdApi.Proxy proxy) {
     if (proxy != null) {
-      send(new TdApi.AddProxy(proxy, true, ""), (addedProxy, error) -> {
-        if (addedProxy != null) {
-          setEffectiveProxyId(proxyId);
+      // AddProxy overwrites the stored comment, so a proxy TDLib already knows is enabled by its own
+      // identifier; otherwise the name given on another device would be lost on every switch.
+      send(new TdApi.GetProxies(), (addedProxies, error) -> {
+        int knownProxyId = -1;
+        if (addedProxies != null) {
+          for (TdApi.AddedProxy addedProxy : addedProxies.proxies) {
+            if (Td.equalsTo(addedProxy.proxy, proxy)) {
+              knownProxyId = addedProxy.id;
+              break;
+            }
+          }
+        }
+        if (knownProxyId >= 0) {
+          send(new TdApi.EnableProxy(knownProxyId), (ok, e) -> {
+            if (ok != null) {
+              setEffectiveProxyId(proxyId);
+            }
+          });
+        } else {
+          Settings.Proxy config = Settings.instance().getProxyConfig(proxyId);
+          String comment = config != null && config.description != null ? config.description : "";
+          send(new TdApi.AddProxy(proxy, true, comment), (addedProxy, e) -> {
+            if (addedProxy != null) {
+              setEffectiveProxyId(proxyId);
+            }
+          });
         }
       });
     } else {
