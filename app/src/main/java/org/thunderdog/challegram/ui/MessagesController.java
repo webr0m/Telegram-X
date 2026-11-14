@@ -2067,6 +2067,13 @@ public class MessagesController extends ViewController<MessagesController.Argume
       tdlib.send(new TdApi.JoinChatByInviteLink(referrer.inviteLink), (chatJoinResult, error) -> {
         if (error != null || chatJoinResult.getConstructor() == TdApi.ChatJoinResultDeclined.CONSTRUCTOR) {
           tdlib.send(new TdApi.AddChatMember(chat.id, tdlib.myUserId(), 0), tdlib.errorHandler());
+        } else if (chatJoinResult.getConstructor() == TdApi.ChatJoinResultRequestSent.CONSTRUCTOR) {
+          runOnUiThreadOptional(() -> {
+            if (isFocused()) {
+              UI.showToast(Lang.getStringBold(TD.isChannel(chat.type) ? R.string.RequestJoinChannelSent : R.string.RequestJoinGroupSent,
+                tdlib.chatTitle(chat.id)), Toast.LENGTH_LONG);
+            }
+          });
         }
       });
     } else {
