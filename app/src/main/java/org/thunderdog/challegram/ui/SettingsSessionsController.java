@@ -257,14 +257,13 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
     return b;
   }
 
-  private static CharSequence getUnconfirmedSessionInfo (TdApi.UnconfirmedSession session, int count) {
-    Lang.SpanCreator bold = Lang.boldCreator();
+  private CharSequence getUnconfirmedSessionInfo (TdApi.UnconfirmedSession session, int count) {
     SpannableStringBuilder b = new SpannableStringBuilder();
-    b.append(Lang.getString(R.string.SessionsUnconfirmedDevice, bold, session.deviceModel));
+    b.append(Lang.getMarkdownStringSecure(this, R.string.SessionsUnconfirmedDevice, session.deviceModel));
     if (!StringUtils.isEmpty(session.location)) {
-      b.append('\n').append(Lang.getString(R.string.SessionsUnconfirmedLocation, bold, session.location));
+      b.append('\n').append(Lang.getMarkdownStringSecure(this, R.string.SessionsUnconfirmedLocation, session.location));
     }
-    b.append('\n').append(Lang.getString(R.string.SessionsUnconfirmedDate, bold, Lang.timeOrDateShort(session.date, TimeUnit.SECONDS)));
+    b.append('\n').append(Lang.getMarkdownStringSecure(this, R.string.SessionsUnconfirmedDate, Lang.timeOrDateShort(session.date, TimeUnit.SECONDS)));
     if (count > 1) {
       b.append('\n').append(Lang.getString(R.string.SessionsUnconfirmedMore, count));
     }
