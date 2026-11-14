@@ -222,8 +222,12 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
         }
 
         if (itemId == R.id.btn_pollSetting_duration) {
-          view.setData(pollOpenPeriod == 0 ? Lang.getString(R.string.PollSettingDurationOff) :
-            Lang.getString(R.string.PollClosesAfter, formatPollDuration(pollOpenPeriod)));
+          if (pollCloseDate != 0) {
+            view.setData(Lang.getString(R.string.PollSettingDurationOn, Lang.getTimestamp(pollCloseDate, TimeUnit.SECONDS)));
+          } else {
+            view.setData(pollOpenPeriod == 0 ? Lang.getString(R.string.PollSettingDurationOff) :
+              Lang.getString(R.string.PollClosesAfter, formatPollDuration(pollOpenPeriod)));
+          }
         } else if (itemId == R.id.btn_pollSetting_showVoters) {
           view.setData(item.getBoolValue() ? R.string.PollSettingShowVotersOn : R.string.PollSettingShowVotersOff);
         } else if (itemId == R.id.btn_pollSetting_multiAnswers) {
@@ -384,6 +388,7 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
   private boolean isQuiz;
   private ListItem settingQuiz, settingShowVoters, settingMultiAnswers, settingRevoting, settingShuffle, settingHideResults, settingAdditions, settingOnlyMembers, settingCountries;
   private int pollOpenPeriod;
+  private int pollCloseDate;
   private Set<ListItem> correctOptionItems = new LinkedHashSet<>();
 
   private void toggleCorrectOptionEnabled (final ListItem option) {
@@ -761,16 +766,27 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
       durations.put(id, seconds);
       CharSequence title = seconds == 0 ? Lang.getString(R.string.PollNoDurationLimit) : formatPollDuration(seconds);
       options.item(new OptionItem(id, title, OptionColor.NORMAL,
-        seconds == pollOpenPeriod ? R.drawable.baseline_check_24 : 0));
+        seconds == pollOpenPeriod && pollCloseDate == 0 ? R.drawable.baseline_check_24 : 0));
     }
+    int closeDateId = ViewCompat.generateViewId();
+    options.item(new OptionItem(closeDateId, Lang.getString(R.string.PollSettingDurationOff), OptionColor.NORMAL,
+      pollCloseDate != 0 ? R.drawable.baseline_check_24 : R.drawable.baseline_date_range_24));
     options.cancelItem();
     showOptions(options.build(), (view, id) -> {
+      if (id == closeDateId) {
+        if (!isDestroyed() && !getDoneButton().isInProgress()) {
+          showDateTimePicker(Lang.getString(R.string.PollSettingDuration),
+            R.string.SetTodayAt, R.string.SetTomorrowAt, R.string.SetDateAt, this::setPollCloseDate, null);
+        }
+        return true;
+      }
       Integer seconds = durations.get(id);
       if (seconds != null && !isDestroyed() && !getDoneButton().isInProgress()) {
         if (seconds > 0 && seconds > tdlib.options().pollOpenPeriodMax) {
           UI.showToast(R.string.PollDurationUnavailable, Toast.LENGTH_SHORT);
         } else {
           pollOpenPeriod = seconds;
+          pollCloseDate = 0;
           adapter.updateValuedSettingById(R.id.btn_pollSetting_duration);
         }
       }
@@ -778,8 +794,21 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
     });
   }
 
+  private void setPollCloseDate (long millis) {
+    long closeDate = millis / 1000L;
+    long now = tdlib.currentTimeMillis() / 1000L;
+    // TDLib rejects a close date further ahead than the same limit that applies to a duration
+    if (closeDate <= now || closeDate - now > tdlib.options().pollOpenPeriodMax) {
+      UI.showToast(R.string.PollDurationUnavailable, Toast.LENGTH_SHORT);
+      return;
+    }
+    pollCloseDate = (int) closeDate;
+    pollOpenPeriod = 0;
+    adapter.updateValuedSettingById(R.id.btn_pollSetting_duration);
+  }
+
   private boolean hasUnsavedPoll () {
-    if (pollOpenPeriod != 0)
+    if (pollOpenPeriod != 0 || pollCloseDate != 0)
       return true;
     CharSequence title = StringUtils.trim(questionItem.getCharSequenceValue());
     if (!StringUtils.isEmpty(title))
@@ -900,7 +929,14 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
 
     TdApi.FormattedText description = getDescription(!disableMarkdown);
 
-    if (pollOpenPeriod > 0 && pollOpenPeriod > tdlib.options().pollOpenPeriodMax) {
+    if (pollCloseDate != 0) {
+      long now = tdlib.currentTimeMillis() / 1000L;
+      if (pollCloseDate <= now || pollCloseDate - now > tdlib.options().pollOpenPeriodMax) {
+        context().tooltipManager().builder(getDoneButton()).controller(this)
+          .show(tdlib, Lang.getString(R.string.PollDurationUnavailable)).hideDelayed();
+        return;
+      }
+    } else if (pollOpenPeriod > 0 && pollOpenPeriod > tdlib.options().pollOpenPeriodMax) {
       context().tooltipManager().builder(getDoneButton()).controller(this)
         .show(tdlib, Lang.getString(R.string.PollDurationUnavailable)).hideDelayed();
       return;
@@ -927,8 +963,8 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
       settingShuffle != null && settingShuffle.getBoolValue(),
       settingHideResults != null && settingHideResults.getBoolValue(),
       inputPollType,
-      pollOpenPeriod,
-      0,
+      pollCloseDate != 0 ? 0 : pollOpenPeriod,
+      pollCloseDate,
       false
     );
 
