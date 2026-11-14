@@ -4258,8 +4258,8 @@ public class TD {
       if (id == R.id.btn_deleteFile) {
         TdlibManager.instance().player().stopPlaybackIfPlayingAnyOf(files);
         context.context().closeFilePip(files);
+        final int[] signal = new int[1];
         for (TdApi.File file : files) {
-          final int[] signal = new int[1];
           context.tdlib().client().send(new TdApi.DeleteFile(file.id), object -> {
             signal[0]++;
             if (signal[0] == files.length) {
