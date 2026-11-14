@@ -2746,6 +2746,7 @@
   <string name="EventLogFilterVoiceChats">Video chats</string>
   <string name="EventLogFilterLiveStreams">Live streams</string>
   <string name="EventLogFilterMemberTags">Member tags</string>
+  <string name="EventLogFilterSubscriptions">Subscriptions</string>
   <string name="EventLogSlowModeChanged">%1$s set the slow mode timer to %2$s</string>
   <string name="EventLogSlowModeDisabled">%1$s disabled the slow mode</string>
   <string name="EventLogSlowModeChangedYou">You set the slow mode timer to %1$s</string>

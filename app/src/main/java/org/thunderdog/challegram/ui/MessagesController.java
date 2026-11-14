@@ -11424,6 +11424,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
       return filters.memberTagChanges;
     } else if (filterId == R.id.btn_filterTopics) {
       return filters.forumChanges;
+    } else if (filterId == R.id.btn_filterSubscriptions) {
+      return filters.subscriptionExtensions;
     }
     return false;
   }
@@ -11457,7 +11459,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             R.id.btn_filterPinnedMessages,
             R.id.btn_filterLeavingMembers,
             R.id.btn_filterVideoChats,
-            R.id.btn_filterMemberTags
+            R.id.btn_filterMemberTags,
+            R.id.btn_filterSubscriptions
           };
           strings = new String[] {
             Lang.getString(R.string.EventLogFilterAll),
@@ -11471,7 +11474,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             Lang.getString(R.string.EventLogFilterPinnedMessages),
             Lang.getString(R.string.EventLogFilterLeavingMembers),
             Lang.getString(R.string.EventLogFilterLiveStreams),
-            Lang.getString(R.string.EventLogFilterMemberTags)
+            Lang.getString(R.string.EventLogFilterMemberTags),
+            Lang.getString(R.string.EventLogFilterSubscriptions)
           };
         } else {
           ids = new int[] {
@@ -11487,7 +11491,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             R.id.btn_filterPinnedMessages,
             R.id.btn_filterLeavingMembers,
             R.id.btn_filterVideoChats,
-            R.id.btn_filterMemberTags
+            R.id.btn_filterMemberTags,
+            R.id.btn_filterSubscriptions
           };
           strings = new String[] {
             Lang.getString(R.string.EventLogFilterAll),
@@ -11502,7 +11507,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             Lang.getString(R.string.EventLogFilterPinnedMessages),
             Lang.getString(R.string.EventLogFilterLeavingMembers),
             Lang.getString(R.string.EventLogFilterVoiceChats),
-            Lang.getString(R.string.EventLogFilterMemberTags)
+            Lang.getString(R.string.EventLogFilterMemberTags),
+            Lang.getString(R.string.EventLogFilterSubscriptions)
           };
         }
 
@@ -11633,6 +11639,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
                   filter.memberTagChanges = isSelected;
                 } else if (checkId == R.id.btn_filterTopics) {
                   filter.forumChanges = isSelected;
+                } else if (checkId == R.id.btn_filterSubscriptions) {
+                  filter.subscriptionExtensions = isSelected;
                 }
               } else if (itemId == R.id.user) {
                 if (item.isSelected() && userIds1 != null) {

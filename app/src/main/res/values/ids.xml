@@ -811,6 +811,7 @@
   <item type="id" name="btn_filterVideoChats" />
   <item type="id" name="btn_filterMemberTags" />
   <item type="id" name="btn_filterTopics" />
+  <item type="id" name="btn_filterSubscriptions" />
 
   <item type="id" name="btn_earpieceMode" />
   <item type="id" name="btn_earpieceModeVideo" />

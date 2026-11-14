@@ -1055,6 +1055,7 @@ public class TD {
       filters.memberRestrictions &&
       filters.memberTagChanges &&
       filters.forumChanges &&
+      filters.subscriptionExtensions &&
       filters.infoChanges &&
       filters.settingChanges &&
       filters.inviteLinkChanges &&
