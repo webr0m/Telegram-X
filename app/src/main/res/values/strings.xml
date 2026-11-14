@@ -5714,6 +5714,7 @@
   <string name="PremiumRequired">This feature requires a **Telegram Premium** subscription.</string>
   <string name="PremiumRequiredMoveFolder">Subscribe to **Telegram Premium** to move the "%1$s" folder.</string>
   <string name="PremiumRequiredToAddMember">You need Telegram Premium to add %1$s to chats</string>
+  <string name="PremiumRequiredToInviteMember">You need Telegram Premium to send %1$s an invite link</string>
 
   <string name="LimitCreateFolder_one">You have reached the limit of **%1$s** folder.</string>
   <string name="LimitCreateFolder_other">You have reached the limit of **%1$s** folders.</string>

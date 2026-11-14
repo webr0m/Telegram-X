@@ -2505,9 +2505,14 @@ public class TD {
 
   public static String memberStatusChangeError (Tdlib tdlib, @Nullable TdApi.Error error, @Nullable TdApi.FailedToAddMember failedToAddMember) {
     if (failedToAddMember != null) {
-      return failedToAddMember.premiumWouldAllowInvite ?
-        Lang.getString(R.string.PremiumRequiredToAddMember, tdlib.cache().userName(failedToAddMember.userId)) :
-        Lang.getString(R.string.errorPrivacyAddMember);
+      String name = tdlib.cache().userName(failedToAddMember.userId);
+      if (failedToAddMember.premiumWouldAllowInvite) {
+        return Lang.getString(R.string.PremiumRequiredToAddMember, name);
+      }
+      if (failedToAddMember.premiumRequiredToSendMessages) {
+        return Lang.getString(R.string.PremiumRequiredToInviteMember, name);
+      }
+      return Lang.getString(R.string.errorPrivacyAddMember);
     }
     if (error != null && ERROR_USER_PRIVACY.equals(error.message)) {
       return Lang.getString(R.string.errorPrivacyAddMember);
