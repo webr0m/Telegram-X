@@ -6937,4 +6937,7 @@
   <string name="TgxTonReceivedService">Received %1$s TON in the wallet</string>
   <string name="TgxChatPaidMessagesInfo">Members who are not administrators must pay this amount for each message they send to this chat.</string>
   <string name="TgxPaidMessagesInvalid">Enter a number between 0 and %1$s.</string>
+  <string name="TgxSuggestedSetPasswordAction">Set Password</string>
+  <string name="TgxSuggestedSetPasswordText">Add a password to protect your account.</string>
+  <string name="TgxSuggestedSetPasswordDelay">Without a password, you have to log in to this account again at least every %1$s days.</string>
 </resources>

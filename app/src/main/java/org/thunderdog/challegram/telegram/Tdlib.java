@@ -12462,6 +12462,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     switch (action.getConstructor()) {
       case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR:
       case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
+      case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
       case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR: {
         return true;
@@ -12563,6 +12564,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     } else if (singleAction != null) {
       switch (singleAction.getConstructor()) {
         case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
+        case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
           return ResolvableProblem.CHECK_PASSWORD;
         case TdApi.SuggestedActionCheckPhoneNumber.CONSTRUCTOR:
           return ResolvableProblem.CHECK_PHONE_NUMBER;

@@ -653,6 +653,9 @@ public class SettingsController extends ViewController<Void> implements
             case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
               view.setText(obtainWrapper(Lang.getString(R.string.ReminderCheckTfaPasswordText), action.getConstructor()));
               break;
+            case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
+              view.setText(obtainWrapper(Lang.getString(R.string.TgxSuggestedSetPasswordText), action.getConstructor()));
+              break;
             case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
               view.setText(obtainWrapper(Lang.getString(R.string.ReminderSetBirthdateText), action.getConstructor()));
               break;
@@ -981,6 +984,9 @@ public class SettingsController extends ViewController<Void> implements
         break;
       case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
         item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_gpp_maybe_24, R.string.ReminderCheckTfaPassword);
+        break;
+      case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
+        item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.mrgrigri_baseline_textbox_password_24, R.string.SetAdditionalPassword);
         break;
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
         item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_cake_variant_24, R.string.ReminderSetBirthdate);
@@ -1423,6 +1429,26 @@ public class SettingsController extends ViewController<Void> implements
 
         break;
       }
+      case TdApi.SuggestedActionSetPassword.CONSTRUCTOR: {
+        int authorizationDelay = ((TdApi.SuggestedActionSetPassword) suggestedAction).authorizationDelay;
+        String infoText = Lang.getString(R.string.SetAdditionalPasswordInfo);
+        if (authorizationDelay > 0) {
+          infoText += "\n\n" + Lang.getString(R.string.TgxSuggestedSetPasswordDelay, authorizationDelay);
+        }
+        info = infoText;
+
+        ids.append(R.id.btn_setPassword);
+        titles.append(R.string.TgxSuggestedSetPasswordAction);
+        colors.append(OptionColor.BLUE);
+        icons.append(R.drawable.mrgrigri_baseline_textbox_password_24);
+
+        ids.append(R.id.btn_cancel);
+        titles.append(R.string.ReminderCheckTfaPasswordHide);
+        colors.append(OptionColor.NORMAL);
+        icons.append(R.drawable.baseline_cancel_24);
+
+        break;
+      }
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR: {
         tdlib.ui().openBirthdateEditor(this, suggestionView, TdlibUi.BirthdateOpenOrigin.SUGGESTED_ACTION);
         return;
@@ -1448,6 +1474,19 @@ public class SettingsController extends ViewController<Void> implements
               controller.setArguments(new PasswordController.Args(PasswordController.MODE_CONFIRM, (TdApi.PasswordState) result).setSuccessListener((pwd) -> {
                 dismissSuggestion(suggestedAction);
               }));
+              navigateTo(controller);
+            });
+          } else {
+            UI.showError(result);
+          }
+        });
+      } else if (id == R.id.btn_setPassword) {
+        tdlib.client().send(new TdApi.GetPasswordState(), result -> {
+          if (result.getConstructor() == TdApi.PasswordState.CONSTRUCTOR) {
+            runOnUiThreadOptional(() -> {
+              TdApi.PasswordState state = (TdApi.PasswordState) result;
+              PasswordController controller = new PasswordController(context, tdlib);
+              controller.setArguments(new PasswordController.Args(state.hasPassword ? PasswordController.MODE_EDIT : PasswordController.MODE_NEW, state));
               navigateTo(controller);
             });
           } else {
