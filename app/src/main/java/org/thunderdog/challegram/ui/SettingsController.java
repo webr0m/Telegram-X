@@ -1474,8 +1474,22 @@ public class SettingsController extends ViewController<Void> implements
         return;
       }
       case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR: {
-        tdlib.ui().editLoginEmail(this);
-        return;
+        info = Lang.getString(R.string.ReminderSetLoginEmailText);
+
+        ids.append(R.id.btn_loginEmail);
+        titles.append(R.string.ReminderSetLoginEmail);
+        colors.append(OptionColor.BLUE);
+        icons.append(R.drawable.baseline_alternate_email_24);
+
+        // TDLib only accepts hideSuggestedAction for this suggestion when it says the action can be hidden
+        if (((TdApi.SuggestedActionSetLoginEmailAddress) suggestedAction).canBeHidden) {
+          ids.append(R.id.btn_cancel);
+          titles.append(R.string.ReminderSetLoginEmailHide);
+          colors.append(OptionColor.NORMAL);
+          icons.append(R.drawable.baseline_cancel_24);
+        }
+
+        break;
       }
       default: {
         Td.assertSuggestedAction_17e8d183();
@@ -1513,6 +1527,8 @@ public class SettingsController extends ViewController<Void> implements
             UI.showError(result);
           }
         });
+      } else if (id == R.id.btn_loginEmail) {
+        tdlib.ui().editLoginEmail(this);
       } else if (id == R.id.btn_info) {
         tdlib.ui().openUrl(this, Lang.getStringSecure(R.string.url_faqPhoneNumber), new TdlibUi.UrlOpenParameters().forceInstantView());
       } else if (id == R.id.btn_cancel) {
