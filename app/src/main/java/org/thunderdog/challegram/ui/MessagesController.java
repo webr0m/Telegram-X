@@ -3878,9 +3878,13 @@ public class MessagesController extends ViewController<MessagesController.Argume
         return;
       }
 
-      tdlib.client().send(new TdApi.AddChatMember(chat.id, ((TGBotStart) item).getUserId(), 0), object -> {
-        if (object.getConstructor() != TdApi.Ok.CONSTRUCTOR) {
-          UI.showToast("Bot is already in chat", Toast.LENGTH_SHORT);
+      // addChatMember answers FailedToAddMembers, never Ok; an empty list means the bot joined
+      tdlib.send(new TdApi.AddChatMember(chat.id, start.getUserId(), 0), (failedToAddMembers, error) -> {
+        if (error != null) {
+          runOnUiThreadOptional(() -> UI.showError(error));
+        } else if (failedToAddMembers.failedToAddMembers.length > 0) {
+          final TdApi.FailedToAddMember failed = failedToAddMembers.failedToAddMembers[0];
+          runOnUiThreadOptional(() -> UI.showToast(TD.memberStatusChangeError(tdlib, null, failed), Toast.LENGTH_SHORT));
         }
       });
 
