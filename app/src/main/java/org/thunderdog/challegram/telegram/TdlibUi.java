@@ -5336,8 +5336,18 @@ public class TdlibUi extends Handler {
             case TdApi.SettingsSectionDataAndStorage.CONSTRUCTOR: {
               String subsection = ((TdApi.SettingsSectionDataAndStorage) section).subsection;
               switch (subsection != null ? subsection : "") {
-                case "storage", "storage/edit", "storage/auto-remove", "storage/clear-cache", "storage/max-cache" ->
+                case "storage", "storage/edit", "storage/max-cache" ->
                   result = new SettingsCacheController(context.context(), tdlib);
+                case "storage/auto-remove" -> {
+                  SettingsCacheController cache = new SettingsCacheController(context.context(), tdlib);
+                  cache.addOneShotFocusListener(cache::showKeepMediaOptions);
+                  result = cache;
+                }
+                case "storage/clear-cache" -> {
+                  SettingsCacheController cache = new SettingsCacheController(context.context(), tdlib);
+                  cache.addOneShotFocusListener(cache::showClearCacheOptions);
+                  result = cache;
+                }
                 case "usage" -> {
                   SettingsDataController usage = new SettingsDataController(context.context(), tdlib);
                   usage.setArguments(new SettingsDataController.Args(SettingsDataController.MODE_STATISTICS));

@@ -508,18 +508,7 @@ public class SettingsCacheController extends RecyclerViewController<SettingsData
         });
       }
     } else if (viewId == R.id.btn_keepMedia) {
-      showOptions(new int[] {R.id.btn_keepMedia_3days, R.id.btn_keepMedia_1week, R.id.btn_keepMedia_1month, R.id.btn_keepMedia_forever}, new String[] {Lang.plural(R.string.xDays, 3), Lang.plural(R.string.xWeeks, 1), Lang.plural(R.string.xMonths, 1), Lang.getString(R.string.KeepMediaForever)}, (itemView, id) -> {
-        if (id == R.id.btn_keepMedia_3days) {
-          setKeepMedia(60 * 60 * 24 * 3, true);
-        } else if (id == R.id.btn_keepMedia_1week) {
-          setKeepMedia(60 * 60 * 24 * 7, true);
-        } else if (id == R.id.btn_keepMedia_1month) {
-          setKeepMedia(60 * 60 * 24 * 30, true);
-        } else if (id == R.id.btn_keepMedia_forever) {
-          setKeepMedia(0, true);
-        }
-        return true;
-      });
+      showKeepMediaOptions();
     } else if (viewId == R.id.btn_clearCache || viewId == R.id.btn_otherChats || viewId == R.id.btn_otherFiles) {
       if (isBusyGlobally)
         return;
@@ -541,6 +530,37 @@ public class SettingsCacheController extends RecyclerViewController<SettingsData
         }
       }
     }
+  }
+
+  public void showKeepMediaOptions () {
+    showOptions(new int[] {R.id.btn_keepMedia_3days, R.id.btn_keepMedia_1week, R.id.btn_keepMedia_1month, R.id.btn_keepMedia_forever}, new String[] {Lang.plural(R.string.xDays, 3), Lang.plural(R.string.xWeeks, 1), Lang.plural(R.string.xMonths, 1), Lang.getString(R.string.KeepMediaForever)}, (itemView, id) -> {
+      if (id == R.id.btn_keepMedia_3days) {
+        setKeepMedia(60 * 60 * 24 * 3, true);
+      } else if (id == R.id.btn_keepMedia_1week) {
+        setKeepMedia(60 * 60 * 24 * 7, true);
+      } else if (id == R.id.btn_keepMedia_1month) {
+        setKeepMedia(60 * 60 * 24 * 30, true);
+      } else if (id == R.id.btn_keepMedia_forever) {
+        setKeepMedia(0, true);
+      }
+      return true;
+    });
+  }
+
+  public void showClearCacheOptions () {
+    if (stats == null) {
+      openClearCacheWhenLoaded = true;
+      return;
+    }
+    openClearCacheWhenLoaded = false;
+    showClearCacheSheet();
+  }
+
+  private void showClearCacheSheet () {
+    if (stats == null || isBusyGlobally || isCleaningUp) {
+      return;
+    }
+    showClearSettings(R.id.btn_otherChats, stats.getTotalFilesEntry());
   }
 
   private void showClearSettings (int id, final TGStorageStats.Entry entry) {
@@ -961,6 +981,7 @@ public class SettingsCacheController extends RecyclerViewController<SettingsData
   }
 
   private TGStorageStats stats;
+  private boolean openClearCacheWhenLoaded;
 
   private void setStorageStats (TGStorageStats stats, boolean firstRequest) {
     TGStorageStats oldStats = this.stats;
@@ -968,6 +989,10 @@ public class SettingsCacheController extends RecyclerViewController<SettingsData
     setIsBusy(false, null, null);
 
     this.stats = stats;
+    if (openClearCacheWhenLoaded) {
+      openClearCacheWhenLoaded = false;
+      showClearCacheSheet();
+    }
     executeScheduledAnimation();
     adapter.updateValuedSettingById(R.id.btn_clearCache);
     adapter.updateValuedSettingById(R.id.btn_localDatabase);
