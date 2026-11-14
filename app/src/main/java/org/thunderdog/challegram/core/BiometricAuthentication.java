@@ -25,6 +25,8 @@ import androidx.biometric.BiometricPrompt;
 import androidx.core.os.CancellationSignal;
 
 import org.thunderdog.challegram.BaseActivity;
+import org.thunderdog.challegram.Log;
+import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.unsorted.AppContext;
 
@@ -115,7 +117,12 @@ public class BiometricAuthentication {
 
     @Override
     public final void onAuthenticationError (int errorCode, @NonNull CharSequence errString) {
-      callback.onAuthenticationError(StringUtils.isEmpty(errString) ? "Error " + errorCode : errString, true);
+      if (StringUtils.isEmpty(errString)) {
+        Log.e("BiometricAuthentication error %d", errorCode);
+        callback.onAuthenticationError(Lang.getString(R.string.BiometricsError), true);
+      } else {
+        callback.onAuthenticationError(errString, true);
+      }
       onComplete();
     }
 
@@ -125,7 +132,7 @@ public class BiometricAuthentication {
       switch (authenticationType) {
         case BiometricPrompt.AUTHENTICATION_RESULT_TYPE_DEVICE_CREDENTIAL:
         case BiometricPrompt.AUTHENTICATION_RESULT_TYPE_UNKNOWN:
-          callback.onAuthenticationError("Use biometrics instead of lock screen credentials.", true);
+          callback.onAuthenticationError(Lang.getString(R.string.TgxBiometricsDeviceCredential), true);
           break;
         case BiometricPrompt.AUTHENTICATION_RESULT_TYPE_BIOMETRIC:
           callback.onAuthenticated(result, strong);
@@ -138,7 +145,7 @@ public class BiometricAuthentication {
 
     @Override
     public final void onAuthenticationFailed () {
-      callback.onAuthenticationError("Try again.", false);
+      callback.onAuthenticationError(Lang.getString(ONLY_FINGERPRINT ? R.string.fingerprint_fail : R.string.biometrics_fail), false);
     }
 
     protected void onComplete () { }
