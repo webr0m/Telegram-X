@@ -461,8 +461,17 @@ public class CreateGroupController extends ViewController<Void> implements EditH
   }
 
   private void handleFailedToAddMembers (TdApi.FailedToAddMembers failedToAddMembers, Runnable after) {
-    if (failedToAddMembers.failedToAddMembers.length > 0) {
-      // TODO handle failedToAddMembers
+    TdApi.FailedToAddMember[] failed = failedToAddMembers.failedToAddMembers;
+    if (failed.length > 0) {
+      StringBuilder names = new StringBuilder();
+      for (TdApi.FailedToAddMember member : failed) {
+        if (names.length() > 0) {
+          names.append(", ");
+        }
+        names.append(tdlib.cache().userName(member.userId));
+      }
+      String message = Lang.getString(R.string.MembersNotAddedToGroup, names.toString());
+      runOnUiThreadOptional(() -> UI.showToast(message, Toast.LENGTH_LONG));
     }
     after.run();
   }

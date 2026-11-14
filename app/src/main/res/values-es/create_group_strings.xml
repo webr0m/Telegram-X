@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="MembersNotAddedToGroup">No se pudo añadir a %1$s al grupo</string>
+</resources>

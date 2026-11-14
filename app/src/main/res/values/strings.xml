@@ -807,6 +807,7 @@
   <string name="GroupName">Group name</string>
   <string name="GroupDontAdd">Do not add to the group</string>
   <string name="GroupEnterValidName">Please enter a valid group name</string>
+  <string name="MembersNotAddedToGroup">%1$s couldn\'t be added to the group</string>
   <string name="Link">Link</string>
   <string name="Copy">Copy</string>
   <string name="CopyText">Copy text</string>
