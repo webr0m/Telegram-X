@@ -9640,6 +9640,14 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     }
   }
 
+  public void changeWebBrowserSettings (boolean openExternalBrowser, @Nullable Runnable after) {
+    boolean displayCloseButton;
+    synchronized (dataLock) {
+      displayCloseButton = webBrowserSettings == null || webBrowserSettings.displayCloseButton;
+    }
+    client().send(new TdApi.ChangeWebBrowserSettings(openExternalBrowser, displayCloseButton), okHandler(after));
+  }
+
   @TdlibThread
   private void updateWebBrowserSettings (TdApi.UpdateWebBrowserSettings update) {
     synchronized (dataLock) {

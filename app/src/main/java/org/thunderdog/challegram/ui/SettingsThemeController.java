@@ -31,6 +31,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.luckycatlabs.sunrisesunset.SunriseSunsetCalculator;
 
+import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.BuildConfig;
 import org.thunderdog.challegram.Log;
 import org.thunderdog.challegram.R;
@@ -45,6 +46,7 @@ import org.thunderdog.challegram.navigation.SettingsWrapBuilder;
 import org.thunderdog.challegram.navigation.ViewController;
 import org.thunderdog.challegram.support.ViewSupport;
 import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.telegram.TdlibOptionListener;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.theme.ThemeCustom;
 import org.thunderdog.challegram.theme.ThemeDelegate;
@@ -79,7 +81,7 @@ import me.vkryl.core.MathUtils;
 import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.IntList;
 
-public class SettingsThemeController extends RecyclerViewController<SettingsThemeController.Args> implements View.OnClickListener, ViewController.SettingsIntDelegate, SliderWrapView.RealTimeChangeListener, View.OnLongClickListener, AppUpdater.Listener {
+public class SettingsThemeController extends RecyclerViewController<SettingsThemeController.Args> implements View.OnClickListener, ViewController.SettingsIntDelegate, SliderWrapView.RealTimeChangeListener, View.OnLongClickListener, AppUpdater.Listener, TdlibOptionListener {
   public SettingsThemeController (Context context, Tdlib tdlib) {
     super(context, tdlib);
   }
@@ -132,7 +134,21 @@ public class SettingsThemeController extends RecyclerViewController<SettingsThem
   public void destroy () {
     super.destroy();
     cancelLocationRequest();
+    tdlib.listeners().removeOptionListener(this);
     context().appUpdater().removeListener(this);
+  }
+
+  @Override
+  public void onWebBrowserSettingsChanged (TdApi.WebBrowserSettings settings) {
+    boolean useInAppBrowser = !settings.openExternalBrowser;
+    if (Settings.instance().useInAppBrowser() != useInAppBrowser) {
+      Settings.instance().setUseInAppBrowser(useInAppBrowser);
+      runOnUiThreadOptional(() -> {
+        if (adapter != null) {
+          adapter.updateValuedSettingById(R.id.btn_useInAppBrowser);
+        }
+      });
+    }
   }
 
   private void cancelLocationRequest () {
@@ -144,6 +160,11 @@ public class SettingsThemeController extends RecyclerViewController<SettingsThem
 
   @Override
   protected void onCreateView (Context context, CustomRecyclerView recyclerView) {
+    tdlib.listeners().addOptionsListener(this);
+    TdApi.WebBrowserSettings webBrowserSettings = tdlib.webBrowserSettings();
+    if (webBrowserSettings != null) {
+      Settings.instance().setUseInAppBrowser(!webBrowserSettings.openExternalBrowser);
+    }
     adapter = new SettingsAdapter(this) {
       @Override
       protected void setValuedSetting (ListItem item, SettingView v, boolean isUpdate) {
@@ -1206,7 +1227,9 @@ public class SettingsThemeController extends RecyclerViewController<SettingsThem
     } else if (viewId == R.id.btn_confirmCalls) {
       Settings.instance().setNeedOutboundCallsPrompt(adapter.toggleView(v));
     } else if (viewId == R.id.btn_useInAppBrowser) {
-      Settings.instance().setUseInAppBrowser(adapter.toggleView(v));
+      boolean useInAppBrowser = adapter.toggleView(v);
+      Settings.instance().setUseInAppBrowser(useInAppBrowser);
+      tdlib.changeWebBrowserSettings(!useInAppBrowser, null);
     } else if (viewId == R.id.btn_switchRtl) {
       Settings.instance().setNeedRtl(Lang.packId(), adapter.toggleView(v));
     } else if (viewId == R.id.btn_useHoldToPreview) {
