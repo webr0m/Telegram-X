@@ -282,6 +282,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
   private TdApi.User user;
   private TdApi.SecretChat secretChat;
   private TdApi.UserFullInfo userFull;
+  private Boolean botCanSendMessages;
 
   TdApi.BasicGroup group;
   TdApi.BasicGroupFullInfo groupFull;
@@ -625,6 +626,10 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       if (((TdApi.UserTypeBot) user.type).canJoinGroups) {
         ids.append(R.id.more_btn_addToGroup);
         strings.append(R.string.BotInvite);
+      }
+      if (Boolean.FALSE.equals(botCanSendMessages)) {
+        ids.append(R.id.more_btn_allowBotMessages);
+        strings.append(R.string.AllowBotMessages);
       }
     }
 
@@ -1405,6 +1410,34 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     );
   }
 
+  private void checkBotCanSendMessages () {
+    botCanSendMessages = null;
+    if (user == null || !TD.isBot(user)) {
+      return;
+    }
+    final long botUserId = user.id;
+    tdlib.send(new TdApi.CanBotSendMessages(botUserId), (ok, error) -> runOnUiThreadOptional(() -> {
+      if (user != null && user.id == botUserId) {
+        botCanSendMessages = error == null;
+      }
+    }));
+  }
+
+  private void allowBotToSendMessages () {
+    if (user == null || !TD.isBot(user) || !Boolean.FALSE.equals(botCanSendMessages)) {
+      return;
+    }
+    final long botUserId = user.id;
+    tdlib.send(new TdApi.AllowBotToSendMessages(botUserId), (ok, error) -> runOnUiThreadOptional(() -> {
+      if (error != null) {
+        UI.showError(error);
+      } else if (user != null && user.id == botUserId) {
+        botCanSendMessages = true;
+        UI.showToast(R.string.AllowBotMessagesDone, Toast.LENGTH_SHORT);
+      }
+    }));
+  }
+
   @Override
   public void onMoreItemPressed (int id) {
     if (id == R.id.btn_boostWithUnusedSlot) {
@@ -1467,6 +1500,10 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     }
     if (id == R.id.btn_revokeBotEmojiStatus) {
       revokeBotEmojiStatusPermission();
+      return;
+    }
+    if (id == R.id.more_btn_allowBotMessages) {
+      allowBotToSendMessages();
       return;
     }
     if (tdlib.ui().processLeaveButton(this, null, getChatId(), id, null)) {
@@ -7676,6 +7713,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
     if (!isUpdate) {
       prepareFullCells(userFull);
+      checkBotCanSendMessages();
     }
 
     tdlib.uiExecute(() -> {

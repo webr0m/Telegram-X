@@ -107,6 +107,7 @@
   <item type="id" name="more_btn_addToContacts" />
   <item type="id" name="more_btn_cloudChat" />
   <item type="id" name="more_btn_addToGroup" />
+  <item type="id" name="more_btn_allowBotMessages" />
   <item type="id" name="more_btn_addToFolder" />
   <item type="id" name="more_btn_removeFromFolder" />
   <item type="id" name="more_btn_edit" />

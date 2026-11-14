@@ -4742,6 +4742,8 @@
   <string name="RevokeBotEmojiStatus">Revoke Emoji Status Permission</string>
   <string name="RevokeBotEmojiStatusConfirm">Prevent this bot from changing your emoji status?</string>
   <string name="BotEmojiStatusPermissionRevoked">Emoji status permission revoked</string>
+  <string name="AllowBotMessages">Allow Sending Messages</string>
+  <string name="AllowBotMessagesDone">This bot can send you messages now</string>
   <string name="StickerKeywords">Edit Search Keywords</string>
   <string name="ChatEmojiStatus">Chat Emoji Status</string>
   <string name="ChatEmojiStatusUnavailable">Changing this chat’s emoji status requires permission to change chat info and a sufficient chat boost level.</string>
