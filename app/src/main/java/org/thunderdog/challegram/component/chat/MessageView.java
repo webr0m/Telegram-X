@@ -1041,6 +1041,11 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
           strings.append(R.string.OpenStickerSet);
           icons.append(R.drawable.deproko_baseline_stickers_24);
         }
+        if (sticker.fullType.getConstructor() == TdApi.StickerFullTypeRegular.CONSTRUCTOR) {
+          ids.append(R.id.btn_messageAddToStickerSet);
+          strings.append(R.string.AddStickerToPack);
+          icons.append(R.drawable.deproko_baseline_insert_sticker_24);
+        }
       }
     }
     if (isSent && !isMore && (!msg.isHot() || TD.isOut(msg.getMessage()))) {

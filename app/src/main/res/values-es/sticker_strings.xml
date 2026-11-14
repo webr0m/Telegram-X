@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="AddStickerToPack">Añadir a Mis stickers</string>
+  <string name="AddStickerToPackInfo">Elige uno de tus packs de stickers</string>
+  <string name="AddStickerToPackDone">Sticker añadido a tu pack</string>
+  <string name="AddStickerToPackEmpty">Todavía no tienes ningún pack de stickers</string>
+</resources>

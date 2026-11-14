@@ -2893,6 +2893,10 @@
   <string name="TrendingStatuses">Trending statuses</string>
   <string name="AddToFavorites">Add to Favorites</string>
   <string name="RemoveFromFavorites">Remove from Favorites</string>
+  <string name="AddStickerToPack">Add to My Stickers</string>
+  <string name="AddStickerToPackInfo">Choose one of your sticker packs</string>
+  <string name="AddStickerToPackDone">Sticker added to your pack</string>
+  <string name="AddStickerToPackEmpty">You do not own a sticker pack yet</string>
   <string name="HoldToAudio">Hold to record audio. Tap to switch to video.</string>
   <string name="HoldToVideo">Hold to record video. Tap to switch to audio.</string>
   <string name="MessageContainsPremiumFeatures">Sending animated emoji requires **Telegram Premium**</string>

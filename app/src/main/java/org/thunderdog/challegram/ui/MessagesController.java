@@ -7416,6 +7416,11 @@ public class MessagesController extends ViewController<MessagesController.Argume
         int fileId = ((TdApi.MessageSticker) selectedMessage.getMessage().content).sticker.sticker.id;
         TdApi.InputFile inputFile = new TdApi.InputFileId(fileId);
         tdlib.send(isFavorite ? new TdApi.AddFavoriteSticker(inputFile) : new TdApi.RemoveFavoriteSticker(inputFile), tdlib.typedOkHandler());
+      } else if (id == R.id.btn_messageAddToStickerSet) {
+        TdApi.Sticker sticker = ((TdApi.MessageSticker) selectedMessage.getMessage().content).sticker;
+        if (sticker.fullType.getConstructor() == TdApi.StickerFullTypeRegular.CONSTRUCTOR) {
+          addStickerToOwnedPack(sticker);
+        }
       } else if (id == R.id.btn_messageUnpin || id == R.id.btn_messagePin) {
         pinUnpinMessage(selectedMessage, id == R.id.btn_messagePin);
         return true;
@@ -7601,6 +7606,64 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
   private int bottomButtonAction;
   private boolean needBigPadding;
+
+  private void addStickerToOwnedPack (TdApi.Sticker sticker) {
+    ArrayList<TdApi.StickerSetInfo> packs = new ArrayList<>();
+    loadOwnedRegularStickerPacks(0, packs, () -> showAddStickerToPackDialog(sticker, packs));
+  }
+
+  private void loadOwnedRegularStickerPacks (long offsetStickerSetId, ArrayList<TdApi.StickerSetInfo> packs, Runnable loaded) {
+    tdlib.send(new TdApi.GetOwnedStickerSets(offsetStickerSetId, 100), (page, error) -> runOnUiThreadOptional(() -> {
+      if (error != null) {
+        UI.showError(error);
+      } else if (page == null || page.sets.length == 0) {
+        loaded.run();
+      } else {
+        // Every page mixes all sticker types, so it is filtered here while the unfiltered last id drives pagination
+        for (TdApi.StickerSetInfo info : page.sets) {
+          if (Td.equalsTo(new TdApi.StickerTypeRegular(), info.stickerType)) {
+            packs.add(info);
+          }
+        }
+        loadOwnedRegularStickerPacks(page.sets[page.sets.length - 1].id, packs, loaded);
+      }
+    }));
+  }
+
+  private void showAddStickerToPackDialog (TdApi.Sticker sticker, ArrayList<TdApi.StickerSetInfo> packs) {
+    if (packs.isEmpty()) {
+      UI.showToast(R.string.AddStickerToPackEmpty, Toast.LENGTH_SHORT);
+      return;
+    }
+    int rowId = View.generateViewId();
+    ListItem[] items = new ListItem[packs.size()];
+    String[] names = new String[packs.size()];
+    for (int i = 0; i < packs.size(); i++) {
+      TdApi.StickerSetInfo pack = packs.get(i);
+      items[i] = new ListItem(ListItem.TYPE_RADIO_OPTION, View.generateViewId(), 0, pack.title, rowId, i == 0);
+      names[i] = pack.name;
+    }
+    showSettings(new SettingsWrapBuilder(rowId)
+      .addHeaderItem(new ListItem(ListItem.TYPE_INFO, 0, 0, R.string.AddStickerToPackInfo))
+      .setRawItems(items)
+      .setSaveStr(R.string.Add)
+      .setIntDelegate((id, result) -> {
+        int selected = result.get(rowId);
+        for (int i = 0; i < items.length; i++) {
+          if (items[i].getId() == selected) {
+            TdApi.NewSticker value = new TdApi.NewSticker(new TdApi.InputFileId(sticker.sticker.id), sticker.format, sticker.emoji, null, null);
+            tdlib.send(new TdApi.AddStickerToSet(tdlib.myUserId(), names[i], value), (ok, error) -> runOnUiThreadOptional(() -> {
+              if (error != null) {
+                UI.showError(error);
+              } else {
+                UI.showToast(R.string.AddStickerToPackDone, Toast.LENGTH_SHORT);
+              }
+            }));
+            break;
+          }
+        }
+      }));
+  }
 
   private void checkExtraPadding () {
     boolean needBigPadding = bottomBarVisible.getValue(); //  && !scrollToBottomVisible;
