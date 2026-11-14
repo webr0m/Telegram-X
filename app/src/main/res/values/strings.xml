@@ -6941,4 +6941,5 @@
   <string name="TgxSuggestedSetPasswordText">Add a password to protect your account.</string>
   <string name="TgxSuggestedSetPasswordDelay">Without a password, you have to log in to this account again at least every %1$s days.</string>
   <string name="TgxBiometricsDeviceCredential">Unlock with your biometrics instead of the lock screen credentials.</string>
+  <string name="TgxSuggestedSetProfilePhotoText">A photo helps people you know recognize your account.</string>
 </resources>

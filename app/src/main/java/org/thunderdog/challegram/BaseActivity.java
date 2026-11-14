@@ -246,6 +246,8 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
           return new ClickBait(R.drawable.baseline_alternate_email_14, false);
         case Tdlib.ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS:
           return new ClickBait(R.drawable.baseline_archive_16, false);
+        case Tdlib.ResolvableProblem.SET_PROFILE_PHOTO:
+          return new ClickBait(R.drawable.baseline_camera_alt_16, false);
       }
     }
     return null;

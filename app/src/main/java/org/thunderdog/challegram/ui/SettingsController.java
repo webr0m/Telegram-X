@@ -659,6 +659,9 @@ public class SettingsController extends ViewController<Void> implements
             case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
               view.setText(obtainWrapper(Lang.getString(R.string.ArchiveNonContactsInfo), action.getConstructor()));
               break;
+            case TdApi.SuggestedActionSetProfilePhoto.CONSTRUCTOR:
+              view.setText(obtainWrapper(Lang.getString(R.string.TgxSuggestedSetProfilePhotoText), action.getConstructor()));
+              break;
             case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
               view.setText(obtainWrapper(Lang.getString(R.string.ReminderSetBirthdateText), action.getConstructor()));
               break;
@@ -993,6 +996,9 @@ public class SettingsController extends ViewController<Void> implements
         break;
       case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
         item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_archive_24, R.string.UnknownChats);
+        break;
+      case TdApi.SuggestedActionSetProfilePhoto.CONSTRUCTOR:
+        item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_camera_alt_24, R.string.SetProfilePhoto);
         break;
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
         item = new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_suggestion, R.drawable.baseline_cake_variant_24, R.string.ReminderSetBirthdate);
@@ -1461,6 +1467,10 @@ public class SettingsController extends ViewController<Void> implements
       }
       case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR: {
         navigateTo(new SettingsArchiveChatListController(context, tdlib));
+        return;
+      }
+      case TdApi.SuggestedActionSetProfilePhoto.CONSTRUCTOR: {
+        changeProfilePhoto();
         return;
       }
       case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR: {

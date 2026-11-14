@@ -12464,6 +12464,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       case TdApi.SuggestedActionCheckPassword.CONSTRUCTOR:
       case TdApi.SuggestedActionSetPassword.CONSTRUCTOR:
       case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
+      case TdApi.SuggestedActionSetProfilePhoto.CONSTRUCTOR:
       case TdApi.SuggestedActionSetBirthdate.CONSTRUCTOR:
       case TdApi.SuggestedActionSetLoginEmailAddress.CONSTRUCTOR: {
         return true;
@@ -12534,7 +12535,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     ResolvableProblem.SET_BIRTHDATE,
     ResolvableProblem.SET_LOGIN_EMAIL,
     ResolvableProblem.CALLS,
-    ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS
+    ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS,
+    ResolvableProblem.SET_PROFILE_PHOTO
   })
   public @interface ResolvableProblem {
     int
@@ -12546,7 +12548,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
       SET_BIRTHDATE = 5,
       SET_LOGIN_EMAIL = 6,
       CALLS = 7,
-      ARCHIVE_AND_MUTE_NEW_CHATS = 8;
+      ARCHIVE_AND_MUTE_NEW_CHATS = 8,
+      SET_PROFILE_PHOTO = 9;
   }
 
   @ResolvableProblem
@@ -12577,6 +12580,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
           return ResolvableProblem.SET_LOGIN_EMAIL;
         case TdApi.SuggestedActionEnableArchiveAndMuteNewChats.CONSTRUCTOR:
           return ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS;
+        case TdApi.SuggestedActionSetProfilePhoto.CONSTRUCTOR:
+          return ResolvableProblem.SET_PROFILE_PHOTO;
         default:
           Td.assertSuggestedAction_17e8d183();
           throw Td.unsupported(singleAction);

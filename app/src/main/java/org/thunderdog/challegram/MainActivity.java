@@ -277,7 +277,9 @@ public class MainActivity extends BaseActivity implements GlobalAccountListener,
     BackHeaderButton backButton = navigation.getHeaderView().getBackButton();
     if (problemType != Tdlib.ResolvableProblem.NONE) {
       @ColorId int colorId;
-      if (problemType == Tdlib.ResolvableProblem.SET_BIRTHDATE) {
+      if (problemType == Tdlib.ResolvableProblem.SET_BIRTHDATE ||
+        problemType == Tdlib.ResolvableProblem.SET_PROFILE_PHOTO ||
+        problemType == Tdlib.ResolvableProblem.ARCHIVE_AND_MUTE_NEW_CHATS) {
         colorId = ColorId.headerBadge;
       } else {
         colorId = ColorId.headerBadgeFailed;
