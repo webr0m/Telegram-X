@@ -6740,6 +6740,8 @@
   <string name="TgxStarsListingPriceConfirm">List %1$s #%2$s for %3$s?</string>
   <string name="TgxBusinessQuickReplyTarget">To %1$s</string>
   <string name="TgxBusinessQuickReplySendSelected">Send selected (%1$s)</string>
+  <string name="TgxBusinessQuickReplyDeleteSelected">Delete selected (%1$s)</string>
+  <string name="TgxBusinessQuickReplyDeleteConfirm">Delete %1$s messages from this shortcut? They will no longer be sent together with the reply.</string>
   <string name="TgxBusinessQuickReplyConfirmTarget">Send %1$s selected messages to %2$s?</string>
   <string name="TgxBusinessQuickReplySubsetUnavailable">This selection includes messages that require sending the full shortcut. Change the selection or send all messages.</string>
   <string name="TgxBusinessQuickReplyPartial">Some messages were queued before sending stopped. Check the chat before trying again.</string>

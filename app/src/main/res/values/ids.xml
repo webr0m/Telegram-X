@@ -1683,6 +1683,7 @@
   <item type="id" name="btn_tgxQuickReplySelect" />
   <item type="id" name="btn_tgxQuickReplyReload" />
   <item type="id" name="btn_tgxQuickReplyConfirm" />
+  <item type="id" name="btn_tgxQuickReplyDeleteSelected" />
   <item type="id" name="btn_editGroupLocation" />
   <item type="id" name="controller_savedMessagesTopics" />
   <item type="id" name="controller_savedMessagesTopic" />

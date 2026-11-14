@@ -175,6 +175,8 @@ final class BusinessQuickReplyController extends RecyclerViewController<Void> im
       if (!selected.isEmpty()) {
         rows.add(new ListItem(ListItem.TYPE_BUTTON, R.id.btn_tgxQuickReplyConfirm, 0,
           Lang.getString(R.string.TgxBusinessQuickReplySendSelected, Lang.formatNumber(selected.size()))));
+        rows.add(new ListItem(ListItem.TYPE_BUTTON, R.id.btn_tgxQuickReplyDeleteSelected, 0,
+          Lang.getString(R.string.TgxBusinessQuickReplyDeleteSelected, Lang.formatNumber(selected.size()))));
       }
     }
     adapter.setItems(rows, false);
@@ -213,7 +215,34 @@ final class BusinessQuickReplyController extends RecyclerViewController<Void> im
       }
       showConfirm(Lang.getString(R.string.TgxBusinessQuickReplyConfirmTarget, Lang.formatNumber(chosen.size()), tdlib.chatTitle(chatId)),
         Lang.getString(R.string.TgxBusinessSendShortcut), () -> send(batches));
+    } else if (messages != null && id == R.id.btn_tgxQuickReplyDeleteSelected && !selected.isEmpty()) {
+      long[] messageIds = new long[selected.size()];
+      int index = 0;
+      for (TdApi.QuickReplyMessage message : messages) {
+        if (selected.contains(message.id)) {
+          messageIds[index++] = message.id;
+        }
+      }
+      showConfirm(Lang.getString(R.string.TgxBusinessQuickReplyDeleteConfirm, Lang.formatNumber(messageIds.length)),
+        Lang.getString(R.string.Delete), () -> deleteMessages(messageIds));
     }
+  }
+
+  private void deleteMessages (long[] messageIds) {
+    if (!current() || sending || messages == null) {
+      return;
+    }
+    sending = true;
+    render();
+    tdlib.send(new TdApi.DeleteQuickReplyShortcutMessages(shortcutId, messageIds), (ok, error) -> runOnUiThreadOptional(() -> {
+      sending = false;
+      if (error != null) {
+        UI.showError(error);
+        render();
+      } else {
+        load();
+      }
+    }));
   }
 
   private ArrayList<TdApi.InputMessageContent[]> prepareSubset (ArrayList<TdApi.QuickReplyMessage> chosen) {
