@@ -721,7 +721,7 @@ public class SettingsDataController extends RecyclerViewController<SettingsDataC
       }));
   }
 
-  private void showAutosaveExceptions () {
+  public void showAutosaveExceptions () {
     if (loadingAutosaveExceptions || changingAutosaveException) {
       return;
     }

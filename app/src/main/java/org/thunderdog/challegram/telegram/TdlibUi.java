@@ -5392,6 +5392,11 @@ public class TdlibUi extends Handler {
                   autosave.addOneShotFocusListener(() -> autosave.showAutosaveScopeSettings(setting));
                   result = autosave;
                 }
+                case "save-to-photos/chats/delete-all", "save-to-photos/groups/delete-all", "save-to-photos/channels/delete-all" -> {
+                  SettingsDataController exceptions = new SettingsDataController(context.context(), tdlib);
+                  exceptions.addOneShotFocusListener(exceptions::showAutosaveExceptions);
+                  result = exceptions;
+                }
                 case "auto-download/mobile", "auto-download/wifi", "auto-download/roaming" -> {
                   SettingsDataController downloads = new SettingsDataController(context.context(), tdlib);
                   int setting = switch (name) {
