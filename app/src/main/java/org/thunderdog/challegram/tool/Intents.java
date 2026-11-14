@@ -38,6 +38,7 @@ import androidx.browser.customtabs.CustomTabsIntent;
 import androidx.browser.customtabs.CustomTabsService;
 import androidx.core.app.ActivityCompat;
 
+import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.BaseActivity;
 import org.thunderdog.challegram.BuildConfig;
 import org.thunderdog.challegram.CallActivity;
@@ -50,6 +51,7 @@ import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.receiver.LiveLocationReceiver;
 import org.thunderdog.challegram.receiver.TGShareBroadcastReceiver;
+import org.thunderdog.challegram.telegram.TdlibManager;
 import org.thunderdog.challegram.telegram.TdlibNotificationChannelGroup;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
@@ -773,7 +775,7 @@ public class Intents {
     }
     try {
       String scheme = uri.getScheme() != null ? uri.getScheme().toLowerCase(Locale.ROOT) : "";
-      if (Config.IN_APP_BROWSER_AVAILABLE && (ignoreSetting || org.thunderdog.challegram.unsorted.Settings.instance().useInAppBrowser()) && !scheme.equals("tel")) {
+      if (Config.IN_APP_BROWSER_AVAILABLE && (ignoreSetting || useInAppBrowser(uri)) && !scheme.equals("tel")) {
         Intent share = new Intent(UI.getContext(), TGShareBroadcastReceiver.class);
         share.setAction(Intent.ACTION_SEND);
 
@@ -797,6 +799,37 @@ public class Intents {
       }
     } catch (Throwable t) {
       Log.e("Cant launch CustomTabs client", t);
+    }
+    return false;
+  }
+
+  // TDLib stores the per-website browser exceptions server-side and answers them through getLinkWebBrowserType,
+  // which is asynchronous while this call site has to decide right now, so WebBrowserSettings::get_open_external_browser
+  // is mirrored here against the settings cached by the current account.
+  private static boolean useInAppBrowser (Uri uri) {
+    boolean inApp = org.thunderdog.challegram.unsorted.Settings.instance().useInAppBrowser();
+    TdApi.WebBrowserSettings settings = TdlibManager.instance().current().webBrowserSettings();
+    String host = uri.getHost();
+    if (settings == null || host == null) {
+      return inApp;
+    }
+    TdApi.WebDomainException[] exceptions = inApp ? settings.externalExceptions : settings.inAppExceptions;
+    return hasDomain(exceptions, host.toLowerCase(Locale.ROOT)) ? !inApp : inApp;
+  }
+
+  private static boolean hasDomain (@Nullable TdApi.WebDomainException[] exceptions, String host) {
+    if (exceptions == null) {
+      return false;
+    }
+    for (TdApi.WebDomainException exception : exceptions) {
+      String domain = exception != null && exception.domain != null ? exception.domain.toLowerCase(Locale.ROOT) : null;
+      if (domain == null || domain.isEmpty()) {
+        continue;
+      }
+      // an exception covers its own domain plus every subdomain of it
+      if (host.endsWith(domain) && (host.length() == domain.length() || host.charAt(host.length() - domain.length() - 1) == '.')) {
+        return true;
+      }
     }
     return false;
   }
