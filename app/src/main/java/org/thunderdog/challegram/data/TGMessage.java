@@ -5158,6 +5158,9 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         result = Lang.getString(R.string.message_groupSign);
       }
     }
+    if (result == null && !StringUtils.isEmpty(msg.senderTag)) {
+      result = msg.senderTag;
+    }
     if (result != null) {
       if (useBubbles())
         return "  " + result.trim();
