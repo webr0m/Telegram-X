@@ -5489,6 +5489,12 @@ public class TdlibUi extends Handler {
         } else if ("new".equals(contactsLink.section)) {
           ok = context.context().navigation().navigateTo(
             new PhoneController(context.context(), tdlib).setMode(PhoneController.MODE_ADD_CONTACT));
+        } else if ("invite".equals(contactsLink.section)) {
+          tdlib.cache().getInviteText(text -> post(() -> {
+            if (text != null && !StringUtils.isEmpty(text.text)) {
+              Intents.shareText(text.text);
+            }
+          }));
         } else {
           unsupported.run();
         }
