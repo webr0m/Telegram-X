@@ -6936,5 +6936,5 @@
   <string name="TgxTonSentService">Sent %1$s TON from the wallet</string>
   <string name="TgxTonReceivedService">Received %1$s TON in the wallet</string>
   <string name="TgxChatPaidMessagesInfo">Members who are not administrators must pay this amount for each message they send to this chat.</string>
-  <string name="TgxChatPaidMessagesInvalid">Enter a number between 0 and %1$s.</string>
+  <string name="TgxPaidMessagesInvalid">Enter a number between 0 and %1$s.</string>
 </resources>

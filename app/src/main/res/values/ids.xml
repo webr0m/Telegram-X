@@ -421,6 +421,7 @@
   <item type="id" name="btn_importedContactCount" />
   <item type="id" name="btn_newChatsAllowAll" />
   <item type="id" name="btn_newChatsContactsPremium" />
+  <item type="id" name="btn_newChatsPaidMessages" />
   <item type="id" name="btn_suggestContactBirthdate" />
   <item type="id" name="btn_autosaveExceptions" />
   <item type="id" name="btn_resetAutosaveException" />

@@ -4650,7 +4650,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
           value = -1L;
         }
         if (value < 0 || value > max) {
-          UI.showToast(Lang.getStringBold(R.string.TgxChatPaidMessagesInvalid, max), Toast.LENGTH_SHORT);
+          UI.showToast(Lang.getStringBold(R.string.TgxPaidMessagesInvalid, max), Toast.LENGTH_SHORT);
           return false;
         }
         final long chatId = getChatId();

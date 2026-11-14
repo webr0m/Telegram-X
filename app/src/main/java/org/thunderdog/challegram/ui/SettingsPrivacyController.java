@@ -996,7 +996,22 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
       if (error != null) {
         UI.showError(error);
       } else if (settings.incomingPaidMessageStarCount != 0) {
-        UI.showToast(R.string.NewChatsPrivacyUnavailable, Toast.LENGTH_SHORT);
+        openIncomingPaidMessageStarCountSettings(settings);
+      } else if (tdlib.options().canEnablePaidMessages) {
+        showOptions(Lang.getString(R.string.NewChatsPrivacyChoicesInfo),
+          new int[] {R.id.btn_newChatsAllowAll, R.id.btn_newChatsContactsPremium, R.id.btn_newChatsPaidMessages, R.id.btn_cancel},
+          new String[] {Lang.getString(R.string.Everybody), Lang.getString(R.string.NewChatsContactsPremium),
+            Lang.getString(R.string.ChargeForMessages), Lang.getString(R.string.Cancel)}, null,
+          new int[] {settings.allowNewChatsFromUnknownUsers ? R.drawable.baseline_check_24 : 0,
+            !settings.allowNewChatsFromUnknownUsers ? R.drawable.baseline_check_24 : 0, 0, R.drawable.baseline_cancel_24},
+          (view, id) -> {
+            if (id == R.id.btn_newChatsPaidMessages) {
+              openIncomingPaidMessageStarCountSettings(settings);
+            } else if (id == R.id.btn_newChatsAllowAll || id == R.id.btn_newChatsContactsPremium) {
+              setAllowNewChatsFromUnknownUsers(id == R.id.btn_newChatsAllowAll);
+            }
+            return true;
+          });
       } else {
         showOptions(Lang.getString(R.string.NewChatsPrivacyChoicesInfo),
           new int[] {R.id.btn_newChatsAllowAll, R.id.btn_newChatsContactsPremium, R.id.btn_cancel},
@@ -1041,6 +1056,34 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
         }
       }));
     }));
+  }
+
+  private void openIncomingPaidMessageStarCountSettings (TdApi.NewChatPrivacySettings settings) {
+    long max = tdlib.options().paidMessageStarCountMax;
+    openInputAlert(Lang.getString(R.string.ChargeForMessages), Lang.getString(R.string.ChargeForMessagesInfo),
+      R.string.Done, R.string.Cancel, Long.toString(settings.incomingPaidMessageStarCount), (inputView, result) -> {
+        long value;
+        try {
+          value = Long.parseLong(result.trim());
+        } catch (NumberFormatException e) {
+          value = -1L;
+        }
+        if (value < 0 || value > max) {
+          UI.showToast(Lang.getStringBold(R.string.TgxPaidMessagesInvalid, max), Toast.LENGTH_SHORT);
+          return false;
+        }
+        // TDLib requires unknown users to be allowed as soon as a price is set; 0 keeps the current choice.
+        TdApi.NewChatPrivacySettings updated = new TdApi.NewChatPrivacySettings(value > 0 || settings.allowNewChatsFromUnknownUsers, value);
+        tdlib.send(new TdApi.SetNewChatPrivacySettings(updated), (ok, error) -> runOnUiThreadOptional(() -> {
+          if (error != null) {
+            UI.showError(error);
+          } else if (isFocused()) {
+            setNewChatsPrivacy(updated);
+            tdlib.listeners().updateNewChatPrivacySettings(updated);
+          }
+        }));
+        return true;
+      }, false);
   }
 
   private TdApi.NewChatPrivacySettings newChatPrivacySettings;
