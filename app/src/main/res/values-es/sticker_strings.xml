@@ -4,4 +4,11 @@
   <string name="AddStickerToPackInfo">Elige uno de tus packs de stickers</string>
   <string name="AddStickerToPackDone">Sticker añadido a tu pack</string>
   <string name="AddStickerToPackEmpty">Todavía no tienes ningún pack de stickers</string>
+  <string name="CreateStickerSetFromSticker">Nuevo pack con este sticker</string>
+  <string name="CreateStickerSetTitle">Nombre del pack</string>
+  <string name="CreateStickerSetTitleInvalid">Introduce un nombre de pack de 1 a 64 caracteres.</string>
+  <string name="CreateStickerSetNameInvalid">Este nombre de pack no se puede usar.</string>
+  <string name="CreateStickerSetNameTaken">Este nombre de pack ya está en uso.</string>
+  <string name="CreateStickerSetConfirm">¿Crear &quot;%1$s&quot; disponible como @%2$s?</string>
+  <string name="CreateStickerSetDone">Pack de stickers creado</string>
 </resources>

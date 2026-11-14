@@ -7421,6 +7421,11 @@ public class MessagesController extends ViewController<MessagesController.Argume
         if (sticker.fullType.getConstructor() == TdApi.StickerFullTypeRegular.CONSTRUCTOR) {
           addStickerToOwnedPack(sticker);
         }
+      } else if (id == R.id.btn_messageCreateStickerSet) {
+        TdApi.Sticker sticker = ((TdApi.MessageSticker) selectedMessage.getMessage().content).sticker;
+        if (sticker.fullType.getConstructor() == TdApi.StickerFullTypeRegular.CONSTRUCTOR) {
+          createStickerSetWith(sticker);
+        }
       } else if (id == R.id.btn_messageUnpin || id == R.id.btn_messagePin) {
         pinUnpinMessage(selectedMessage, id == R.id.btn_messagePin);
         return true;
@@ -7663,6 +7668,58 @@ public class MessagesController extends ViewController<MessagesController.Argume
           }
         }
       }));
+  }
+
+  private void createStickerSetWith (TdApi.Sticker sticker) {
+    openInputAlert(Lang.getString(R.string.CreateStickerSetTitle), Lang.getString(R.string.CreateStickerSetTitle),
+      R.string.Done, R.string.Cancel, "", (inputView, result) -> {
+        String title = result == null ? "" : result.trim();
+        if (title.isEmpty() || title.length() > 64) {
+          UI.showToast(R.string.CreateStickerSetTitleInvalid, Toast.LENGTH_SHORT);
+          return false;
+        }
+        tdlib.send(new TdApi.GetSuggestedStickerSetName(title), (suggested, error) -> runOnUiThreadOptional(() -> {
+          if (!isFocused()) {
+            return;
+          } else if (error != null) {
+            UI.showError(error);
+            return;
+          }
+          String name = suggested == null || suggested.text == null ? "" : suggested.text;
+          if (name.isEmpty()) {
+            UI.showToast(R.string.CreateStickerSetNameInvalid, Toast.LENGTH_SHORT);
+            return;
+          }
+          tdlib.send(new TdApi.CheckStickerSetName(name), (check, checkError) -> runOnUiThreadOptional(() -> {
+            if (!isFocused()) {
+              return;
+            } else if (checkError != null) {
+              UI.showError(checkError);
+            } else if (check.getConstructor() == TdApi.CheckStickerSetNameResultNameOccupied.CONSTRUCTOR) {
+              UI.showToast(R.string.CreateStickerSetNameTaken, Toast.LENGTH_SHORT);
+            } else if (check.getConstructor() == TdApi.CheckStickerSetNameResultNameInvalid.CONSTRUCTOR) {
+              UI.showToast(R.string.CreateStickerSetNameInvalid, Toast.LENGTH_SHORT);
+            } else {
+              showConfirm(Lang.getString(R.string.CreateStickerSetConfirm, title, name), Lang.getString(R.string.Done),
+                () -> sendCreateStickerSet(sticker, title, name));
+            }
+          }));
+        }));
+        return true;
+      }, true);
+  }
+
+  private void sendCreateStickerSet (TdApi.Sticker sticker, String title, String name) {
+    TdApi.NewSticker value = new TdApi.NewSticker(new TdApi.InputFileId(sticker.sticker.id), sticker.format, sticker.emoji, null, null);
+    TdApi.Function<TdApi.StickerSet> request = new TdApi.CreateNewStickerSet(tdlib.myUserId(), title, name,
+      new TdApi.StickerTypeRegular(), false, new TdApi.NewSticker[] {value}, "");
+    tdlib.send(request, (set, error) -> runOnUiThreadOptional(() -> {
+      if (error != null) {
+        UI.showError(error);
+      } else {
+        UI.showToast(R.string.CreateStickerSetDone, Toast.LENGTH_SHORT);
+      }
+    }));
   }
 
   private void checkExtraPadding () {

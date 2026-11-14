@@ -1045,6 +1045,9 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
           ids.append(R.id.btn_messageAddToStickerSet);
           strings.append(R.string.AddStickerToPack);
           icons.append(R.drawable.deproko_baseline_insert_sticker_24);
+          ids.append(R.id.btn_messageCreateStickerSet);
+          strings.append(R.string.CreateStickerSetFromSticker);
+          icons.append(R.drawable.baseline_add_24);
         }
       }
     }
