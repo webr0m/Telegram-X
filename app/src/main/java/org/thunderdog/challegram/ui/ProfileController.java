@@ -2597,6 +2597,11 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         } else if (itemId == R.id.btn_userNote) {
           TdApi.FormattedText note = userFull != null ? userFull.note : null;
           view.setData(note != null && !StringUtils.isEmpty(note.text) ? note.text : Lang.getString(R.string.TapToSetup));
+        } else if (itemId == R.id.btn_privacyPolicy) {
+          String url = botPrivacyPolicyUrl();
+          if (url != null) {
+            view.setData(StringUtils.urlWithoutProtocol(url));
+          }
         } else if (itemId == R.id.btn_description) {
           view.setText(aboutWrapper);
           if (canEditDescription() && !hasDescription()) {
@@ -3287,6 +3292,21 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     return new ListItem(ListItem.TYPE_INFO_MULTILINE, R.id.btn_description, R.drawable.baseline_info_24, TD.isBot(user) ? R.string.BotInfo : isUserMode() ? R.string.UserBio : R.string.Description);
   }
 
+  private ListItem newBotPrivacyPolicyItem () {
+    if (isEditing() || !TD.isBot(user) || botPrivacyPolicyUrl() == null) {
+      return null;
+    }
+    return new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_privacyPolicy, R.drawable.baseline_policy_24, R.string.PrivacyPolicy);
+  }
+
+  @Nullable
+  private String botPrivacyPolicyUrl () {
+    if (userFull == null || userFull.botInfo == null || StringUtils.isEmpty(userFull.botInfo.privacyPolicyUrl)) {
+      return null;
+    }
+    return userFull.botInfo.privacyPolicyUrl;
+  }
+
   private ListItem newPeerIdItem () {
     return new ListItem(ListItem.TYPE_INFO_SETTING, R.id.btn_peer_id, R.drawable.baseline_identifier_24, R.string.PeerId);
   }
@@ -3334,6 +3354,14 @@ public class ProfileController extends ViewController<ProfileController.Args> im
           items.add(new ListItem(ListItem.TYPE_SEPARATOR));
         }
         items.add(newDescriptionItem());
+        addedCount++;
+      }
+      ListItem privacyPolicyItem = newBotPrivacyPolicyItem();
+      if (privacyPolicyItem != null) {
+        if (addedCount > 0) {
+          items.add(new ListItem(ListItem.TYPE_SEPARATOR));
+        }
+        items.add(privacyPolicyItem);
         addedCount++;
       }
       ListItem userNoteItem = newUserNoteItem();
@@ -3396,6 +3424,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
   private void addFullCells (TdApi.UserFullInfo userFull) {
     checkBirthdate();
     checkDescription();
+    checkBotPrivacyPolicy();
     checkGroupsInCommon();
     checkBusinessProfile();
     checkCollectibles();
@@ -3725,6 +3754,37 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       if (setDescription()) {
         updateValuedItem(R.id.btn_description);
       }
+    }
+  }
+
+  private void checkBotPrivacyPolicy () {
+    if (isEditing() || baseAdapter == null) {
+      return;
+    }
+    int foundIndex = baseAdapter.indexOfViewById(R.id.btn_privacyPolicy);
+    boolean hadItem = foundIndex != -1;
+    ListItem item = newBotPrivacyPolicyItem();
+    if (hadItem != (item != null)) {
+      if (hadItem) {
+        removeTopItem(foundIndex);
+      } else {
+        int index = 0;
+        if (Settings.instance().showPeerIds() && baseAdapter.indexOfViewById(R.id.btn_peer_id) != -1) {
+          index++;
+        }
+        if (baseAdapter.indexOfViewById(R.id.btn_username) != -1) {
+          index++;
+        }
+        if (baseAdapter.indexOfViewById(R.id.btn_birthdate) != -1) {
+          index++;
+        }
+        if (baseAdapter.indexOfViewById(R.id.btn_description) != -1) {
+          index++;
+        }
+        addTopItem(item, index);
+      }
+    } else if (item != null) {
+      updateValuedItem(R.id.btn_privacyPolicy);
     }
   }
 
@@ -6141,6 +6201,11 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       Settings.instance().setNewSetting(((ListItem) v.getTag()).getLongId(), baseAdapter.toggleView(v));
     } else if (viewId == R.id.btn_peer_id) {
       showOptions(Long.toString(getPeerId()), new int[]{R.id.btn_peer_id_copy}, new String[]{Lang.getString(R.string.Copy)}, null, new int[]{R.drawable.baseline_content_copy_24});
+    } else if (viewId == R.id.btn_privacyPolicy) {
+      String url = botPrivacyPolicyUrl();
+      if (url != null) {
+        tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().disableInstantView());
+      }
     } else if (viewId == R.id.btn_username) {
       boolean canSetUsername = canSetUsername();
       boolean canInviteUsers = chat != null && tdlib.canManageInviteLinks(chat);
@@ -7723,6 +7788,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
         checkBusinessProfile();
         checkCollectibles();
         checkDescription();
+        checkBotPrivacyPolicy();
         updateValuedItem(R.id.btn_userNote);
         if (mode == Mode.EDIT_BOT_USER) {
           updateValuedItem(R.id.btn_botDescription);
