@@ -222,6 +222,7 @@ import tgx.td.data.MessageWithProperties;
 
 public class TdlibUi extends Handler {
   private final Tdlib tdlib;
+  private String termsOfServicePromptId;
 
   /*package*/ TdlibUi (Tdlib tdlib) {
     super(Looper.getMainLooper());
@@ -6054,8 +6055,47 @@ public class TdlibUi extends Handler {
   }
 
   public void handleTermsOfService (TdApi.UpdateTermsOfService update) {
-    // TODO handle updateTermsOfService
-    // Log.i("%s", update);
+    if (update == null || update.termsOfService == null || StringUtils.isEmpty(update.termsOfServiceId)) {
+      return;
+    }
+    if (!tdlib.isAuthorized() || update.termsOfServiceId.equals(termsOfServicePromptId)) {
+      return;
+    }
+    BaseActivity activity = UI.getUiContext();
+    if (activity == null || UI.getUiState() != UI.State.RESUMED) {
+      return; // TDLib repeats the pending terms next time the session is initialised
+    }
+    final String termsOfServiceId = update.termsOfServiceId;
+    final TdlibDelegate delegate = new TdlibDelegate() {
+      @Override
+      public BaseActivity context () {
+        return activity;
+      }
+
+      @Override
+      public Tdlib tdlib () {
+        return tdlib;
+      }
+    };
+    CharSequence body = TD.formatString(delegate, update.termsOfService.text.text, update.termsOfService.text.entities, null, null);
+    if (update.termsOfService.minUserAge > 0) {
+      body = TextUtils.concat(body, "\n\n", Lang.getString(R.string.TgxTermsOfServiceMinAge, Integer.toString(update.termsOfService.minUserAge)));
+    }
+    termsOfServicePromptId = termsOfServiceId;
+    AlertDialog.Builder builder = new AlertDialog.Builder(activity, Theme.dialogTheme());
+    builder.setTitle(Lang.getString(R.string.TermsOfService));
+    builder.setMessage(body);
+    builder.setCancelable(!update.termsOfService.showPopup);
+    builder.setPositiveButton(Lang.getString(R.string.TermsOfServiceDone), (dialog, which) -> tdlib.send(new TdApi.AcceptTermsOfService(termsOfServiceId), (ok, error) -> post(() -> {
+      termsOfServicePromptId = null;
+      if (error != null) {
+        UI.showError(error);
+      }
+    })));
+    if (!update.termsOfService.showPopup) {
+      builder.setNegativeButton(Lang.getString(R.string.Cancel), null);
+    }
+    activity.showAlert(builder);
   }
 
   // Leave/join chat

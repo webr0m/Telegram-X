@@ -4384,6 +4384,7 @@
 
   <string name="TermsOfService">Terms of Service</string>
   <string name="TermsOfServiceDone">Agree</string>
+  <string name="TgxTermsOfServiceMinAge">You must be at least %1$s years old to accept these terms.</string>
 
   <string name="PrivacyForwardLinkNobody">Do not have a link to your account</string>
   <string name="PrivacyForwardLinkNobodyExcept">Do not have a link to your account (%1$s)</string>
