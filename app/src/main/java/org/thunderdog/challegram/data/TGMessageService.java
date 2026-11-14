@@ -2790,6 +2790,12 @@ public final class TGMessageService extends TGMessageServiceImpl {
             new BoldArgument(duration)
           );
         }
+      } else if (msg.isOutgoing) {
+        return getText(
+          // unlike the other EventLog*You strings, this one keeps the subject as %1$s
+          R.string.EventLogSlowModeDisabledYou,
+          new PlainArgument(Lang.getString(R.string.FromYou))
+        );
       } else {
         return getText(
           R.string.EventLogSlowModeDisabled,
