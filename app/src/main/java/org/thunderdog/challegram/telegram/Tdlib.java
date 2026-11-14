@@ -347,7 +347,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
           TdApi.AddedProxy[] proxies = ((TdApi.AddedProxies) result).proxies;
           boolean foundEnabledProxy = false;
           for (TdApi.AddedProxy addedProxy : proxies) {
-            int proxyId = Settings.instance().addOrUpdateProxy(addedProxy.proxy, null, addedProxy.isEnabled);
+            int proxyId = Settings.instance().addOrUpdateProxy(addedProxy.proxy,
+              !StringUtils.isEmpty(addedProxy.comment) ? addedProxy.comment : null, addedProxy.isEnabled);
             if (addedProxy.isEnabled) {
               tdlib.setEffectiveProxyId(proxyId);
               tdlib.setProxy(proxyId, addedProxy.proxy);
