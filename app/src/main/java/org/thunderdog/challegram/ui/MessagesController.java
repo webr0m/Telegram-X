@@ -10320,7 +10320,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
           }
 
           if (reportSpam) {
-            tdlib.send(new TdApi.ReportChat(getChatId(), null, null, null), tdlib.errorHandler());
+            TdlibUi.reportChat(this, getChatId(), null, null, null, false);
           }
           if (deleteChat) {
             deleteAndLeave();
