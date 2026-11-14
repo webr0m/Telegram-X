@@ -5159,9 +5159,12 @@ public class TdlibUi extends Handler {
                   result = privacy;
                   break;
                 }
-                case "auto-delete/set-custom":
-                  unsupported.run();
+                case "auto-delete/set-custom": {
+                  SettingsPrivacyController privacy = new SettingsPrivacyController(context.context(), tdlib);
+                  privacy.addOneShotFocusListener(privacy::openCustomDefaultMessageAutoDelete);
+                  result = privacy;
                   break;
+                }
 
                 case "blocked":
                 case "blocked/block-user": {

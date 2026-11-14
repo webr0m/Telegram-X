@@ -339,7 +339,7 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
     super.onFocus();
     if (adapter != null && !isOnlyPrivacy()) {
       loadImportedContactCount();
-      loadDefaultMessageAutoDelete(false);
+      loadDefaultMessageAutoDelete(AUTO_DELETE_PICKER_NONE);
     }
   }
 
@@ -828,14 +828,21 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
 
   private int defaultMessageAutoDeleteSeconds = -1;
   private boolean loadingDefaultMessageAutoDelete;
-  private boolean openDefaultMessageAutoDeleteWhenLoaded;
+  private static final int AUTO_DELETE_PICKER_NONE = 0, AUTO_DELETE_PICKER_OPTIONS = 1, AUTO_DELETE_PICKER_CUSTOM = 2;
+  private int pendingDefaultMessageAutoDeletePicker = AUTO_DELETE_PICKER_NONE;
 
   public void openDefaultMessageAutoDelete () {
-    loadDefaultMessageAutoDelete(true);
+    loadDefaultMessageAutoDelete(AUTO_DELETE_PICKER_OPTIONS);
   }
 
-  private void loadDefaultMessageAutoDelete (boolean openPicker) {
-    openDefaultMessageAutoDeleteWhenLoaded |= openPicker;
+  public void openCustomDefaultMessageAutoDelete () {
+    loadDefaultMessageAutoDelete(AUTO_DELETE_PICKER_CUSTOM);
+  }
+
+  private void loadDefaultMessageAutoDelete (int picker) {
+    if (picker != AUTO_DELETE_PICKER_NONE) {
+      pendingDefaultMessageAutoDeletePicker = picker;
+    }
     if (loadingDefaultMessageAutoDelete) {
       return;
     }
@@ -843,8 +850,9 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
     adapter.updateValuedSettingById(R.id.btn_defaultMessageAutoDelete);
     tdlib.send(new TdApi.GetDefaultMessageAutoDeleteTime(), (settings, error) -> runOnUiThreadOptional(() -> {
       loadingDefaultMessageAutoDelete = false;
-      boolean showPicker = openDefaultMessageAutoDeleteWhenLoaded && isFocused();
-      openDefaultMessageAutoDeleteWhenLoaded = false;
+      boolean showPicker = pendingDefaultMessageAutoDeletePicker != AUTO_DELETE_PICKER_NONE && isFocused();
+      int pendingPicker = pendingDefaultMessageAutoDeletePicker;
+      pendingDefaultMessageAutoDeletePicker = AUTO_DELETE_PICKER_NONE;
       if (error != null) {
         if (showPicker) {
           UI.showError(error);
@@ -852,7 +860,11 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
       } else {
         defaultMessageAutoDeleteSeconds = settings.time;
         if (showPicker) {
-          showDefaultMessageAutoDeleteOptions(settings.time);
+          if (pendingPicker == AUTO_DELETE_PICKER_CUSTOM) {
+            editDefaultMessageAutoDeleteDays(settings.time);
+          } else {
+            showDefaultMessageAutoDeleteOptions(settings.time);
+          }
         }
       }
       adapter.updateValuedSettingById(R.id.btn_defaultMessageAutoDelete);
@@ -939,7 +951,7 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
     tdlib.send(new TdApi.GetDefaultMessageAutoDeleteTime(), (settings, error) -> runOnUiThreadOptional(() -> {
       if (error != null || !isFocused() || settings.time != expected) {
         loadingDefaultMessageAutoDelete = false;
-        openDefaultMessageAutoDeleteWhenLoaded = false;
+        pendingDefaultMessageAutoDeletePicker = AUTO_DELETE_PICKER_NONE;
         if (error != null) {
           UI.showError(error);
         } else {
@@ -954,7 +966,7 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
       tdlib.send(new TdApi.SetDefaultMessageAutoDeleteTime(new TdApi.MessageAutoDeleteTime(selected)),
         (ok, setError) -> runOnUiThreadOptional(() -> {
           loadingDefaultMessageAutoDelete = false;
-          openDefaultMessageAutoDeleteWhenLoaded = false;
+          pendingDefaultMessageAutoDeletePicker = AUTO_DELETE_PICKER_NONE;
           if (setError != null) {
             UI.showError(setError);
           } else {
