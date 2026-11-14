@@ -5243,16 +5243,28 @@ public class TdlibUi extends Handler {
             }
             case TdApi.SettingsSectionNotifications.CONSTRUCTOR: {
               String subsection = ((TdApi.SettingsSectionNotifications) section).subsection;
-              TdApi.NotificationSettingsScope scope = switch (subsection != null ? subsection : "") {
+              String name = subsection != null ? subsection : "";
+              TdApi.NotificationSettingsScope scope = switch (name) {
                 case "private-chats", "private-chats/edit" -> new TdApi.NotificationSettingsScopePrivateChats();
                 case "groups", "groups/edit" -> new TdApi.NotificationSettingsScopeGroupChats();
                 case "channels", "channels/edit" -> new TdApi.NotificationSettingsScopeChannelChats();
                 default -> null;
               };
-              if (StringUtils.isEmpty(subsection) || scope != null) {
+              int reactionSourceId = switch (name) {
+                case "reactions", "reactions/messages" -> R.id.btn_reactionNotifications_message;
+                case "reactions/stories" -> R.id.btn_reactionNotifications_story;
+                default -> 0;
+              };
+              boolean resetAll = "reset".equals(name);
+              if (name.isEmpty() || scope != null || reactionSourceId != 0 || resetAll) {
                 SettingsNotificationController notifications = new SettingsNotificationController(context.context(), tdlib);
                 if (scope != null) {
                   notifications.setArguments(new SettingsNotificationController.Args(scope));
+                }
+                if (reactionSourceId != 0) {
+                  notifications.addOneShotFocusListener(() -> notifications.showReactionSourceOptions(reactionSourceId));
+                } else if (resetAll) {
+                  notifications.addOneShotFocusListener(() -> notifications.onMoreItemPressed(R.id.btn_resetNotifications));
                 }
                 result = notifications;
               } else {

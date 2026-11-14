@@ -3069,7 +3069,7 @@ public class SettingsNotificationController extends RecyclerViewController<Setti
     return settings.messageReactionSource;
   }
 
-  private void showReactionSourceOptions (@IdRes int viewId) {
+  public void showReactionSourceOptions (@IdRes int viewId) {
     TdApi.ReactionNotificationSource source = getReactionSource(viewId);
     boolean isContacts = source instanceof TdApi.ReactionNotificationSourceContacts;
     boolean isEveryone = source instanceof TdApi.ReactionNotificationSourceAll;
