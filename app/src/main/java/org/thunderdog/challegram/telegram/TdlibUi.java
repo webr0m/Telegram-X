@@ -5341,7 +5341,12 @@ public class TdlibUi extends Handler {
             }
             case TdApi.SettingsSectionDataAndStorage.CONSTRUCTOR: {
               String subsection = ((TdApi.SettingsSectionDataAndStorage) section).subsection;
-              switch (subsection != null ? subsection : "") {
+              String name = subsection != null ? subsection : "";
+              // auto-download/<network>/<media type> edits one checkbox of the <network> sheet
+              if (name.startsWith("auto-download/") && (name.endsWith("/photos") || name.endsWith("/videos") || name.endsWith("/files"))) {
+                name = name.substring(0, name.lastIndexOf('/'));
+              }
+              switch (name) {
                 case "storage", "storage/edit", "storage/max-cache" ->
                   result = new SettingsCacheController(context.context(), tdlib);
                 case "storage/auto-remove" -> {
@@ -5366,7 +5371,7 @@ public class TdlibUi extends Handler {
                   result = usage;
                 }
                 case "usage/mobile", "usage/roaming", "usage/wifi" -> {
-                  int network = switch (subsection) {
+                  int network = switch (name) {
                     case "usage/wifi" -> TGNetworkStats.TYPE_WIFI;
                     case "usage/roaming" -> TGNetworkStats.TYPE_ROAMING;
                     default -> TGNetworkStats.TYPE_MOBILE;
@@ -5379,7 +5384,7 @@ public class TdlibUi extends Handler {
                      "save-to-photos/groups", "save-to-photos/groups/max-video-size",
                      "save-to-photos/channels", "save-to-photos/channels/max-video-size" -> {
                   SettingsDataController autosave = new SettingsDataController(context.context(), tdlib);
-                  int setting = switch (subsection) {
+                  int setting = switch (name) {
                     case "save-to-photos/groups", "save-to-photos/groups/max-video-size" -> R.id.btn_autosaveGroupChats;
                     case "save-to-photos/channels", "save-to-photos/channels/max-video-size" -> R.id.btn_autosaveChannelChats;
                     default -> R.id.btn_autosavePrivateChats;
@@ -5389,7 +5394,7 @@ public class TdlibUi extends Handler {
                 }
                 case "auto-download/mobile", "auto-download/wifi", "auto-download/roaming" -> {
                   SettingsDataController downloads = new SettingsDataController(context.context(), tdlib);
-                  int setting = switch (subsection) {
+                  int setting = switch (name) {
                     case "auto-download/wifi" -> R.id.btn_mediaWiFiLimits;
                     case "auto-download/roaming" -> R.id.btn_mediaRoamingLimits;
                     default -> R.id.btn_mediaMobileLimits;
