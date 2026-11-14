@@ -218,7 +218,8 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
         } else if (
           itemId == R.id.btn_pollSetting_additions
         ) {
-          view.getToggler().setRadioEnabled(!isQuiz && item.getBoolValue(), isUpdate);
+          // TDLib takes no open answers in a quiz nor in an anonymous poll (inputPollTypeRegular)
+          view.getToggler().setRadioEnabled(!isQuiz && !isAnonymousPoll() && item.getBoolValue(), isUpdate);
         }
 
         if (itemId == R.id.btn_pollSetting_duration) {
@@ -506,12 +507,16 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
       itemId == R.id.btn_pollSetting_revoting ||
       itemId == R.id.btn_pollSetting_showVoters ||
       (itemId == R.id.btn_pollSetting_quiz && canChangePollType()) ||
-      (itemId == R.id.btn_pollSetting_additions && !isQuiz)
+      (itemId == R.id.btn_pollSetting_additions && !isQuiz && !isAnonymousPoll())
     ) {
       boolean value = adapter.toggleView(v);
 
       item.setBoolValue(value);
       adapter.updateValuedSetting(item);
+
+      if (itemId == R.id.btn_pollSetting_showVoters && settingAdditions != null) {
+        adapter.updateValuedSetting(settingAdditions);
+      }
 
       if (itemId == R.id.btn_pollSetting_multiAnswers) {
         if (!value) {
@@ -746,6 +751,10 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
     return settingMultiAnswers != null && settingMultiAnswers.getBoolValue();
   }
 
+  private boolean isAnonymousPoll () {
+    return settingShowVoters == null || !settingShowVoters.getBoolValue();
+  }
+
   private CharSequence formatPollDuration (int seconds) {
     return Lang.pluralDuration(seconds, TimeUnit.SECONDS, R.string.xSeconds, R.string.xMinutes,
       R.string.xHours, R.string.xDays, 0, 0);
@@ -949,13 +958,13 @@ public class CreatePollController extends RecyclerViewController<CreatePollContr
     TdApi.InputPollOption[] optionsArray = options.toArray(new TdApi.InputPollOption[0]);
     TdApi.InputPollType inputPollType = isQuiz ?
       new TdApi.InputPollTypeQuiz(correctOptionIds.get(), getExplanation(!disableMarkdown), null) :
-      new TdApi.InputPollTypeRegular(settingAdditions != null && settingAdditions.getBoolValue());
+      new TdApi.InputPollTypeRegular(!isAnonymousPoll() && settingAdditions != null && settingAdditions.getBoolValue());
     TdApi.InputMessagePoll poll = new TdApi.InputMessagePoll(
       question,
       optionsArray,
       description,
       null,
-      settingShowVoters == null || !settingShowVoters.getBoolValue(),
+      isAnonymousPoll(),
       isMultiAnswers(),
       settingRevoting != null && settingRevoting.getBoolValue(),
       settingOnlyMembers != null && settingOnlyMembers.getBoolValue(),
