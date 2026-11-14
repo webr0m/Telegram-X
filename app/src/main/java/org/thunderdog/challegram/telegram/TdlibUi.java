@@ -5453,10 +5453,20 @@ public class TdlibUi extends Handler {
               }
               break;
             }
+            case TdApi.SettingsSectionInAppBrowser.CONSTRUCTOR: {
+              String subsection = ((TdApi.SettingsSectionInAppBrowser) section).subsection;
+              if (StringUtils.isEmpty(subsection) || "enable-browser".equals(subsection)) {
+                SettingsThemeController tweaks = new SettingsThemeController(context.context(), context.tdlib());
+                tweaks.setArguments(new SettingsThemeController.Args(SettingsThemeController.MODE_INTERFACE_OPTIONS));
+                result = tweaks;
+              } else {
+                unsupported.run();
+              }
+              break;
+            }
             case TdApi.SettingsSectionSearch.CONSTRUCTOR:
             case TdApi.SettingsSectionPowerSaving.CONSTRUCTOR:
             case TdApi.SettingsSectionSendGift.CONSTRUCTOR:
-            case TdApi.SettingsSectionInAppBrowser.CONSTRUCTOR:
             case TdApi.SettingsSectionFeatures.CONSTRUCTOR: {
               unsupported.run();
               break;
