@@ -370,7 +370,7 @@ public final class StarsController extends RecyclerViewController<Void> implemen
     }
   }
 
-  private void chooseRevenueOwner () {
+  public void chooseRevenueOwner () {
     showOptions(new int[] {R.id.btn_starsPersonalRevenue, R.id.btn_starsBotRevenue, R.id.btn_cancel},
       new String[] {Lang.getString(R.string.TgxStarsPersonalRevenue), Lang.getString(R.string.TgxStarsBotRevenue),
         Lang.getString(R.string.Cancel)}, (view, id) -> {
