@@ -645,6 +645,10 @@ public class SettingsController extends ViewController<Void> implements
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_chatSettings, R.drawable.baseline_data_usage_24, R.string.DataSettings));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
+    // region @MadeByLLM("gpt-6", id = "stars-development")
+    items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tgxStarsSettings, R.drawable.baseline_stars_24, R.string.TgxStarsTitle));
+    items.add(new ListItem(ListItem.TYPE_SEPARATOR));
+    // endregion
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_privacySettings, R.drawable.baseline_lock_24, R.string.PrivacySettings));
     items.add(new ListItem(ListItem.TYPE_SEPARATOR));
     items.add(new ListItem(ListItem.TYPE_SETTING, R.id.btn_stickerSettingsAndEmoji, R.drawable.deproko_baseline_stickers_filled_24, R.string.StickersAndEmoji));
@@ -1164,6 +1168,10 @@ public class SettingsController extends ViewController<Void> implements
       });
     } else if (viewId == R.id.btn_languageSettings) {
       navigateTo(new SettingsLanguageController(context, tdlib));
+    // region @MadeByLLM("gpt-6", id = "stars-development")
+    } else if (viewId == R.id.btn_tgxStarsSettings) {
+      navigateTo(new StarsController(context, tdlib, false, 0, ""));
+    // endregion
     } else if (viewId == R.id.btn_notificationSettings) {
       navigateTo(new SettingsNotificationController(context, tdlib));
     } else if (viewId == R.id.btn_devices) {
