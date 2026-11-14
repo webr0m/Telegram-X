@@ -258,7 +258,7 @@ public class SettingsLanguageController extends RecyclerViewController<Void> imp
         boolean first = true;
         TdApi.LanguagePackInfo prevLanguageInfo = null;
         for (TdApi.LanguagePackInfo languageInfo : languagePack.languagePacks) {
-          if (prevLanguageInfo != null && (Td.isInstalled(prevLanguageInfo) != Td.isInstalled(languageInfo) || (!Td.isInstalled(prevLanguageInfo) && Td.isBeta(prevLanguageInfo) != Td.isBeta(languageInfo)))) {
+          if (prevLanguageInfo != null && getSectionName(prevLanguageInfo) != getSectionName(languageInfo)) {
             first = true;
           }
           if (first) {
@@ -370,6 +370,8 @@ public class SettingsLanguageController extends RecyclerViewController<Void> imp
       return R.string.LanguageSectionInstalled;
     } else if (Td.isBeta(info)) {
       return R.string.LanguageSectionRaw;
+    } else if (info.isOfficial) {
+      return R.string.LanguageSectionOfficial;
     } else {
       return R.string.Language;
     }
