@@ -4921,8 +4921,25 @@ public class TdlibUi extends Handler {
             }
             case TdApi.SettingsSectionChatFolders.CONSTRUCTOR: {
               if (Settings.instance().chatFoldersEnabled()) {
-                SettingsFoldersController chatFolders = new SettingsFoldersController(context.context(), context.tdlib());
-                context.context().navigation().navigateTo(chatFolders);
+                String subsection = ((TdApi.SettingsSectionChatFolders) section).subsection;
+                switch (subsection != null ? subsection : "") {
+                  case "create": {
+                    result = context.tdlib().canCreateChatFolder() ?
+                      EditChatFolderController.newFolder(context.context(), context.tdlib()) :
+                      new SettingsFoldersController(context.context(), context.tdlib());
+                    break;
+                  }
+                  case "tab-view": {
+                    SettingsFoldersController chatFolders = new SettingsFoldersController(context.context(), context.tdlib());
+                    chatFolders.addOneShotFocusListener(chatFolders::showFolderStyleOptions);
+                    result = chatFolders;
+                    break;
+                  }
+                  default: {
+                    result = new SettingsFoldersController(context.context(), context.tdlib());
+                    break;
+                  }
+                }
               } else {
                 showLinkTooltip(tdlib, R.drawable.baseline_warning_24, Lang.getString(R.string.InternalUrlUnsupported), openParameters);
               }

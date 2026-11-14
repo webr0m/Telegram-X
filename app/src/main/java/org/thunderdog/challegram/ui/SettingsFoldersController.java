@@ -443,40 +443,7 @@ public class SettingsFoldersController extends RecyclerViewController<Void> impl
         }
       }
     } else if (v.getId() == R.id.btn_chatFolderStyle) {
-      int chatFolderStyle = tdlib.settings().chatFolderStyle();
-      ListItem[] items = new ListItem[] {
-        new ListItem(ListItem.TYPE_CHECKBOX_OPTION, R.id.btn_displayFoldersAtTop, 0, R.string.DisplayFoldersAtTheTop, tdlib.settings().displayFoldersAtTop()),
-        new ListItem(ListItem.TYPE_SHADOW_BOTTOM).setTextColorId(ColorId.background),
-        new ListItem(ListItem.TYPE_SHADOW_TOP).setTextColorId(ColorId.background),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_iconWithLabelOnActiveFolder, 0, R.string.IconWithLabelOnActiveFolder2, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.ICON_WITH_LABEL_ON_ACTIVE_FOLDER),
-        new ListItem(ListItem.TYPE_SEPARATOR_FULL),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_labelAndIcon, 0, R.string.LabelAndIcon2, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.LABEL_AND_ICON),
-        new ListItem(ListItem.TYPE_SEPARATOR_FULL),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_labelOnly, 0, R.string.LabelOnly, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.LABEL_ONLY),
-        new ListItem(ListItem.TYPE_SEPARATOR_FULL),
-        new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_iconOnly, 0, R.string.IconOnly, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.ICON_ONLY)
-      };
-      SettingsWrapBuilder settings = new SettingsWrapBuilder(R.id.btn_chatFolderStyle)
-        .setRawItems(items)
-        .setNeedSeparators(false)
-        .setIntDelegate((id, result) -> {
-          int selection = result.get(R.id.btn_chatFolderStyle);
-          int style;
-          if (selection == R.id.btn_iconOnly) {
-            style = ChatFolderStyle.ICON_ONLY;
-          } else if (selection == R.id.btn_labelAndIcon) {
-            style = ChatFolderStyle.LABEL_AND_ICON;
-          } else if (selection == R.id.btn_iconWithLabelOnActiveFolder) {
-            style = ChatFolderStyle.ICON_WITH_LABEL_ON_ACTIVE_FOLDER;
-          } else {
-            style = ChatFolderStyle.LABEL_ONLY;
-          }
-          boolean displayFoldersAtTop = result.get(R.id.btn_displayFoldersAtTop) != 0;
-          tdlib.settings().setChatFolderStyle(style);
-          tdlib.settings().setDisplayFoldersAtTop(displayFoldersAtTop);
-          adapter.updateValuedSettingById(R.id.btn_chatFolderStyle);
-        });
-      showSettings(settings);
+      showFolderStyleOptions();
     } else if (v.getId() == R.id.btn_countMutedChats) {
       boolean countMuted = adapter.toggleView(v);
       int badgeFlags = BitwiseUtils.setFlag(tdlib.settings().getChatFolderBadgeFlags(), Settings.BADGE_FLAG_MUTED, countMuted);
@@ -498,6 +465,43 @@ public class SettingsFoldersController extends RecyclerViewController<Void> impl
         }
       }));
     }
+  }
+
+  public void showFolderStyleOptions () {
+    int chatFolderStyle = tdlib.settings().chatFolderStyle();
+    ListItem[] items = new ListItem[] {
+      new ListItem(ListItem.TYPE_CHECKBOX_OPTION, R.id.btn_displayFoldersAtTop, 0, R.string.DisplayFoldersAtTheTop, tdlib.settings().displayFoldersAtTop()),
+      new ListItem(ListItem.TYPE_SHADOW_BOTTOM).setTextColorId(ColorId.background),
+      new ListItem(ListItem.TYPE_SHADOW_TOP).setTextColorId(ColorId.background),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_iconWithLabelOnActiveFolder, 0, R.string.IconWithLabelOnActiveFolder2, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.ICON_WITH_LABEL_ON_ACTIVE_FOLDER),
+      new ListItem(ListItem.TYPE_SEPARATOR_FULL),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_labelAndIcon, 0, R.string.LabelAndIcon2, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.LABEL_AND_ICON),
+      new ListItem(ListItem.TYPE_SEPARATOR_FULL),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_labelOnly, 0, R.string.LabelOnly, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.LABEL_ONLY),
+      new ListItem(ListItem.TYPE_SEPARATOR_FULL),
+      new ListItem(ListItem.TYPE_RADIO_OPTION, R.id.btn_iconOnly, 0, R.string.IconOnly, R.id.btn_chatFolderStyle, chatFolderStyle == ChatFolderStyle.ICON_ONLY)
+    };
+    SettingsWrapBuilder settings = new SettingsWrapBuilder(R.id.btn_chatFolderStyle)
+      .setRawItems(items)
+      .setNeedSeparators(false)
+      .setIntDelegate((id, result) -> {
+        int selection = result.get(R.id.btn_chatFolderStyle);
+        int style;
+        if (selection == R.id.btn_iconOnly) {
+          style = ChatFolderStyle.ICON_ONLY;
+        } else if (selection == R.id.btn_labelAndIcon) {
+          style = ChatFolderStyle.LABEL_AND_ICON;
+        } else if (selection == R.id.btn_iconWithLabelOnActiveFolder) {
+          style = ChatFolderStyle.ICON_WITH_LABEL_ON_ACTIVE_FOLDER;
+        } else {
+          style = ChatFolderStyle.LABEL_ONLY;
+        }
+        boolean displayFoldersAtTop = result.get(R.id.btn_displayFoldersAtTop) != 0;
+        tdlib.settings().setChatFolderStyle(style);
+        tdlib.settings().setDisplayFoldersAtTop(displayFoldersAtTop);
+        adapter.updateValuedSettingById(R.id.btn_chatFolderStyle);
+      });
+    showSettings(settings);
   }
 
   @Override
