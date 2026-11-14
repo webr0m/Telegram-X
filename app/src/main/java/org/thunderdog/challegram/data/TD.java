@@ -1053,6 +1053,8 @@ public class TD {
       filters.memberInvites &&
       filters.memberPromotions &&
       filters.memberRestrictions &&
+      filters.memberTagChanges &&
+      filters.forumChanges &&
       filters.infoChanges &&
       filters.settingChanges &&
       filters.inviteLinkChanges &&

@@ -11420,6 +11420,10 @@ public class MessagesController extends ViewController<MessagesController.Argume
       return filters.memberLeaves;
     } else if (filterId == R.id.btn_filterVideoChats) {
       return filters.videoChatChanges;
+    } else if (filterId == R.id.btn_filterMemberTags) {
+      return filters.memberTagChanges;
+    } else if (filterId == R.id.btn_filterTopics) {
+      return filters.forumChanges;
     }
     return false;
   }
@@ -11435,8 +11439,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
         ArrayList<ListItem> items = new ArrayList<>();
 
-        final int[] ids;
-        final String[] strings;
+        int[] ids;
+        String[] strings;
 
         final boolean isChannel = tdlib.isChannel(chat.id);
 
@@ -11452,7 +11456,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             R.id.btn_filterEditedMessages,
             R.id.btn_filterPinnedMessages,
             R.id.btn_filterLeavingMembers,
-            R.id.btn_filterVideoChats
+            R.id.btn_filterVideoChats,
+            R.id.btn_filterMemberTags
           };
           strings = new String[] {
             Lang.getString(R.string.EventLogFilterAll),
@@ -11465,7 +11470,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             Lang.getString(R.string.EventLogFilterEditedMessages),
             Lang.getString(R.string.EventLogFilterPinnedMessages),
             Lang.getString(R.string.EventLogFilterLeavingMembers),
-            Lang.getString(R.string.EventLogFilterLiveStreams)
+            Lang.getString(R.string.EventLogFilterLiveStreams),
+            Lang.getString(R.string.EventLogFilterMemberTags)
           };
         } else {
           ids = new int[] {
@@ -11480,7 +11486,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             R.id.btn_filterEditedMessages,
             R.id.btn_filterPinnedMessages,
             R.id.btn_filterLeavingMembers,
-            R.id.btn_filterVideoChats
+            R.id.btn_filterVideoChats,
+            R.id.btn_filterMemberTags
           };
           strings = new String[] {
             Lang.getString(R.string.EventLogFilterAll),
@@ -11494,14 +11501,24 @@ public class MessagesController extends ViewController<MessagesController.Argume
             Lang.getString(R.string.EventLogFilterEditedMessages),
             Lang.getString(R.string.EventLogFilterPinnedMessages),
             Lang.getString(R.string.EventLogFilterLeavingMembers),
-            Lang.getString(R.string.EventLogFilterVoiceChats)
+            Lang.getString(R.string.EventLogFilterVoiceChats),
+            Lang.getString(R.string.EventLogFilterMemberTags)
           };
         }
+
+        if (tdlib.isForum(chat.id)) {
+          ids = Arrays.copyOf(ids, ids.length + 1);
+          ids[ids.length - 1] = R.id.btn_filterTopics;
+          strings = Arrays.copyOf(strings, strings.length + 1);
+          strings[strings.length - 1] = Lang.getString(R.string.ForumChatTopics);
+        }
+
+        final int[] filterIds = ids;
 
         boolean isFirst = true;
         int i = 0;
 
-        for (int id : ids) {
+        for (int id : filterIds) {
           if (isFirst) {
             isFirst = false;
           } else {
@@ -11612,6 +11629,10 @@ public class MessagesController extends ViewController<MessagesController.Argume
                   filter.memberLeaves = isSelected;
                 } else if (checkId == R.id.btn_filterVideoChats) {
                   filter.videoChatChanges = isSelected;
+                } else if (checkId == R.id.btn_filterMemberTags) {
+                  filter.memberTagChanges = isSelected;
+                } else if (checkId == R.id.btn_filterTopics) {
+                  filter.forumChanges = isSelected;
                 }
               } else if (itemId == R.id.user) {
                 if (item.isSelected() && userIds1 != null) {
@@ -11692,7 +11713,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
                 }
               }
 
-              boolean allSelected = selectedFilters == ids.length - 1;
+              boolean allSelected = selectedFilters == filterIds.length - 1;
 
               int i1 = settingsAdapter.indexOfViewById(R.id.btn_filterAll);
               if (i1 != -1) {
