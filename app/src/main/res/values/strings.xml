@@ -1236,6 +1236,12 @@
   <string name="OtherDevices">Other Devices</string>
   <string name="SessionsIncompleteTitle">Incomplete Login Attempts</string>
   <string name="SessionsIncompleteInfo">The devices above have no access to your messages. The code was entered correctly, but no correct password was given.</string>
+  <string name="SessionsUnconfirmedTitle">Unconfirmed Login</string>
+  <string name="SessionsUnconfirmed">Waiting for confirmation</string>
+  <string name="SessionsUnconfirmedDevice">Logged in from **%1$s**</string>
+  <string name="SessionsUnconfirmedLocation">Location: **%1$s**</string>
+  <string name="SessionsUnconfirmedDate">Requested on **%1$s**</string>
+  <string name="SessionsUnconfirmedMore">%1$d logins are waiting for confirmation in total</string>
   <string name="TwoStepVerification">Two-Step Verification</string>
   <string name="LoginEmail">Login Email</string>
   <string name="PasswordEnabled">Enabled</string>

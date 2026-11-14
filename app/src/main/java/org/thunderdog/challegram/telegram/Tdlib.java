@@ -5695,6 +5695,20 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   private SessionsInfo sessionsInfo;
 
+  private volatile TdApi.UpdateUnconfirmedSession unconfirmedSessionInfo;
+
+  // TDLib reports unconfirmed sessions through an update only, there is no getter for them
+  @Nullable
+  public TdApi.UnconfirmedSession unconfirmedSession () {
+    TdApi.UpdateUnconfirmedSession info = unconfirmedSessionInfo;
+    return info != null && info.unconfirmedSessionCount > 0 ? info.session : null;
+  }
+
+  public int unconfirmedSessionCount () {
+    TdApi.UpdateUnconfirmedSession info = unconfirmedSessionInfo;
+    return info != null ? info.unconfirmedSessionCount : 0;
+  }
+
   @Nullable
   public TdApi.Session currentSession () {
     synchronized (dataLock) {
@@ -9191,7 +9205,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   @TdlibThread
   private void updateUnconfirmedSession (TdApi.UpdateUnconfirmedSession update) {
-    // TODO
+    this.unconfirmedSessionInfo = update;
+    listeners.notifyUnconfirmedSessionChanged();
   }
 
   // Updates: FILES

@@ -273,6 +273,12 @@ public class TdlibListeners {
     }
   }
 
+  void notifyUnconfirmedSessionChanged () {
+    for (SessionListener listener : sessionListeners) {
+      listener.onUnconfirmedSessionChanged(tdlib);
+    }
+  }
+
   void notifySessionListPossiblyChanged (boolean isWeakGuess) {
     for (SessionListener listener : sessionListeners) {
       listener.onSessionListChanged(tdlib, isWeakGuess);

@@ -92,6 +92,15 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
     items.add(new ListItem(ListItem.TYPE_VALUED_SETTING, R.id.btn_sessionTtl, 0, R.string.SessionTerminateTtl));
     items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
 
+    TdApi.UnconfirmedSession unconfirmedSession = tdlib.unconfirmedSession();
+    int unconfirmedSessionCount = tdlib.unconfirmedSessionCount();
+    if (unconfirmedSession != null) {
+      items.add(new ListItem(ListItem.TYPE_HEADER, 0, 0, R.string.SessionsUnconfirmedTitle));
+      items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
+      items.add(new ListItem(ListItem.TYPE_VALUED_SETTING_COMPACT, R.id.btn_unconfirmedSession, R.drawable.baseline_device_android_x_24, R.string.SessionsUnconfirmed).setData(getUnconfirmedSessionInfo(unconfirmedSession, unconfirmedSessionCount)));
+      items.add(new ListItem(ListItem.TYPE_SHADOW_BOTTOM));
+    }
+
     items.add(new ListItem(items.isEmpty() ? ListItem.TYPE_HEADER_PADDED : ListItem.TYPE_HEADER, 0, 0, R.string.ThisDevice));
     items.add(new ListItem(ListItem.TYPE_SHADOW_TOP));
     items.add(new ListItem(ListItem.TYPE_SESSION, R.id.btn_currentSession, 0, 0));
@@ -248,6 +257,20 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
     return b;
   }
 
+  private static CharSequence getUnconfirmedSessionInfo (TdApi.UnconfirmedSession session, int count) {
+    Lang.SpanCreator bold = Lang.boldCreator();
+    SpannableStringBuilder b = new SpannableStringBuilder();
+    b.append(Lang.getString(R.string.SessionsUnconfirmedDevice, bold, session.deviceModel));
+    if (!StringUtils.isEmpty(session.location)) {
+      b.append('\n').append(Lang.getString(R.string.SessionsUnconfirmedLocation, bold, session.location));
+    }
+    b.append('\n').append(Lang.getString(R.string.SessionsUnconfirmedDate, bold, Lang.timeOrDateShort(session.date, TimeUnit.SECONDS)));
+    if (count > 1) {
+      b.append('\n').append(Lang.getString(R.string.SessionsUnconfirmedMore, count));
+    }
+    return b;
+  }
+
   @Override
   protected void onCreateView (Context context, CustomRecyclerView recyclerView) {
     this.adapter = new SettingsAdapter(this) {
@@ -264,6 +287,8 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
         final int itemId = item.getId();
         if (itemId == R.id.btn_terminateAllSessions) {
           view.setData(R.string.ClearOtherSessionsHelp);
+        } else if (itemId == R.id.btn_unconfirmedSession) {
+          view.setData((CharSequence) item.getData());
         } else if (itemId == R.id.btn_qrLogin) {
           view.setData(Lang.getStringSecure(R.string.ScanQRLogInInfo));
         } else if (itemId == R.id.btn_sessionTtl) {
@@ -353,6 +378,11 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
   @Override
   public void onSessionListChanged (Tdlib tdlib, boolean isWeakGuess) {
     requestActiveSessions();
+  }
+
+  @Override
+  public void onUnconfirmedSessionChanged (Tdlib tdlib) {
+    runOnUiThreadOptional(this::buildCells);
   }
 
   @Override

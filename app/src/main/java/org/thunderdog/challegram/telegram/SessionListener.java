@@ -28,4 +28,6 @@ public interface SessionListener {
   default void onInactiveSessionTtlChanged (Tdlib tdlib, int ttlDays) {
     onSessionListChanged(tdlib, false);
   }
+  default void onUnconfirmedSessionChanged (Tdlib tdlib) {
+  }
 }

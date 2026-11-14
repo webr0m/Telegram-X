@@ -560,6 +560,7 @@
   <item type="id" name="btn_currentSession" />
   <item type="id" name="btn_qrLogin" />
   <item type="id" name="btn_sessionTtl" />
+  <item type="id" name="btn_unconfirmedSession" />
   <item type="id" name="btn_selectChat" />
   <item type="id" name="btn_selectUnread" />
   <item type="id" name="btn_selectAll" />

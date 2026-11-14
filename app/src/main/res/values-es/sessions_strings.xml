@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="SessionsUnconfirmedTitle">Inicio de sesión sin confirmar</string>
+  <string name="SessionsUnconfirmed">Esperando confirmación</string>
+  <string name="SessionsUnconfirmedDevice">Sesión iniciada desde **%1$s**</string>
+  <string name="SessionsUnconfirmedLocation">Ubicación: **%1$s**</string>
+  <string name="SessionsUnconfirmedDate">Solicitado el **%1$s**</string>
+  <string name="SessionsUnconfirmedMore">%1$d inicios de sesión esperan confirmación en total</string>
+</resources>
