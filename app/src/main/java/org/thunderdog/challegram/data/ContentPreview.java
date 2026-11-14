@@ -1565,7 +1565,7 @@ public class ContentPreview {
 
       case TdApi.MessageProximityAlertTriggered.CONSTRUCTOR: {
         int distance = (int) arg1;
-        return new ContentPreview(EMOJI_LOCATION, 0, Lang.plural(distance >= 1000 ? R.string.ChatContentProximityFromYouKm : R.string.ChatContentProximityFromYouM, distance >= 1000 ? distance / 1000 : distance, tdlib.senderName(sender, true)), true);
+        return new ContentPreview(EMOJI_LOCATION, 0, Lang.plural(distance >= 1000 ? R.string.ChatContentProximityFromYouKm : R.string.ChatContentProximityFromYouM, distance >= 1000 ? distance / 1000 : distance, getSenderName(tdlib, sender, senderName)), true);
       }
 
       case TdApi.MessageVideoChatStarted.CONSTRUCTOR: {
