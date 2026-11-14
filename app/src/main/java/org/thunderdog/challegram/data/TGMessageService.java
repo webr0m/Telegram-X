@@ -1098,6 +1098,11 @@ public final class TGMessageService extends TGMessageServiceImpl {
         );
       }
     });
+    if (chatHasProtectedContentToggled.requestMessageId != 0) {
+      setOnClickListener(() ->
+        highlightOtherMessage(chatHasProtectedContentToggled.requestMessageId)
+      );
+    }
   }
 
   public TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessageManagedBotCreated botCreated) {
