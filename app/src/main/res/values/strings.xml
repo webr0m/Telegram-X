@@ -6550,6 +6550,8 @@
   <string name="TgxBusinessAddQuickReply">Create Quick Reply</string>
   <string name="TgxBusinessAppendQuickReply">Add Text Message</string>
   <string name="TgxBusinessRenameQuickReply">Rename Shortcut</string>
+  <string name="TgxBusinessDeleteQuickReply">Delete Shortcut</string>
+  <string name="TgxBusinessDeleteQuickReplyConfirm">Delete /%1$s and all its messages? This cannot be undone.</string>
   <string name="TgxBusinessQuickReplyMedia">Media or other non-text message.</string>
   <string name="TgxBusinessQuickReplyName">Shortcut Name</string>
   <string name="TgxBusinessQuickReplyNameInvalid">Enter a new shortcut name.</string>

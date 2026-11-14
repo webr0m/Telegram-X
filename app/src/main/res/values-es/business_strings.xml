@@ -43,6 +43,8 @@
   <string name="TgxBusinessAddQuickReply">Crear respuesta rápida</string>
   <string name="TgxBusinessAppendQuickReply">Añadir mensaje de texto</string>
   <string name="TgxBusinessRenameQuickReply">Renombrar acceso directo</string>
+  <string name="TgxBusinessDeleteQuickReply">Eliminar acceso directo</string>
+  <string name="TgxBusinessDeleteQuickReplyConfirm">¿Eliminar /%1$s y todos sus mensajes? No se puede deshacer.</string>
   <string name="TgxBusinessQuickReplyMedia">Mensaje multimedia o de otro tipo.</string>
   <string name="TgxBusinessQuickReplyName">Nombre del atajo</string>
   <string name="TgxBusinessQuickReplyNameInvalid">Introduce un nombre de atajo nuevo.</string>

@@ -1624,6 +1624,7 @@
   <item type="id" name="btn_tgxBusinessAddQuickReply" />
   <item type="id" name="btn_tgxBusinessAppendQuickReply" />
   <item type="id" name="btn_tgxBusinessRenameQuickReply" />
+  <item type="id" name="btn_tgxBusinessDeleteQuickReply" />
   <item type="id" name="btn_tgxBusinessDisconnect" />
   <item type="id" name="controller_starsGifts" />
   <item type="id" name="controller_starsRevenue" />

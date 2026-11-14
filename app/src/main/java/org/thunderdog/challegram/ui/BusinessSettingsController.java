@@ -317,16 +317,21 @@ public final class BusinessSettingsController extends RecyclerViewController<Voi
     String preview = content instanceof TdApi.MessageText text ? text.text.text :
       Lang.getString(R.string.TgxBusinessQuickReplyMedia);
     showOptions("/" + shortcut.name + "\n" + preview,
-      new int[] {R.id.btn_tgxBusinessAppendQuickReply, R.id.btn_tgxBusinessRenameQuickReply, R.id.btn_cancel},
+      new int[] {R.id.btn_tgxBusinessAppendQuickReply, R.id.btn_tgxBusinessRenameQuickReply, R.id.btn_tgxBusinessDeleteQuickReply, R.id.btn_cancel},
       new String[] {
         Lang.getString(R.string.TgxBusinessAppendQuickReply),
         Lang.getString(R.string.TgxBusinessRenameQuickReply),
+        Lang.getString(R.string.TgxBusinessDeleteQuickReply),
         Lang.getString(R.string.Cancel)
-      }, (view, id) -> {
+      },
+      new int[] {OptionColor.NORMAL, OptionColor.NORMAL, OptionColor.RED, OptionColor.NORMAL},
+      new int[] {0, 0, R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (view, id) -> {
         if (id == R.id.btn_tgxBusinessAppendQuickReply) {
           editShortcut(shortcut);
         } else if (id == R.id.btn_tgxBusinessRenameQuickReply) {
           renameShortcut(shortcut);
+        } else if (id == R.id.btn_tgxBusinessDeleteQuickReply) {
+          deleteShortcut(shortcut);
         }
         return true;
       });
@@ -363,6 +368,24 @@ public final class BusinessSettingsController extends RecyclerViewController<Voi
             render();
           }
         }));
+      }));
+    });
+  }
+
+  private void deleteShortcut (TdApi.QuickReplyShortcut shortcut) {
+    showConfirm(Lang.getString(R.string.TgxBusinessDeleteQuickReplyConfirm, shortcut.name), Lang.getString(R.string.Delete), () -> {
+      TdApi.QuickReplyShortcut current = Arrays.stream(tdlib.quickReplyShortcuts())
+        .filter(item -> item.id == shortcut.id).findFirst().orElse(null);
+      if (current == null || !current.name.equals(shortcut.name)) {
+        UI.showToast(R.string.TgxBusinessChanged, Toast.LENGTH_SHORT);
+        return;
+      }
+      tdlib.send(new TdApi.DeleteQuickReplyShortcut(shortcut.id), (ok, error) -> runOnUiThreadOptional(() -> {
+        if (error != null) {
+          UI.showError(error);
+        } else {
+          render();
+        }
       }));
     });
   }
