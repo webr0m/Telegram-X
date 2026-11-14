@@ -261,6 +261,28 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
     return false;
   }
 
+  public void onAnimatedEmojiClicked (TdApi.Sticker clickedSticker) {
+    if (specialType != SPECIAL_TYPE_ANIMATED_EMOJI || clickedSticker == null) {
+      return;
+    }
+    TdApi.MessageContent content = pendingEmoji != null ? pendingEmoji : animatedEmoji;
+    if (content == null || content.getConstructor() != TdApi.MessageAnimatedEmoji.CONSTRUCTOR) {
+      return;
+    }
+    TdApi.MessageAnimatedEmoji currentEmoji = (TdApi.MessageAnimatedEmoji) content;
+    TdApi.AnimatedEmoji emoji = currentEmoji.animatedEmoji;
+    TdApi.MessageContent clicked = new TdApi.MessageAnimatedEmoji(new TdApi.AnimatedEmoji(clickedSticker, emoji.stickerWidth, emoji.stickerHeight, emoji.fitzpatrickType, emoji.sound, emoji.isRegularEmoji), currentEmoji.emoji);
+    if (pendingEmoji != null) {
+      this.pendingEmoji = clicked;
+    } else {
+      this.animatedEmoji = clicked;
+    }
+    if (updateAnimatedEmoji()) {
+      rebuildContent();
+      invalidateContentReceiver();
+    }
+  }
+
   private void setDice (TdApi.MessageDice dice, boolean isUpdate) {
     this.dice = dice;
     TdApi.DiceStickers targetSticker = tdlib.findDiceEmoji(dice.emoji, dice.value, dice.finalState != null ? dice.finalState : dice.initialState);
@@ -844,7 +866,19 @@ public class TGMessageSticker extends TGMessage implements AnimatedEmojiListener
                 .show(tdlib, Lang.getString(ContentPreview.EMOJI_DART.textRepresentation.equals(dice.emoji) ? R.string.SendDartHint : ContentPreview.EMOJI_DICE.textRepresentation.equals(dice.emoji) ? R.string.SendDiceHint : R.string.SendUnknownDiceHint, dice.emoji));
               break;
             }
-            case SPECIAL_TYPE_ANIMATED_EMOJI:
+            case SPECIAL_TYPE_ANIMATED_EMOJI: {
+              tdlib.send(new TdApi.ClickAnimatedEmojiMessage(msg.chatId, msg.id), (clickedSticker, error) -> {
+                if (clickedSticker != null) {
+                  tdlib.ui().post(() -> {
+                    if (!isDestroyed()) {
+                      onAnimatedEmojiClicked(clickedSticker);
+                    }
+                  });
+                }
+              });
+              tapProcessed = openOrLoopSticker(view, sticker, Settings.instance().getNewSetting(Settings.SETTING_FLAG_NO_ANIMATED_STICKERS_LOOP));
+              break;
+            }
             default: {
               tapProcessed = openOrLoopSticker(view, sticker, Settings.instance().getNewSetting(Settings.SETTING_FLAG_NO_ANIMATED_STICKERS_LOOP));
               break;

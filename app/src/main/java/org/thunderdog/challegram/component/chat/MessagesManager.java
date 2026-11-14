@@ -39,6 +39,7 @@ import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.data.TGMessage;
 import org.thunderdog.challegram.data.TGMessageBotInfo;
+import org.thunderdog.challegram.data.TGMessageSticker;
 import org.thunderdog.challegram.data.TGMessageVideo;
 import org.thunderdog.challegram.data.ThreadInfo;
 // region @MadeByLLM("gpt-6-astra", id = "forum-topics", ref = "PR #1095")
@@ -3916,6 +3917,21 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
     tdlib.ui().post(() -> {
       if (loader.getChatId() == chatId) {
         updateMessageOpened(messageId);
+      }
+    });
+  }
+
+  @Override
+  public void onAnimatedEmojiMessageClicked (long chatId, long messageId, TdApi.Sticker sticker) {
+    tdlib.ui().post(() -> {
+      if (loader.getChatId() == chatId) {
+        int index = adapter.indexOfMessageContainer(messageId);
+        if (index != -1) {
+          TGMessage item = adapter.getItem(index);
+          if (item instanceof TGMessageSticker) {
+            ((TGMessageSticker) item).onAnimatedEmojiClicked(sticker);
+          }
+        }
       }
     });
   }
