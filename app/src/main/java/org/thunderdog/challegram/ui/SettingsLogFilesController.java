@@ -53,7 +53,7 @@ public class SettingsLogFilesController extends RecyclerViewController<SettingsL
 
   @Override
   public CharSequence getName () {
-    return "Application Logs";
+    return Lang.getString(R.string.AppLogs);
   }
 
   private SettingsAdapter adapter;
@@ -126,7 +126,7 @@ public class SettingsLogFilesController extends RecyclerViewController<SettingsL
     if (viewId == R.id.btn_file) {
       final ListItem item = (ListItem) v.getTag();
       final File file = (File) item.getData();
-      showOptions(file.getName() + " (" + Strings.buildSize(file.length()) + ")", new int[] {R.id.btn_open, R.id.btn_share, R.id.btn_delete}, new String[] {"View", "Share", "Delete"}, new int[] {OptionColor.NORMAL, OptionColor.NORMAL, OptionColor.RED}, new int[] {R.drawable.baseline_visibility_24, R.drawable.baseline_forward_24, R.drawable.baseline_delete_24}, (itemView, id) -> {
+      showOptions(file.getName() + " (" + Strings.buildSize(file.length()) + ")", new int[] {R.id.btn_open, R.id.btn_share, R.id.btn_delete}, new String[] {"View", Lang.getString(R.string.Share), Lang.getString(R.string.Delete)}, new int[] {OptionColor.NORMAL, OptionColor.NORMAL, OptionColor.RED}, new int[] {R.drawable.baseline_visibility_24, R.drawable.baseline_forward_24, R.drawable.baseline_delete_24}, (itemView, id) -> {
         if (id == R.id.btn_open) {
           TextController c = new TextController(context, tdlib);
           c.setArguments(TextController.Arguments.fromFile(file.getName(), file.getPath(), "text/plain"));

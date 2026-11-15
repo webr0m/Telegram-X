@@ -617,7 +617,7 @@ public class SettingsBugController extends RecyclerViewController<SettingsBugCon
           Settings.TdlibLogSettings settings = Settings.instance().getLogSettings();
           int verbosity = settings.getVerbosity(module);
           if (module != null && verbosity == settings.getDefaultVerbosity(module)) {
-            view.setData("Default");
+            view.setData(Lang.getString(R.string.Default));
             view.getToggler().setRadioEnabled(verbosity <= settings.getVerbosity(null), isUpdate);
           } else {
             view.setData(getLogVerbosity(verbosity));
@@ -1544,7 +1544,7 @@ public class SettingsBugController extends RecyclerViewController<SettingsBugCon
       //noinspection ResourceType
       if (item.getId() == 7 && wrap[0] != null && wrap[0].window != null && !wrap[0].window.isWindowHidden()) {
         wrap[0].window.hideWindow(true);
-        UI.post(() -> openInputAlert(module != null ? module : "Verbosity Level", "Integer "  + (module != null ? 1 : 0) + ".." + Integer.MAX_VALUE, R.string.Save, R.string.Cancel, Integer.toString(currentVerbosity != Settings.TDLIB_LOG_VERBOSITY_UNKNOWN ? currentVerbosity : 0), (inputView, result) -> {
+        UI.post(() -> openInputAlert(module != null ? module : Lang.getString(R.string.DebugVerbosity), "Integer "  + (module != null ? 1 : 0) + ".." + Integer.MAX_VALUE, R.string.Save, R.string.Cancel, Integer.toString(currentVerbosity != Settings.TDLIB_LOG_VERBOSITY_UNKNOWN ? currentVerbosity : 0), (inputView, result) -> {
           if (!StringUtils.isNumeric(result)) {
             return false;
           }
@@ -1634,7 +1634,7 @@ public class SettingsBugController extends RecyclerViewController<SettingsBugCon
           setLogFiles(Log.getLogFiles());
         }
         if (logFiles != null && !logFiles.isEmpty()) {
-          showOptions("Clear " + Strings.buildSize(logFiles.totalSize) + "?", new int[] {R.id.btn_deleteAll, R.id.btn_cancel}, new String[] {"Delete all logs", "Cancel"}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+          showOptions("Clear " + Strings.buildSize(logFiles.totalSize) + "?", new int[] {R.id.btn_deleteAll, R.id.btn_cancel}, new String[] {"Delete all logs", Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
             if (id == R.id.btn_deleteAll) {
               deleteAllFiles();
             }
