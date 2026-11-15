@@ -6563,8 +6563,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     proxy.pingMs = Settings.PROXY_TIME_LOADING;
     proxy.pingErrorCount = 0;
     notifyPingValueChanged(proxy);
+    // addProxy reuses the entry of an already-known proxy and overwrites its stored comment, so pinging must resend it
+    String comment = !StringUtils.isEmpty(proxy.description) ? proxy.description : "";
     TdApi.Function<?> function = proxyId != Settings.PROXY_ID_NONE ?
-      new TdApi.AddProxy(proxy.proxy, false, "") :
+      new TdApi.AddProxy(proxy.proxy, false, comment) :
       new TdApi.PingProxy(null);
     AtomicLong uptimeMillis = new AtomicLong(SystemClock.uptimeMillis());
     client().send(function, new Client.ResultHandler() {
