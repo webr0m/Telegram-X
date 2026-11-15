@@ -1634,7 +1634,7 @@ public class SettingsBugController extends RecyclerViewController<SettingsBugCon
           setLogFiles(Log.getLogFiles());
         }
         if (logFiles != null && !logFiles.isEmpty()) {
-          showOptions("Clear " + Strings.buildSize(logFiles.totalSize) + "?", new int[] {R.id.btn_deleteAll, R.id.btn_cancel}, new String[] {"Delete all logs", Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
+          showOptions(Lang.getString(R.string.AppLogsClear), new int[] {R.id.btn_deleteAll, R.id.btn_cancel}, new String[] {Lang.getString(R.string.ClearX, Strings.buildSize(logFiles.totalSize)), Lang.getString(R.string.Cancel)}, new int[] {OptionColor.RED, OptionColor.NORMAL}, new int[] {R.drawable.baseline_delete_24, R.drawable.baseline_cancel_24}, (itemView, id) -> {
             if (id == R.id.btn_deleteAll) {
               deleteAllFiles();
             }
