@@ -6866,13 +6866,9 @@ public class Settings {
   public String[] getQuickReactions (Tdlib tdlib) {
     if (quickReactions == null) {
       quickReactions = pmc.getStringArray(KEY_QUICK_REACTIONS);
-      if (quickReactions == null) {
-        quickReactions = new String[] {
-          tdlib.defaultEmojiReaction()
-        };
-      }
     }
-    return quickReactions;
+    // the seed follows the account default reaction, which can change at runtime
+    return quickReactions != null ? quickReactions : new String[] { tdlib.defaultEmojiReaction() };
   }
 
   public void setBigReactionsInChannels (boolean inChannels) {
