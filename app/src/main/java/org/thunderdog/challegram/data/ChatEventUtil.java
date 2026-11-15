@@ -960,7 +960,7 @@ public class ChatEventUtil {
           if (e.newInviteLink.expirationDate == 0) {
             expires = Lang.getString(R.string.LinkExpiresNever);
           } else if (DateUtils.isToday(e.newInviteLink.expirationDate, TimeUnit.SECONDS)) {
-            expires = Lang.getString(R.string.LinkExpiresTomorrow, Lang.time(e.newInviteLink.expirationDate, TimeUnit.SECONDS));
+            expires = Lang.getString(R.string.LinkExpiresToday, Lang.time(e.newInviteLink.expirationDate, TimeUnit.SECONDS));
           } else if (DateUtils.isTomorrow(e.newInviteLink.expirationDate, TimeUnit.SECONDS)) {
             expires = Lang.getString(R.string.LinkExpiresTomorrow, Lang.time(e.newInviteLink.expirationDate, TimeUnit.SECONDS));
           } else {
