@@ -31,6 +31,7 @@ import org.thunderdog.challegram.navigation.SettingsWrapBuilder;
 import org.thunderdog.challegram.telegram.StickersListener;
 import org.thunderdog.challegram.telegram.TGLegacyManager;
 import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.telegram.TdlibManager;
 import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.unsorted.Settings;
 import org.thunderdog.challegram.util.EmojiModifier;
@@ -265,6 +266,9 @@ public class SettingsStickersAndEmojiController extends RecyclerViewController<S
       if (item.getBoolValue())
         value = !value;
       Settings.instance().setNewSetting(item.getLongId(), value);
+      if (item.getLongId() == Settings.SETTING_FLAG_NO_ANIMATED_EMOJI) {
+        TdlibManager.instance().updateDisableAnimatedEmoji(value);
+      }
       if (value && item.getLongId() == Settings.SETTING_FLAG_DOWNLOAD_BETAS) {
         context().appUpdater().checkForUpdates();
       }

@@ -891,6 +891,15 @@ public class TdlibManager implements Iterable<TdlibAccount>, UI.StateListener {
     }
   }
 
+  public void updateDisableAnimatedEmoji (boolean disable) {
+    for (TdlibAccount account : accounts) {
+      Tdlib tdlib = account.activeTdlib();
+      if (tdlib != null) {
+        tdlib.setDisableAnimatedEmoji(disable);
+      }
+    }
+  }
+
   synchronized int getAccountUsageIndex (int accountId, long limitUsageTimeMs) {
     if (accountsSorted == null)
       accountsSorted = new ArrayList<>(activeAccounts.size());

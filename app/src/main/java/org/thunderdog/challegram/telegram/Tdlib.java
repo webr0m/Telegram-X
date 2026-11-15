@@ -6343,6 +6343,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     client.send(new TdApi.SetOption("use_quick_ack", new TdApi.OptionValueBoolean(true)), okHandler);
     client.send(new TdApi.SetOption("use_pfs", new TdApi.OptionValueBoolean(true)), okHandler);
     client.send(new TdApi.SetOption("is_emulator", new TdApi.OptionValueBoolean(isEmulator = Settings.instance().isEmulator())), okHandler);
+    client.send(new TdApi.SetOption("disable_animated_emoji", new TdApi.OptionValueBoolean(Settings.instance().getNewSetting(Settings.SETTING_FLAG_NO_ANIMATED_EMOJI))), okHandler);
     if (isService) {
       updateNotificationParameters(client);
     } else {
@@ -6368,6 +6369,10 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     parameters.systemLanguageCode = TdlibManager.getSystemLanguageCode();
     parameters.deviceModel = TdlibManager.getDeviceModel();
     parameters.systemVersion = TdlibManager.getSystemVersion();
+  }
+
+  public void setDisableAnimatedEmoji (boolean disable) {
+    send(new TdApi.SetOption("disable_animated_emoji", new TdApi.OptionValueBoolean(disable)), typedOkHandler());
   }
 
   private String applicationConfigJson;
