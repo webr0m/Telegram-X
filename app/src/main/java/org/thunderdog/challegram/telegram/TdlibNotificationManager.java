@@ -1933,7 +1933,14 @@ public class TdlibNotificationManager implements UI.StateListener, Passcode.Lock
   }
 
   private static TdApi.ScopeNotificationSettings newDefaults () {
-    return new TdApi.ScopeNotificationSettings(0, 0, true, true, false, 0, true, false, false);
+    TdApi.ScopeNotificationSettings settings = new TdApi.ScopeNotificationSettings();
+    // 0 means "no sound at all" here; -1 is the app-dependent default sound
+    settings.soundId = -1;
+    settings.storySoundId = -1;
+    settings.showPreview = true;
+    settings.useDefaultMuteStories = true;
+    settings.showStoryPoster = true;
+    return settings;
   }
 
   // Ringtone
