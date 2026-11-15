@@ -139,10 +139,10 @@ public class SettingsLogFilesController extends RecyclerViewController<SettingsL
           final long size = file.length();
           final boolean isCrash = file.getName().startsWith(Log.CRASH_PREFIX);
           if (Log.deleteFile(file)) {
-            UI.showToast("OK. Freed " + Strings.buildSize(size), Toast.LENGTH_SHORT);
+            UI.showToast(Lang.getString(R.string.TdlibLogClearOk, Strings.buildSize(size)), Toast.LENGTH_SHORT);
             removeFile(file, size, isCrash);
           } else {
-            UI.showToast("Failed", Toast.LENGTH_SHORT);
+            UI.showToast(Lang.getString(R.string.TdlibLogClearFail), Toast.LENGTH_SHORT);
           }
         }
         return true;

@@ -287,7 +287,7 @@ public class AvatarPickerManager extends MediaLayoutManager {
       return true;
     } else if (requestCode == Intents.ACTIVITY_RESULT_GALLERY) {
       if (data == null) {
-        UI.showToast("Error", Toast.LENGTH_SHORT);
+        UI.showToast(R.string.Error, Toast.LENGTH_SHORT);
         return false;
       }
 
