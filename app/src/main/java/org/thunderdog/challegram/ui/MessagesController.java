@@ -11331,10 +11331,6 @@ public class MessagesController extends ViewController<MessagesController.Argume
       inputView.onCustomEmojiSelected(sticker);
       return false;
     }
-    if (Td.customEmojiId(sticker) != 0 && canWriteMessages() && inputView != null) {
-      inputView.onCustomEmojiSelected(sticker);
-      return false;
-    }
     return sendContent(view, RightId.SEND_OTHER_MESSAGES, R.string.ChatDisabledStickers, R.string.ChatRestrictedStickers, R.string.ChatRestrictedStickersUntil, allowReply, initialSendOptions, () -> new TdApi.InputMessageSticker(new TdApi.InputSticker(new TdApi.InputFileId(sticker.sticker.id), null, 0, 0), emoji));
   }
 
