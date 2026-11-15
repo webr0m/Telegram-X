@@ -1125,8 +1125,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
               Intents.sendEmail(
                 Lang.getStringSecure(R.string.email_SmsHelp),
                 Lang.getStringSecure(R.string.email_LoginDeadEnd_subject, formattedPhone),
-                Lang.getStringSecure(R.string.email_LoginDeadEnd_text, formattedPhone, U.getUsefulMetadata(tdlib)),
-                StringUtils.isEmpty(lastVerificationError) ? "none" : lastVerificationError
+                Lang.getStringSecure(R.string.email_LoginDeadEnd_text, formattedPhone, U.getUsefulMetadata(tdlib), StringUtils.isEmpty(lastVerificationError) ? "none" : lastVerificationError)
               );
             }
           }, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);

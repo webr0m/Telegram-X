@@ -332,7 +332,8 @@ public class IntroController extends ViewController<Void> implements GLSurfaceVi
           TdlibManager.getSystemLanguageCode(),
           TdlibManager.getSystemVersion()
         );
-        Intents.sendEmail(Lang.getStringSecure(R.string.email_SmsHelp), Lang.getString(languagePackInfo, R.string.email_LoginTooLong_subject), text, Lang.getString(languagePackInfo, R.string.HelpEmailError));
+        String supportAddress = Lang.getStringSecure(R.string.email_SmsHelp);
+        Intents.sendEmail(supportAddress, Lang.getString(languagePackInfo, R.string.email_LoginTooLong_subject), text, Lang.getString(languagePackInfo, R.string.HelpEmailError, supportAddress));
       } else if (id == R.id.btn_proxy) {
         getTdlib().ui().openProxySettings(new TdlibContext(context, getTdlib()), true);
       }
