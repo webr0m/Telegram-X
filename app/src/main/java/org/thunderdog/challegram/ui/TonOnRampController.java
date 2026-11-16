@@ -329,11 +329,11 @@ public final class TonOnRampController extends RecyclerViewController<Void> impl
       }
       String paymentMethod = quote != null && quote.paymentMethod != null && !quote.paymentMethod.isEmpty() ?
         quote.paymentMethod : method;
-      createCheckout(asset, currency, paymentMethod, amount);
+      createCheckout(asset, currency, paymentMethod, amount, quote);
     });
   }
 
-  private void createCheckout (Asset asset, String currency, String method, String amount) {
+  private void createCheckout (Asset asset, String currency, String method, String amount, TdApi.OnRampPaymentQuote quote) {
     busy = true;
     render();
     tdlib.send(new TdApi.CreateOnRampPaymentSession(asset.provider.id, asset.code, address, method, currency, amount,
@@ -344,12 +344,12 @@ public final class TonOnRampController extends RecyclerViewController<Void> impl
       URI url = TonWalletController.httpsUrl(result.url);
       if (url == null) {
         unavailable();
-      } else if (!isFresh(result.expirationDate, now())) {
+      } else if (!canOpenCheckout(result.expirationDate, quote, now())) {
         expired();
       } else {
         showConfirm(Lang.getString(R.string.TgxTonOnRampOpen, url.getHost()), Lang.getString(R.string.Continue), () -> {
           if (sameWallet() && isFocused()) {
-            if (isFresh(result.expirationDate, now())) {
+            if (canOpenCheckout(result.expirationDate, quote, now())) {
               Intents.openUriInBrowser(Uri.parse(url.toASCIIString()));
             } else {
               expired();
@@ -358,6 +358,10 @@ public final class TonOnRampController extends RecyclerViewController<Void> impl
         });
       }
     }));
+  }
+
+  static boolean canOpenCheckout (int sessionExpiry, TdApi.OnRampPaymentQuote quote, long now) {
+    return isFresh(sessionExpiry, now) && (quote == null || isFresh(quote.expirationDate, now));
   }
 
   private void unavailable () {

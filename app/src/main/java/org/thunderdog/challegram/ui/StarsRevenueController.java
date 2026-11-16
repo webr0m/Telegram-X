@@ -232,15 +232,11 @@ public final class StarsRevenueController extends RecyclerViewController<Void> i
       }
       if (error != null) {
         UI.showError(error);
+      } else if (result != null && TonRevenueController.validWithdrawalUrl(result.url)) {
+        origin.navigateBack();
+        Intents.openUriInBrowser(Uri.parse(result.url));
       } else {
-        Uri url = Uri.parse(result.url);
-        if ("https".equals(url.getScheme()) && "fragment.com".equalsIgnoreCase(url.getHost()) &&
-            url.getUserInfo() == null && url.getPort() == -1) {
-          origin.navigateBack();
-          Intents.openUriInBrowser(url);
-        } else {
-          UI.showToast(R.string.TgxStarsUnexpectedWithdrawalUrl, Toast.LENGTH_LONG);
-        }
+        UI.showToast(R.string.TgxStarsUnexpectedWithdrawalUrl, Toast.LENGTH_LONG);
       }
     }));
   }

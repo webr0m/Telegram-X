@@ -287,7 +287,9 @@ public final class StarsController extends RecyclerViewController<Void> implemen
           tab == page ? R.drawable.baseline_check_24 : 0));
       }
       showOptions(options.build(), (button, selected) -> {
-        showPage(Page.values()[selected - 1]);
+        if (!editing && selected > 0 && selected <= Page.values().length) {
+          showPage(Page.values()[selected - 1]);
+        }
         return true;
       });
     } else if (id == R.id.btn_starsGifts) {
@@ -516,28 +518,29 @@ public final class StarsController extends RecyclerViewController<Void> implemen
       } else if (id == rejoinId) {
         if (reuse) {
           showConfirm(Lang.getString(R.string.TgxStarsRejoinConfirm), Lang.getString(R.string.TgxStarsRejoin),
-            () -> startSubscriptionAction(subscription, true));
+            () -> startSubscriptionAction(subscription, StarsHistory.SubscriptionAction.REJOIN));
         } else if (renew) {
-          startSubscriptionAction(subscription, true);
+          startSubscriptionAction(subscription, StarsHistory.SubscriptionAction.OPEN_RENEWAL);
         }
       } else if (id == R.id.btn_tgxStarsChangeRenewal) {
         showConfirm(Lang.getString(subscription.isCanceled ? R.string.TgxStarsEnableConfirm : R.string.TgxStarsCancelConfirm),
-          Lang.getString(action), () -> startSubscriptionAction(subscription, false));
+          Lang.getString(action), () -> startSubscriptionAction(subscription, StarsHistory.SubscriptionAction.CHANGE_RENEWAL));
       }
       return true;
     });
   }
 
-  private void startSubscriptionAction (TdApi.StarSubscription expected, boolean rejoin) {
+  private void startSubscriptionAction (TdApi.StarSubscription expected, StarsHistory.SubscriptionAction action) {
     if (editing || page != Page.SUBSCRIPTIONS || !isFocused()) {
       return;
     }
     editing = true;
     render();
-    verifySubscription(expected, rejoin, tdlib.myUserId(), "", new HashSet<>());
+    verifySubscription(expected, action, tdlib.myUserId(), "", new HashSet<>());
   }
 
-  private void verifySubscription (TdApi.StarSubscription expected, boolean rejoin, long account, String cursor, HashSet<String> visited) {
+  private void verifySubscription (TdApi.StarSubscription expected, StarsHistory.SubscriptionAction action, long account,
+                                   String cursor, HashSet<String> visited) {
     if (!visited.add(cursor)) {
       finishRenewal(null, false);
       return;
@@ -550,27 +553,25 @@ public final class StarsController extends RecyclerViewController<Void> implemen
       for (TdApi.StarSubscription fresh : result.subscriptions) {
         if (expected.id.equals(fresh.id)) {
           long now = tdlib.currentTime(TimeUnit.SECONDS);
-          if (rejoin && StarsHistory.sameChannelSubscription(expected, fresh) &&
-              fresh.type instanceof TdApi.StarSubscriptionTypeChannel channel) {
-            if (channel.canReuse && fresh.expirationDate > now) {
-              tdlib.send(new TdApi.ReuseStarSubscription(fresh.id), (ok, reuseError) -> runOnUiThreadOptional(() -> {
+          if (!StarsHistory.canApplySubscriptionAction(action, expected, fresh, now)) {
+            finishRenewal(null, false);
+            return;
+          }
+          switch (action) {
+            case REJOIN -> tdlib.send(new TdApi.ReuseStarSubscription(fresh.id),
+              (ok, reuseError) -> runOnUiThreadOptional(() -> {
                 finishRenewal(reuseError, reuseError == null);
                 if (reuseError == null && isFocused() && account == tdlib.myUserId()) {
                   tdlib.ui().openChat(this, fresh.chatId, null);
                 }
               }));
-            } else if (fresh.expirationDate <= now && !StringUtils.isEmpty(channel.inviteLink)) {
+            case OPEN_RENEWAL -> {
               editing = false;
               render();
-              tdlib.ui().openUrl(this, channel.inviteLink, null);
-            } else {
-              finishRenewal(null, false);
+              tdlib.ui().openUrl(this, ((TdApi.StarSubscriptionTypeChannel) fresh.type).inviteLink, null);
             }
-          } else if (!rejoin && StarsHistory.canEdit(expected, fresh, now)) {
-            tdlib.send(new TdApi.EditStarSubscription(fresh.id, !fresh.isCanceled),
+            case CHANGE_RENEWAL -> tdlib.send(new TdApi.EditStarSubscription(fresh.id, !fresh.isCanceled),
               (ok, editError) -> runOnUiThreadOptional(() -> finishRenewal(editError, editError == null)));
-          } else {
-            finishRenewal(null, false);
           }
           return;
         }
@@ -578,7 +579,7 @@ public final class StarsController extends RecyclerViewController<Void> implemen
       if (StringUtils.isEmpty(result.nextOffset)) {
         finishRenewal(null, false);
       } else {
-        verifySubscription(expected, rejoin, account, result.nextOffset, visited);
+        verifySubscription(expected, action, account, result.nextOffset, visited);
       }
     }));
   }

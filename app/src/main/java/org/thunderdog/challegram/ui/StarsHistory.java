@@ -24,6 +24,8 @@ import java.util.Locale;
 import org.drinkless.tdlib.TdApi;
 
 final class StarsHistory {
+  enum SubscriptionAction { CHANGE_RENEWAL, REJOIN, OPEN_RENEWAL }
+
   private StarsHistory () { }
 
   static String amount (TdApi.StarAmount amount, Locale locale, boolean signed) {
@@ -43,6 +45,19 @@ final class StarsHistory {
       fresh.expirationDate > now && shown.pricing != null && fresh.pricing != null &&
       shown.pricing.starCount == fresh.pricing.starCount && shown.pricing.period == fresh.pricing.period;
   }
+  static boolean canApplySubscriptionAction (SubscriptionAction action, TdApi.StarSubscription shown,
+                                            TdApi.StarSubscription fresh, long now) {
+    if (action == SubscriptionAction.CHANGE_RENEWAL) {
+      return canEdit(shown, fresh, now);
+    }
+    if (!sameChannelSubscription(shown, fresh)) {
+      return false;
+    }
+    TdApi.StarSubscriptionTypeChannel channel = (TdApi.StarSubscriptionTypeChannel) fresh.type;
+    return action == SubscriptionAction.REJOIN ? channel.canReuse && fresh.expirationDate > now :
+      fresh.expirationDate <= now && channel.inviteLink != null && !channel.inviteLink.isEmpty();
+  }
+
   static boolean sameChannelSubscription (TdApi.StarSubscription shown, TdApi.StarSubscription fresh) {
     return shown.id.equals(fresh.id) && shown.chatId == fresh.chatId && shown.expirationDate == fresh.expirationDate &&
       shown.pricing != null && fresh.pricing != null && shown.pricing.starCount == fresh.pricing.starCount &&
