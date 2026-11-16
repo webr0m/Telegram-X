@@ -192,8 +192,23 @@ final class StarsGiftMarketController extends RecyclerViewController<Void> imple
   }
 
   static boolean sameOffer (TdApi.UpgradedGift expected, TdApi.UpgradedGift fresh) {
-    return fresh != null && expected.id == fresh.id && expected.name != null && expected.name.equals(fresh.name) && starPrice(expected) > 0 &&
-      starPrice(expected) == starPrice(fresh);
+    return sameResaleSeller(expected, fresh) && starPrice(expected) > 0 && starPrice(expected) == starPrice(fresh);
+  }
+
+  static boolean sameResaleSeller (TdApi.UpgradedGift expected, TdApi.UpgradedGift fresh) {
+    if (expected == null || fresh == null || expected.id != fresh.id ||
+        expected.name == null || !expected.name.equals(fresh.name) || expected.isBurned || fresh.isBurned) {
+      return false;
+    }
+    if (expected.ownerId instanceof TdApi.MessageSenderUser user) {
+      return fresh.ownerId instanceof TdApi.MessageSenderUser current && user.userId == current.userId;
+    }
+    if (expected.ownerId instanceof TdApi.MessageSenderChat chat) {
+      return fresh.ownerId instanceof TdApi.MessageSenderChat current && chat.chatId == current.chatId;
+    }
+    // Telegram can omit the seller's identity when displaying a resale listing.
+    return expected.ownerId == null && fresh.ownerId == null &&
+      Objects.equals(expected.ownerAddress, fresh.ownerAddress) && Objects.equals(expected.ownerName, fresh.ownerName);
   }
 
   @Override

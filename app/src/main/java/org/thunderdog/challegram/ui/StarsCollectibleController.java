@@ -128,7 +128,7 @@ public final class StarsCollectibleController extends RecyclerViewController<Voi
   }
 
   static boolean sameTonListing (TdApi.UpgradedGift expected, TdApi.UpgradedGift fresh) {
-    return fresh != null && expected.id == fresh.id && expected.name != null && expected.name.equals(fresh.name) &&
+    return StarsGiftMarketController.sameResaleSeller(expected, fresh) &&
       tonPrice(expected) > 0 && tonPrice(expected) == tonPrice(fresh);
   }
 
