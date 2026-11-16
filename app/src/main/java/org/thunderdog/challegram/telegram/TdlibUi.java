@@ -7227,6 +7227,8 @@ public class TdlibUi extends Handler {
             context.tdlib().client().send(new TdApi.RevokeChatInviteLink(chatId, link.inviteLink), result -> {
               if (result.getConstructor() == TdApi.ChatInviteLinks.CONSTRUCTOR && onLinkRevoked != null) {
                 context.runOnUiThreadOptional(() -> onLinkRevoked.runWithData((TdApi.ChatInviteLinks) result));
+              } else if (result.getConstructor() == TdApi.Error.CONSTRUCTOR) {
+                UI.showError(result);
               }
             });
           }

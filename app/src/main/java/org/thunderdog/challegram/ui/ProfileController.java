@@ -6657,6 +6657,8 @@ public class ProfileController extends ViewController<ProfileController.Args> im
                     onInviteLinkChanged(newPrimaryLink);
                   }
                 });
+              } else if (result.getConstructor() == TdApi.Error.CONSTRUCTOR) {
+                UI.showError(result);
               }
             });
           }

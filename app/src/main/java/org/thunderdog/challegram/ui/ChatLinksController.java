@@ -310,6 +310,8 @@ public class ChatLinksController extends RecyclerViewController<ChatLinksControl
               tdlib.client().send(new TdApi.RevokeChatInviteLink(chatId, link.inviteLink), result -> {
                 if (result.getConstructor() == TdApi.ChatInviteLinks.CONSTRUCTOR) {
                   runOnUiThreadOptional(() -> onLinkRevoked(link, (TdApi.ChatInviteLinks) result));
+                } else if (result.getConstructor() == TdApi.Error.CONSTRUCTOR) {
+                  UI.showError(result);
                 }
               });
             }
