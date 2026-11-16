@@ -402,6 +402,9 @@ public class StickersController extends RecyclerViewController<StickersControlle
           tdlib.client().send(new TdApi.ChangeStickerSet(info.getId(), true, false), object -> tdlib.ui().post(() -> {
             if (!isDestroyed()) {
               boolean isOk = object.getConstructor() == TdApi.Ok.CONSTRUCTOR;
+              if (object.getConstructor() == TdApi.Error.CONSTRUCTOR) {
+                UI.showError(object);
+              }
               if (isOk) {
                 info.setIsInstalled();
               }

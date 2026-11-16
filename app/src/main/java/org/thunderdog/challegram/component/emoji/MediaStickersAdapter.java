@@ -53,6 +53,7 @@ import org.thunderdog.challegram.theme.PorterDuffColorId;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Fonts;
 import org.thunderdog.challegram.tool.Screen;
+import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.tool.Views;
 import org.thunderdog.challegram.widget.EmojiLayout;
 import org.thunderdog.challegram.widget.NoScrollTextView;
@@ -245,6 +246,8 @@ public class MediaStickersAdapter extends RecyclerView.Adapter<MediaStickersAdap
       if (object.getConstructor() == TdApi.Ok.CONSTRUCTOR) {
         stickerSet.setIsInstalled();
         updateDone(stickerSet);
+      } else if (object.getConstructor() == TdApi.Error.CONSTRUCTOR) {
+        UI.showError(object);
       }
     }));
   }
