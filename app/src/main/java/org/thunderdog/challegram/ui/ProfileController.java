@@ -4709,14 +4709,18 @@ public class ProfileController extends ViewController<ProfileController.Args> im
             if (groupFull != null) {
               showConfirm(Lang.getMarkdownString(this, R.string.UpgradeChatPrompt), Lang.getString(R.string.Proceed), () ->
                 tdlib.upgradeToSupergroup(chat.id, (oldChatId, newChatId, error) -> {
-                  if (newChatId != 0) {
+                  if (error != null) {
+                    UI.showError(error);
+                  } else if (newChatId != 0) {
                     tdlib.send(new TdApi.ToggleSupergroupIsAllHistoryAvailable(ChatId.toSupergroupId(newChatId), visible), tdlib.typedOkHandler());
                   }
                 })
               );
             } else {
               if (supergroupFull != null && supergroupFull.linkedChatId != 0) {
-                tdlib.client().send(new TdApi.SetChatDiscussionGroup(0, chat.id), ignored -> tdlib.client().send(new TdApi.ToggleSupergroupIsAllHistoryAvailable(supergroup.id, visible), tdlib.okHandler()));
+                tdlib.send(new TdApi.SetChatDiscussionGroup(0, chat.id), tdlib.typedOkHandler(() ->
+                  tdlib.send(new TdApi.ToggleSupergroupIsAllHistoryAvailable(supergroup.id, visible), tdlib.typedOkHandler())
+                ));
               } else {
                 tdlib.send(new TdApi.ToggleSupergroupIsAllHistoryAvailable(supergroup.id, visible), tdlib.typedOkHandler());
               }
@@ -4858,9 +4862,9 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     tdlib.cache().supergroupFull(ChatId.toSupergroupId(selectedChatId), selectedFullInfo -> {
       Runnable doneAct = () -> {
         RunnableLong act = chatId -> {
-          tdlib.client().send(new TdApi.ToggleSupergroupIsAllHistoryAvailable(ChatId.toSupergroupId(chatId), true), ignored ->
-            tdlib.client().send(new TdApi.SetChatDiscussionGroup(chat.id, chatId), tdlib.okHandler())
-          );
+          tdlib.send(new TdApi.ToggleSupergroupIsAllHistoryAvailable(ChatId.toSupergroupId(chatId), true), tdlib.typedOkHandler(() ->
+            tdlib.send(new TdApi.SetChatDiscussionGroup(chat.id, chatId), tdlib.typedOkHandler())
+          ));
           context.navigateBack();
         };
         if (ChatId.isBasicGroup(selectedChatId)) {
