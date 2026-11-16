@@ -631,7 +631,9 @@ public class SelectChatsController extends RecyclerViewController<SelectChatsCon
           TD.updateExcludedChatTypes(chatFolder, selectedChatTypes);
         }
         tdlib.send(new TdApi.EditChatFolder(chatFolderId, chatFolder), (chatFolderInfo, error) -> {
-          if (after != null) {
+          if (error != null) {
+            UI.showError(error);
+          } else if (after != null) {
             executeOnUiThreadOptional(after);
           }
         });
