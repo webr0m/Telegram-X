@@ -5497,9 +5497,17 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         if (!TD.isMember(status, false)) {
           client().send(new TdApi.DeleteChatHistory(chatId, true, revoke), okHandler(after));
         } else {
-          client().send(new TdApi.SetChatMemberStatus(chatId, mySender(), new TdApi.ChatMemberStatusLeft()), result -> {
-            if (ChatId.isBasicGroup(chatId)) {
+          // setChatMemberStatus(Left) answers 400 "Can't remove chat owner" for the owner of a channel, while
+          // leaveChat keeps the ownership and still steps out of the members list (Requests.cpp:6344-6352).
+          client().send(new TdApi.LeaveChat(chatId), result -> {
+            boolean isError = result.getConstructor() == TdApi.Error.CONSTRUCTOR;
+            if (isError) {
+              UI.showError(result);
+            }
+            if (!isError && ChatId.isBasicGroup(chatId)) {
               client().send(new TdApi.DeleteChatHistory(chatId, true, revoke), okHandler(after));
+            } else if (after != null) {
+              tdlib().ui().post(after);
             }
           });
         }
