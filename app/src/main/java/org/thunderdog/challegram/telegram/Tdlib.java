@@ -1464,7 +1464,7 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
             long chatId = serviceNotificationsChatId();
             Client.ResultHandler localMessageHandler = message -> {
               if (message.getConstructor() == TdApi.Error.CONSTRUCTOR) {
-                Log.e("Received error while sending change log: %s", TD.toErrorString(object));
+                Log.e("Received error while sending change log: %s", TD.toErrorString(message));
               }
               if (remainingUpdates.decrementAndGet() == 0) {
                 decrementJobReferenceCount(JOB_ID_CHANGE_LOG); // ending task
