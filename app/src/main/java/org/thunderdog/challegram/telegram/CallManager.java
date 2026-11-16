@@ -752,7 +752,14 @@ debugCall id:long debug:string = Ok;
       }
       Log.v(Log.TAG_VOIP, "#%d: AcceptCall requested", callId);
       startServiceIfMissing(true);
-      tdlib.client().send(new TdApi.AcceptCall(callId, VoIP.getProtocol()), object -> Log.v(Log.TAG_VOIP, "#%d: AcceptCall completed: %s", callId, object));
+      tdlib.send(new TdApi.AcceptCall(callId, VoIP.getProtocol()), (ok, error) -> {
+        if (error != null) {
+          Log.e(Log.TAG_VOIP, "#%d: Failed to accept call: %s", callId, TD.toErrorString(error));
+          UI.showError(error);
+        } else {
+          Log.v(Log.TAG_VOIP, "#%d: AcceptCall completed", callId);
+        }
+      });
     }
   }
 
