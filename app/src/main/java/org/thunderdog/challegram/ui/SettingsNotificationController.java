@@ -2629,7 +2629,9 @@ public class SettingsNotificationController extends RecyclerViewController<Setti
       if (archiveChatListSettings != null) {
         archiveChatListSettings.archiveAndMuteNewChatsFromUnknownUsers = adapter.toggleView(v);
         tdlib.send(new TdApi.SetArchiveChatListSettings(archiveChatListSettings), (ok, error) -> {
-          if (ok != null) {
+          if (error != null) {
+            UI.showError(error);
+          } else if (ok != null) {
             tdlib.listeners().notifyArchiveChatListSettingsChanged(archiveChatListSettings);
           }
         });

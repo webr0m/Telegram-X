@@ -26,6 +26,7 @@ import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.telegram.NotificationSettingsListener;
 import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 
 import java.util.ArrayList;
@@ -157,7 +158,9 @@ public class SettingsArchiveChatListController extends RecyclerViewController<Vo
         archiveChatListSettings.archiveAndMuteNewChatsFromUnknownUsers = value;
       }
       tdlib.send(new TdApi.SetArchiveChatListSettings(archiveChatListSettings), (ok, error) -> {
-        if (ok != null) {
+        if (error != null) {
+          UI.showError(error);
+        } else if (ok != null) {
           tdlib.listeners().notifyArchiveChatListSettingsChanged(archiveChatListSettings);
         }
       });
