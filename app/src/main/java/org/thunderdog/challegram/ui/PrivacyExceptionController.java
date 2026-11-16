@@ -32,6 +32,7 @@ import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibCache;
 import org.thunderdog.challegram.telegram.TdlibUi;
 import org.thunderdog.challegram.theme.ColorId;
+import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.v.CustomRecyclerView;
 import org.thunderdog.challegram.widget.BetterChatView;
 
@@ -629,6 +630,9 @@ public class PrivacyExceptionController extends RecyclerViewController<PrivacyEx
         adapter.updateValuedSettingByLongId(TdApi.ReadDatePrivacySettings.CONSTRUCTOR);
       }
       tdlib.send(new TdApi.SetUserPrivacySettingRules(setting, rules), (ok, error) -> runOnUiThreadOptional(() -> {
+        if (error != null) {
+          UI.showError(error);
+        }
         int i = pendingRequests.indexOfKey(settingKey);
         if (i >= 0 && pendingRequests.valueAt(i) == newPrivacy) {
           pendingRequests.removeAt(i);
