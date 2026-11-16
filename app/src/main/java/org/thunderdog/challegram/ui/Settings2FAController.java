@@ -184,8 +184,13 @@ public class Settings2FAController extends RecyclerViewController<Settings2FACon
         if (success) {
           // Setting the address again would only ask the server to re-verify it; this is the call that drops the pending code.
           tdlib.client().send(new TdApi.CancelRecoveryEmailAddressVerification(), object -> tdlib.ui().post(() -> {
-            if (!isDestroyed() && object instanceof TdApi.PasswordState) {
+            if (isDestroyed()) {
+              return;
+            }
+            if (object instanceof TdApi.PasswordState) {
               updatePasswordState((TdApi.PasswordState) object, currentAcceptedPassword);
+            } else if (object.getConstructor() == TdApi.Error.CONSTRUCTOR) {
+              UI.showError(object);
             }
           }));
         }
