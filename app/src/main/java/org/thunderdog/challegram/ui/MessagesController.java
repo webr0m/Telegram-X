@@ -2187,6 +2187,8 @@ public class MessagesController extends ViewController<MessagesController.Argume
             tdlib.settings().setWallpaper(bg, true, Theme.getWallpaperIdentifier());
             navigateBack();
           });
+        } else if (error != null) {
+          UI.showError(error);
         }
       });
     } else if (viewId == R.id.btn_silent) {
