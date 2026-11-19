@@ -1882,12 +1882,8 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
     AtomicInteger readChatsCount = new AtomicInteger(0);
     getAllChats(chatList, chat -> {
       boolean read = false;
-      if (chat.unreadCount != 0 && chat.lastMessage != null) {
-        readMessages(chat.id, new long[] {chat.lastMessage.id}, new TdApi.MessageSourceChatList());
-        read = true;
-      }
-      if (chat.isMarkedAsUnread) {
-        client().send(new TdApi.ToggleChatIsMarkedAsUnread(chat.id, false), okHandler());
+      if (chat.unreadCount != 0 || chat.isMarkedAsUnread) {
+        // TDLib reads the messages and clears the unread mark for the whole list at once
         read = true;
       }
       if (chat.unreadMentionCount > 0) {
@@ -1906,8 +1902,12 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
         readChatsCount.incrementAndGet();
       }
     }, isFinal -> {
-      if (isFinal && after != null) {
-        after.runWithInt(readChatsCount.get());
+      if (isFinal) {
+        Log.ensureReturnType(TdApi.ReadChatList.class, TdApi.Ok.class);
+        client().send(new TdApi.ReadChatList(chatList), okHandler());
+        if (after != null) {
+          after.runWithInt(readChatsCount.get());
+        }
       }
     }, false);
   }
