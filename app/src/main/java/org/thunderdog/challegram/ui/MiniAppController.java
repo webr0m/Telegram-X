@@ -1,0 +1,1249 @@
+/*
+ * This file is a part of Telegram X.
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ */
+package org.thunderdog.challegram.ui;
+
+import android.annotation.SuppressLint;
+import android.app.AlertDialog;
+import android.app.DownloadManager;
+import android.content.Context;
+import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.net.Uri;
+import android.os.Build;
+import android.os.Environment;
+import android.os.SystemClock;
+import android.view.Gravity;
+import android.view.HapticFeedbackConstants;
+import android.view.View;
+import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
+import android.webkit.ValueCallback;
+import android.widget.Button;
+import android.widget.LinearLayout;
+import android.widget.ProgressBar;
+import android.widget.TextView;
+import android.widget.FrameLayout;
+
+import androidx.annotation.Nullable;
+import androidx.core.graphics.Insets;
+import androidx.webkit.JavaScriptReplyProxy;
+import androidx.webkit.WebViewCompat;
+import androidx.webkit.WebViewFeature;
+
+import org.drinkless.tdlib.TdApi;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+import org.json.JSONTokener;
+import org.thunderdog.challegram.R;
+import org.thunderdog.challegram.core.Lang;
+import org.thunderdog.challegram.core.Background;
+import org.thunderdog.challegram.navigation.BackHeaderButton;
+import org.thunderdog.challegram.navigation.DoubleHeaderView;
+import org.thunderdog.challegram.navigation.NavigationController;
+import org.thunderdog.challegram.navigation.HeaderView;
+import org.thunderdog.challegram.navigation.Menu;
+import org.thunderdog.challegram.navigation.MoreDelegate;
+import org.thunderdog.challegram.navigation.ViewController;
+import org.thunderdog.challegram.support.ViewSupport;
+import org.thunderdog.challegram.telegram.Tdlib;
+import org.thunderdog.challegram.telegram.TdlibUi;
+import org.thunderdog.challegram.theme.ColorId;
+import org.thunderdog.challegram.theme.Theme;
+import org.thunderdog.challegram.theme.ThemeDelegate;
+import org.thunderdog.challegram.tool.Keyboard;
+import org.thunderdog.challegram.tool.Intents;
+import org.thunderdog.challegram.tool.Screen;
+import org.thunderdog.challegram.tool.UI;
+import org.thunderdog.challegram.unsorted.Settings;
+import org.thunderdog.challegram.util.Permissions;
+import org.thunderdog.challegram.util.MiniAppStorage;
+import org.thunderdog.challegram.util.StringList;
+
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
+import java.util.Collections;
+import java.util.Set;
+
+import me.vkryl.core.StringUtils;
+
+import tgx.td.ChatId;
+import tgx.td.Td;
+
+/** A TDLib-authenticated Mini App with an origin-scoped, main-frame-only bridge. */
+public final class MiniAppController extends ViewController<Void> implements Menu, MoreDelegate {
+  private final long botUserId;
+  private final long accountUserId;
+  private final long chatId;
+  private final String sourceUrl;
+  private final @Nullable String shortName;
+  private final String startParameter;
+  private final @Nullable String keyboardButtonText;
+  private final @Nullable TdApi.MessageTopic topicId;
+  private final @Nullable TdApi.InputMessageReplyTo replyTo;
+  private final @Nullable TdApi.WebAppOpenMode mode;
+  private DoubleHeaderView header;
+  private WebView webView;
+  private ProgressBar progress;
+  private TextView errorText;
+  private LinearLayout buttons;
+  private Button mainButton, secondaryButton;
+  private @Nullable JavaScriptReplyProxy reply;
+  private @Nullable AlertDialog popup;
+  private String origin;
+  private long launchId;
+  private int documentGeneration;
+  private int pendingCustomRequests;
+  private int pendingStorageRequests;
+  private boolean appBackButton, confirmClosing, dataSending, messageSent;
+  private @Nullable ValueCallback<Uri[]> fileChooser;
+  private long lastInteractionTime;
+  private boolean requestingDownload;
+  private boolean failed;
+  private MiniAppFullscreen fullscreen;
+  private boolean attachmentLaunch;
+  private boolean preparingMessage, preparedResultPending;
+  private int preparedGeneration;
+  private String preparedError;
+  private boolean initialFullscreen;
+  private boolean settingsButtonVisible;
+
+  private MiniAppController (Context context, Tdlib tdlib, long botUserId, long chatId,
+                            String sourceUrl, @Nullable String shortName, String startParameter,
+                            @Nullable String keyboardButtonText, @Nullable TdApi.MessageTopic topicId,
+                            @Nullable TdApi.InputMessageReplyTo replyTo, @Nullable TdApi.WebAppOpenMode mode) {
+    super(context, tdlib);
+    this.botUserId = botUserId;
+    this.accountUserId = tdlib.myUserId();
+    this.chatId = chatId;
+    this.sourceUrl = sourceUrl;
+    this.shortName = shortName;
+    this.startParameter = startParameter;
+    this.keyboardButtonText = keyboardButtonText;
+    this.topicId = topicId;
+    this.replyTo = replyTo;
+    this.mode = mode;
+  }
+
+  public static void open (ViewController<?> owner, long botUserId, String url,
+                           @Nullable String keyboardButtonText, @Nullable TdApi.MessageTopic topicId,
+                           @Nullable TdApi.InputMessageReplyTo replyTo) {
+    confirmOpen(owner, botUserId, owner.getChatId(), url, null, "", keyboardButtonText, topicId, replyTo, null);
+  }
+
+  static void openAttachment (ViewController<?> owner, long botUserId, long chatId, String url,
+                              @Nullable TdApi.MessageTopic topic, @Nullable TdApi.InputMessageReplyTo reply) {
+    confirmOpen(owner, botUserId, chatId, url, null, "", null, topic, reply, null, true);
+  }
+
+  public static void openLink (ViewController<?> owner, long chatId, String username,
+                               @Nullable String shortName, String startParameter, @Nullable TdApi.WebAppOpenMode mode) {
+    long sourceChatId = owner.getChatId();
+    owner.tdlib().send(new TdApi.SearchPublicChat(username), (chat, error) -> owner.runOnUiThreadOptional(() -> {
+      if (!owner.isFocused() || owner.getChatId() != sourceChatId) {
+        return;
+      }
+      if (error != null) {
+        UI.showError(error);
+      } else {
+        confirmOpen(owner, owner.tdlib().chatUserId(chat), chatId, "", shortName, startParameter, null, null, null, mode);
+      }
+    }));
+  }
+
+  private static void confirmOpen (ViewController<?> owner, long botUserId, long chatId, String url,
+                                  @Nullable String shortName, String startParameter, @Nullable String keyboardButtonText,
+                                  @Nullable TdApi.MessageTopic topicId, @Nullable TdApi.InputMessageReplyTo replyTo,
+                                  @Nullable TdApi.WebAppOpenMode mode) {
+    confirmOpen(owner, botUserId, chatId, url, shortName, startParameter, keyboardButtonText, topicId, replyTo, mode, false);
+  }
+
+  private static void confirmOpen (ViewController<?> owner, long botUserId, long chatId, String url,
+                                  @Nullable String shortName, String startParameter, @Nullable String keyboardButtonText,
+                                  @Nullable TdApi.MessageTopic topicId, @Nullable TdApi.InputMessageReplyTo replyTo,
+                                  @Nullable TdApi.WebAppOpenMode mode, boolean attachmentLaunch) {
+    TdApi.User user = owner.tdlib().cache().user(botUserId);
+    if (owner.isDestroyed() || !owner.tdlib().isAuthorized() || user == null || !(user.type instanceof TdApi.UserTypeBot) ||
+        ChatId.isSecret(chatId) || Td.hasRestriction(user.restrictionInfo, Settings.instance().needRestrictContent())) {
+      UI.showToast(R.string.MiniAppUnavailable, android.widget.Toast.LENGTH_SHORT);
+      return;
+    }
+    owner.showConfirm(Lang.getString(R.string.MiniAppOpenConfirm, owner.tdlib().cache().userName(botUserId)),
+      Lang.getString(R.string.MiniAppOpen), () -> {
+        if (owner.isFocused() && !owner.isDestroyed()) {
+          MiniAppController app = new MiniAppController(owner.context(), owner.tdlib(), botUserId, chatId,
+            url, shortName, startParameter, keyboardButtonText, topicId, replyTo, mode);
+          app.attachmentLaunch = attachmentLaunch;
+          owner.navigateTo(app);
+        }
+      });
+  }
+
+  @Override
+  public int getId () {
+    return R.id.controller_miniApp;
+  }
+
+  @Override
+  public long getChatId () {
+    return chatId;
+  }
+
+  @Override
+  protected int getBackButton () {
+    return BackHeaderButton.TYPE_BACK;
+  }
+
+  @Override
+  public View getCustomHeaderCell () {
+    return header;
+  }
+
+  @Override
+  protected int getMenuId () {
+    return R.id.menu_miniApp;
+  }
+
+  @Override
+  public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
+    header.addMoreButton(menu, this);
+  }
+
+  @Override
+  public void onMenuItemPressed (int id, View view) {
+    if (id != R.id.menu_btn_more) return;
+    me.vkryl.core.collection.IntList ids = new me.vkryl.core.collection.IntList(3);
+    StringList labels = new StringList(3);
+    ids.append(R.id.btn_miniAppFullscreen);
+    labels.append(Lang.getString(R.string.MiniAppFullscreen));
+    if (settingsButtonVisible) {
+      ids.append(R.id.btn_miniAppSettings);
+      labels.append(Lang.getString(R.string.Settings));
+    }
+    if (attachmentLaunch) {
+      ids.append(R.id.btn_miniAppRemove);
+      labels.append(Lang.getString(R.string.MiniAppRemoveAttachment));
+    }
+    showMore(ids.get(), labels.get(), 0);
+  }
+
+  @Override
+  public void onMoreItemPressed (int id) {
+    if (id == R.id.btn_miniAppFullscreen) {
+      if (!fullscreen.isSupported() || !fullscreen.setRequested(true)) {
+        sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
+      }
+    } else if (id == R.id.btn_miniAppSettings && settingsButtonVisible) {
+      sendEvent("settings_button_pressed", json());
+    } else if (id == R.id.btn_miniAppRemove && attachmentLaunch) {
+      MiniAppAttachments.remove(this, botUserId);
+    }
+  }
+
+  @Override
+  public boolean canSlideBackFrom (NavigationController navigation, float x, float y) {
+    return false;
+  }
+
+  @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi"})
+  @Override
+  protected View onCreateView (Context context) {
+    header = new DoubleHeaderView(context);
+    header.setThemedTextColor(this);
+    header.initWithMargin(Screen.dp(49), true);
+    header.setTitle(tdlib.cache().userName(botUserId));
+    header.setSubtitle(Lang.getString(R.string.MiniApp));
+    LinearLayout root = new LinearLayout(context);
+    root.setOrientation(LinearLayout.VERTICAL);
+    FrameLayout host = new FrameLayout(context);
+    host.addView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    fullscreen = new MiniAppFullscreen(context(), host, root, this::sendFullscreenState, this::requestClose);
+    initialFullscreen = mode instanceof TdApi.WebAppOpenModeFullScreen;
+    fullscreen.setRequested(initialFullscreen);
+    ViewSupport.setThemedBackground(root, ColorId.filling, this);
+    progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
+    root.addView(progress, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(3)));
+    errorText = new TextView(context);
+    errorText.setTextColor(Theme.textAccentColor());
+    addThemeTextAccentColorListener(errorText);
+    errorText.setGravity(Gravity.CENTER);
+    errorText.setPadding(Screen.dp(24), Screen.dp(24), Screen.dp(24), Screen.dp(24));
+    errorText.setVisibility(View.GONE);
+    root.addView(errorText, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+    try {
+      if (!WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER) ||
+          !WebViewFeature.isFeatureSupported(WebViewFeature.DOCUMENT_START_SCRIPT)) {
+        showError(R.string.MiniAppWebViewRequired);
+        return host;
+      }
+      webView = new WebView(context);
+      WebSettings settings = webView.getSettings();
+      settings.setJavaScriptEnabled(true);
+      settings.setDomStorageEnabled(true);
+      settings.setAllowFileAccess(false);
+      settings.setAllowContentAccess(false);
+      settings.setJavaScriptCanOpenWindowsAutomatically(false);
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN) {
+        settings.setAllowFileAccessFromFileURLs(false);
+        settings.setAllowUniversalAccessFromFileURLs(false);
+      }
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        settings.setMixedContentMode(WebSettings.MIXED_CONTENT_NEVER_ALLOW);
+      }
+      webView.setWebChromeClient(new WebChromeClient() {
+        @Override
+        public void onProgressChanged (WebView view, int value) {
+          progress.setProgress(value);
+        }
+
+        @Override
+        public boolean onShowFileChooser (WebView view, ValueCallback<Uri[]> callback, FileChooserParams parameters) {
+          if (!isFocused()) {
+            callback.onReceiveValue(null);
+            return true;
+          }
+          cancelFileChooser();
+          fileChooser = callback;
+          int generation = documentGeneration;
+          context().putActivityResultHandler(Intents.ACTIVITY_RESULT_MINI_APP_FILE, (requestCode, resultCode, data) -> {
+            ValueCallback<Uri[]> pending = fileChooser;
+            fileChooser = null;
+            if (pending == null) return;
+            Uri[] selected = FileChooserParams.parseResult(resultCode, data);
+            if (generation != documentGeneration || isDestroyed()) selected = null;
+            if (selected != null) {
+              for (Uri uri : selected) {
+                if (uri == null || !"content".equals(uri.getScheme())) {
+                  selected = null;
+                  break;
+                }
+              }
+            }
+            pending.onReceiveValue(selected);
+          });
+          try {
+            Intent intent = parameters.createIntent();
+            intent.addCategory(Intent.CATEGORY_OPENABLE);
+            context().startActivityForResult(intent, Intents.ACTIVITY_RESULT_MINI_APP_FILE);
+          } catch (RuntimeException e) {
+            cancelFileChooser();
+          }
+          return true;
+        }
+      });
+      webView.setOnTouchListener((v, event) -> {
+        if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP) {
+          lastInteractionTime = SystemClock.elapsedRealtime();
+        }
+        return false;
+      });
+      webView.setWebViewClient(new WebViewClient() {
+        @Override
+        public void onPageStarted (WebView view, String url, Bitmap favicon) {
+          documentGeneration++;
+          cancelFileChooser();
+          reply = null;
+          pendingCustomRequests = 0;
+          lastInteractionTime = 0;
+          appBackButton = confirmClosing = false;
+          settingsButtonVisible = false;
+          preparingMessage = preparedResultPending = false;
+          mainButton.setVisibility(View.GONE);
+          secondaryButton.setVisibility(View.GONE);
+          if (popup != null) {
+            popup.dismiss();
+          }
+          progress.setVisibility(View.VISIBLE);
+        }
+
+        @Override
+        public void onPageFinished (WebView view, String url) {
+          progress.setVisibility(View.GONE);
+          sendTheme();
+          sendViewport();
+        }
+
+        @Override
+        public void onReceivedError (WebView view, int code, String description, String failingUrl) {
+          if (failingUrl.equals(view.getUrl())) {
+            showError(R.string.MiniAppLoadFailed);
+          }
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading (WebView view, String url) {
+          return navigateUrl(url);
+        }
+
+        @Override
+        public boolean shouldOverrideUrlLoading (WebView view, WebResourceRequest request) {
+          return request.isForMainFrame() && navigateUrl(request.getUrl().toString());
+        }
+      });
+      webView.addOnLayoutChangeListener((v, l, t, r, b, oldL, oldT, oldR, oldB) -> sendViewport());
+      root.addView(webView, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0, 1));
+      buttons = new LinearLayout(context);
+      buttons.setOrientation(LinearLayout.VERTICAL);
+      mainButton = newButton(context, "main_button_pressed");
+      secondaryButton = newButton(context, "secondary_button_pressed");
+      buttons.addView(mainButton);
+      buttons.addView(secondaryButton);
+      root.addView(buttons, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+      openAuthenticatedUrl();
+    } catch (RuntimeException e) {
+      showError(R.string.MiniAppWebViewRequired);
+    }
+    return host;
+  }
+
+  private Button newButton (Context context, String event) {
+    Button button = new Button(context);
+    button.setAllCaps(false);
+    button.setVisibility(View.GONE);
+    button.setOnClickListener(v -> {
+      lastInteractionTime = SystemClock.elapsedRealtime();
+      sendEvent(event, json());
+    });
+    button.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(52)));
+    return button;
+  }
+
+  private void showError (int resource) {
+    failed = true;
+    documentGeneration++;
+    reply = null;
+    progress.setVisibility(View.GONE);
+    errorText.setText(resource);
+    errorText.setVisibility(View.VISIBLE);
+    if (webView != null) {
+      webView.setVisibility(View.GONE);
+    }
+  }
+
+  private void openAuthenticatedUrl () {
+    TdApi.WebAppOpenParameters parameters = new TdApi.WebAppOpenParameters(themeParameters(), "android", mode);
+    if (shortName != null) {
+      tdlib.send(new TdApi.GetWebAppLinkUrl(chatId, botUserId, shortName, startParameter, false, parameters),
+        (url, error) -> runOnUiThreadOptional(() -> onUrl(url, error)));
+    } else if (sourceUrl.isEmpty() && !attachmentLaunch) {
+      tdlib.send(new TdApi.GetMainWebApp(chatId, botUserId, startParameter, parameters),
+        (app, error) -> runOnUiThreadOptional(() -> {
+          if (app != null) {
+            initialFullscreen = app.mode instanceof TdApi.WebAppOpenModeFullScreen;
+            fullscreen.setRequested(initialFullscreen);
+          }
+          onUrl(app != null ? app.url : null, error);
+        }));
+    } else if (keyboardButtonText != null) {
+      tdlib.send(new TdApi.GetWebAppUrl(botUserId, sourceUrl, parameters),
+        (url, error) -> runOnUiThreadOptional(() -> onUrl(url, error)));
+    } else {
+      tdlib.send(new TdApi.OpenWebApp(chatId, botUserId, sourceUrl, topicId, replyTo, parameters), (app, error) ->
+        UI.post(() -> {
+          if (isDestroyed()) {
+            if (app != null) {
+              tdlib.send(new TdApi.CloseWebApp(app.launchId), tdlib.typedOkHandler());
+            }
+            return;
+          }
+          if (app != null) {
+            launchId = app.launchId;
+            tdlib.ui().registerWebApp(launchId, this::onMessageSent);
+          }
+          onUrl(app != null ? app.url : null, error);
+        }));
+    }
+  }
+
+  @SuppressLint("RestrictedApi")
+  private void onUrl (@Nullable TdApi.WebAppUrl url, @Nullable TdApi.Error error) {
+    if (tdlib.myUserId() != accountUserId || error != null || url == null || httpsOrigin(url.url) == null) {
+      if (error != null) {
+        UI.showError(error);
+      }
+      showError(R.string.MiniAppLoadFailed);
+      return;
+    }
+    origin = httpsOrigin(url.url);
+    Set<String> origins = Collections.singleton(origin);
+    try {
+      String bootstrap;
+      try (InputStream input = context().getResources().openRawResource(R.raw.mini_app_bridge);
+           ByteArrayOutputStream output = new ByteArrayOutputStream()) {
+        byte[] buffer = new byte[4096];
+        int count;
+        while ((count = input.read(buffer)) != -1) {
+          output.write(buffer, 0, count);
+        }
+        bootstrap = new String(output.toByteArray(), StringUtils.UTF_8);
+      }
+      WebViewCompat.addWebMessageListener(webView, "TgxMiniAppBridge", origins,
+        (view, message, sourceOrigin, isMainFrame, replyProxy) -> {
+          if (!failed && !isDestroyed() && isMainFrame && origin.equals(httpsOrigin(sourceOrigin.toString())) &&
+              origin.equals(httpsOrigin(view.getUrl()))) {
+            reply = replyProxy;
+            receiveEvent(message.getData());
+          }
+        });
+      // This WebKit version keeps document-start injection available on the legacy flavor.
+      WebViewCompat.addDocumentStartJavaScript(webView, bootstrap, origins);
+      webView.loadUrl(url.url);
+    } catch (Exception e) {
+      showError(R.string.MiniAppLoadFailed);
+    }
+  }
+
+  private static @Nullable String httpsOrigin (@Nullable String url) {
+    if (url == null) {
+      return null;
+    }
+    Uri uri = Uri.parse(url);
+    if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getHost() == null || uri.getUserInfo() != null) {
+      return null;
+    }
+    return "https://" + uri.getHost().toLowerCase(java.util.Locale.US) +
+      (uri.getPort() == -1 || uri.getPort() == 443 ? "" : ":" + uri.getPort());
+  }
+
+  private boolean navigateUrl (String url) {
+    if (origin != null && origin.equals(httpsOrigin(url))) {
+      return false;
+    }
+    Uri uri = Uri.parse(url);
+    if ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()) ||
+        "tg".equalsIgnoreCase(uri.getScheme())) {
+      tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().controller(this).requireOpenPrompt());
+    }
+    return true;
+  }
+
+  private void receiveEvent (@Nullable String message) {
+    if (tdlib.myUserId() != accountUserId || message == null || message.length() > 6 * 1024 * 1024) {
+      return;
+    }
+    try {
+      JSONObject envelope = new JSONObject(message);
+      String event = envelope.getString("eventType");
+      Object payload = new JSONTokener(envelope.optString("eventData", "{}")).nextValue();
+      JSONObject data = payload instanceof JSONObject ? (JSONObject) payload : json();
+      switch (event) {
+        case "web_app_ready":
+          progress.setVisibility(View.GONE);
+          sendTheme();
+          sendViewport();
+          sendFullscreenState();
+          break;
+        case "web_app_request_theme":
+          sendTheme();
+          break;
+        case "web_app_request_viewport":
+        case "web_app_expand":
+          sendViewport();
+          break;
+        case "web_app_request_safe_area":
+          sendSafeAreas();
+          break;
+        case "web_app_request_content_safe_area":
+          sendSafeAreas();
+          break;
+        case "web_app_setup_back_button":
+          appBackButton = data.optBoolean("is_visible");
+          break;
+        case "web_app_setup_settings_button":
+          settingsButtonVisible = data.optBoolean("is_visible");
+          break;
+        case "web_app_setup_closing_behavior":
+          confirmClosing = data.optBoolean("need_confirmation");
+          break;
+        case "web_app_close":
+          requestClose();
+          break;
+        case "web_app_hide_keyboard":
+          Keyboard.hide(webView);
+          break;
+        case "web_app_setup_main_button":
+          setupButton(mainButton, data);
+          break;
+        case "web_app_setup_secondary_button":
+          setupButton(secondaryButton, data);
+          arrangeButtons(data.optString("position", "bottom"));
+          break;
+        case "web_app_set_background_color":
+          if (validColor(data.optString("color"))) {
+            webView.setBackgroundColor(Color.parseColor(data.getString("color")));
+          }
+          break;
+        case "web_app_set_bottom_bar_color":
+          if (validColor(data.optString("color"))) {
+            buttons.setBackgroundColor(Color.parseColor(data.getString("color")));
+          }
+          break;
+        case "web_app_open_link":
+          openExternalLink(data.getString("url"));
+          break;
+        case "web_app_open_tg_link": {
+          String path = data.getString("path_full");
+          if (path.startsWith("/") && !path.startsWith("//")) {
+            fullscreen.setRequested(false);
+            tdlib.ui().openUrl(this, "https://t.me" + path, new TdlibUi.UrlOpenParameters().controller(this));
+          }
+          break;
+        }
+        case "web_app_open_popup":
+          showPopup(data);
+          break;
+        case "web_app_invoke_custom_method":
+          invokeCustomMethod(data);
+          break;
+        case "web_app_device_storage_save_key":
+        case "web_app_device_storage_get_key":
+        case "web_app_device_storage_clear": {
+          if (pendingStorageRequests >= 16) {
+            sendEvent("device_storage_failed", json("req_id", data.optString("req_id"), "error", "REQUEST_LIMIT_EXCEEDED"));
+            break;
+          }
+          pendingStorageRequests++;
+          int generation = documentGeneration;
+          long userId = tdlib.myUserId();
+          Background.instance().post(() -> {
+            MiniAppStorage.Result result = MiniAppStorage.handle(context(), userId, botUserId, event, data);
+            runOnUiThreadOptional(() -> {
+              pendingStorageRequests--;
+              if (documentGeneration == generation) sendEvent(result.event, result.data);
+            });
+          });
+          break;
+        }
+        case "web_app_request_write_access":
+          requestWriteAccess();
+          break;
+        case "web_app_request_phone":
+          requestPhone();
+          break;
+        case "web_app_request_file_download":
+          requestDownload(data);
+          break;
+        case "web_app_data_send":
+          sendData(data.getString("data"));
+          break;
+        case "web_app_trigger_haptic_feedback":
+          if (isFocused() && context.getActivityState() == UI.State.RESUMED) {
+            webView.performHapticFeedback("selection_change".equals(data.optString("type")) ?
+              HapticFeedbackConstants.KEYBOARD_TAP : HapticFeedbackConstants.LONG_PRESS);
+          }
+          break;
+        case "web_app_request_fullscreen":
+          if (fullscreen.isSupported() && (fullscreen.isFullscreen() || hasRecentInteraction())) {
+            if (!fullscreen.setRequested(true)) {
+              sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
+            }
+          } else {
+            sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
+          }
+          break;
+        case "web_app_exit_fullscreen":
+          fullscreen.setRequested(false);
+          sendFullscreenState();
+          break;
+        case "web_app_check_home_screen":
+          sendEvent("home_screen_checked", json("status", "unsupported"));
+          break;
+        case "web_app_secure_storage_save_key":
+        case "web_app_secure_storage_get_key":
+        case "web_app_secure_storage_restore_key":
+        case "web_app_secure_storage_clear":
+          sendEvent("secure_storage_failed", json("req_id", data.optString("req_id"), "error", "UNSUPPORTED"));
+          break;
+        case "web_app_check_location":
+          sendEvent("location_checked", json("available", false));
+          break;
+        case "web_app_request_location":
+          sendEvent("location_requested", json());
+          break;
+        case "web_app_biometry_get_info":
+          sendEvent("biometry_info_received", json("available", false));
+          break;
+        case "web_app_read_text_from_clipboard":
+          sendEvent("clipboard_text_received", json("req_id", data.optString("req_id")));
+          break;
+        case "web_app_send_prepared_message":
+          sharePreparedMessage(data);
+          break;
+        case "web_app_switch_inline_query":
+          switchInlineQuery(data);
+          break;
+        case "web_app_open_scan_qr_popup":
+          sendEvent("scan_qr_popup_closed", json());
+          break;
+        case "web_app_set_emoji_status":
+          sendEvent("emoji_status_failed", json("error", "UNSUPPORTED"));
+          break;
+        case "web_app_request_emoji_status_access":
+          sendEvent("emoji_status_access_requested", json("status", "cancelled"));
+          break;
+        case "web_app_open_invoice":
+          sendEvent("invoice_closed", json("slug", data.optString("slug"), "status", "failed"));
+          break;
+        case "web_app_start_accelerometer":
+          sendEvent("accelerometer_failed", json("error", "UNSUPPORTED"));
+          break;
+        case "web_app_start_device_orientation":
+          sendEvent("device_orientation_failed", json("error", "UNSUPPORTED"));
+          break;
+        case "web_app_start_gyroscope":
+          sendEvent("gyroscope_failed", json("error", "UNSUPPORTED"));
+          break;
+        case "web_app_stop_accelerometer":
+          sendEvent("accelerometer_stopped", json());
+          break;
+        case "web_app_stop_device_orientation":
+          sendEvent("device_orientation_stopped", json());
+          break;
+        case "web_app_stop_gyroscope":
+          sendEvent("gyroscope_stopped", json());
+          break;
+        default:
+          break;
+      }
+    } catch (JSONException | IllegalArgumentException e) {
+      // Malformed events from the page cannot interrupt the native controller.
+    }
+  }
+
+  private static boolean validColor (String color) {
+    return color.matches("#[0-9a-fA-F]{6}");
+  }
+
+  private void setupButton (Button button, JSONObject data) {
+    String text = data.optString("text");
+    button.setText(data.optBoolean("is_progress_visible") ? text + " …" : text);
+    button.setVisibility(data.optBoolean("is_visible") && !text.trim().isEmpty() ? View.VISIBLE : View.GONE);
+    button.setEnabled(data.optBoolean("is_active", true) && !data.optBoolean("is_progress_visible"));
+    button.setTextColor(validColor(data.optString("text_color")) ? Color.parseColor(data.optString("text_color")) : Theme.getColor(ColorId.fillingPositiveContent));
+    button.setBackgroundColor(validColor(data.optString("color")) ? Color.parseColor(data.optString("color")) : Theme.getColor(ColorId.fillingPositive));
+  }
+
+  private void arrangeButtons (String position) {
+    boolean horizontal = "left".equals(position) || "right".equals(position);
+    buttons.removeAllViews();
+    buttons.setOrientation(horizontal ? LinearLayout.HORIZONTAL : LinearLayout.VERTICAL);
+    mainButton.setLayoutParams(new LinearLayout.LayoutParams(horizontal ? 0 : ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(52), horizontal ? 1 : 0));
+    secondaryButton.setLayoutParams(new LinearLayout.LayoutParams(horizontal ? 0 : ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(52), horizontal ? 1 : 0));
+    boolean secondaryFirst = "left".equals(position) || "top".equals(position);
+    buttons.addView(secondaryFirst ? secondaryButton : mainButton);
+    buttons.addView(secondaryFirst ? mainButton : secondaryButton);
+  }
+
+  private void openExternalLink (String url) {
+    Uri uri = Uri.parse(url);
+    if (hasRecentInteraction() && ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))) {
+      fullscreen.setRequested(false);
+      tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().controller(this).requireOpenPrompt());
+    }
+  }
+
+  private boolean hasRecentInteraction () {
+    return isFocused() && context.getActivityState() == UI.State.RESUMED && lastInteractionTime != 0 &&
+      SystemClock.elapsedRealtime() - lastInteractionTime < 10000;
+  }
+
+  private void switchInlineQuery (JSONObject data) throws JSONException {
+    TdApi.User user = tdlib.cache().user(botUserId);
+    if (!hasRecentInteraction() || user == null || !(user.type instanceof TdApi.UserTypeBot bot) ||
+        !bot.isInline || !Td.hasUsername(user)) return;
+    String query = data.optString("query");
+    if (query.length() > 256) return;
+    JSONArray chatTypes = data.optJSONArray("chat_types");
+    java.util.Set<String> types = new java.util.HashSet<>();
+    if (chatTypes != null) {
+      for (int i = 0; i < chatTypes.length(); i++) types.add(chatTypes.getString(i));
+    }
+    org.thunderdog.challegram.data.TGSwitchInline item =
+      new org.thunderdog.challegram.data.TGSwitchInline(Td.primaryUsername(user), query);
+    fullscreen.setRequested(false);
+    if (types.isEmpty() && chatId != 0 && tdlib.canSendBasicMessage(chatId)) {
+      tdlib.ui().openChat(this, chatId, new TdlibUi.ChatOpenParameters().keepStack().messageTopic(topicId).shareItem(item));
+      return;
+    }
+    TdApi.TargetChatTypes allowed = new TdApi.TargetChatTypes(types.isEmpty() || types.contains("users"),
+      types.isEmpty() || types.contains("bots"), types.isEmpty() || types.contains("groups"), types.isEmpty() || types.contains("channels"));
+    ChatsController picker = new ChatsController(context(), tdlib);
+    picker.setArguments(new ChatsController.Arguments(
+      chat -> org.thunderdog.challegram.util.MiniAppChatPolicy.allows(tdlib, chat, allowed) && tdlib.canSendBasicMessage(chat),
+      new ChatsController.PickerDelegate() {
+        @Override
+        public boolean onChatPicked (TdApi.Chat chat, Runnable onDone) { return tdlib.canSendBasicMessage(chat); }
+        @Override
+        public Object getShareItem () { return item; }
+        @Override
+        public void modifyChatOpenParams (TdlibUi.ChatOpenParameters params) { params.keepStack(); }
+      }));
+    navigateTo(picker);
+  }
+
+  private void sharePreparedMessage (JSONObject data) throws JSONException {
+    if (preparingMessage || preparedResultPending || !hasRecentInteraction()) {
+      sendEvent("prepared_message_failed", json("error", "USER_DECLINED"));
+      return;
+    }
+    String id = data.getString("id");
+    if (id.isEmpty() || id.length() > 512) {
+      sendEvent("prepared_message_failed", json("error", "MESSAGE_EXPIRED"));
+      return;
+    }
+    preparingMessage = true;
+    int generation = documentGeneration;
+    tdlib.send(new TdApi.GetPreparedInlineMessage(botUserId, id), (message, error) -> runOnUiThreadOptional(() -> {
+      if (generation != documentGeneration) return;
+      if (error != null || message == null || message.result == null || message.chatTypes == null) {
+        preparingMessage = false;
+        sendEvent("prepared_message_failed", json("error", "MESSAGE_EXPIRED"));
+        return;
+      }
+      if (!isFocused()) {
+        preparingMessage = false;
+        sendEvent("prepared_message_failed", json("error", "USER_DECLINED"));
+        return;
+      }
+      MiniAppPreparedMessageController picker = new MiniAppPreparedMessageController(context(), tdlib, message, failure -> {
+        if (isDestroyed() || generation != documentGeneration) return;
+        preparingMessage = false;
+        preparedResultPending = true;
+        preparedGeneration = generation;
+        preparedError = failure;
+        reportPreparedResult();
+      });
+      fullscreen.setActive(false);
+      if (!navigateTo(picker)) {
+        picker.destroy();
+        updateFullscreenActivity();
+      }
+    }));
+  }
+
+  private void reportPreparedResult () {
+    if (preparedResultPending && preparedGeneration == documentGeneration && isFocused()) {
+      preparedResultPending = false;
+      if (preparedError == null) sendEvent("prepared_message_sent", json());
+      else sendEvent("prepared_message_failed", json("error", preparedError));
+    }
+  }
+
+  private void requestDownload (JSONObject data) throws JSONException {
+    String url = data.getString("url");
+    String name = data.getString("file_name");
+    if (requestingDownload || popup != null || !hasRecentInteraction() || httpsOrigin(url) == null ||
+        name.isEmpty() || name.length() > 240 || name.contains("/") || name.contains("\\") ||
+        name.matches(".*[\\x00-\\x1f].*") || ".".equals(name) || "..".equals(name)) {
+      sendEvent("file_download_requested", json("status", "cancelled"));
+      return;
+    }
+    requestingDownload = true;
+    int generation = documentGeneration;
+    tdlib.send(new TdApi.CheckWebAppFileDownload(botUserId, name, url), (ok, error) -> runOnUiThreadOptional(() -> {
+      if (generation != documentGeneration || !isFocused() || popup != null) {
+        requestingDownload = false;
+        if (generation == documentGeneration) sendEvent("file_download_requested", json("status", "cancelled"));
+        return;
+      }
+      if (error != null) {
+        requestingDownload = false;
+        sendEvent("file_download_requested", json("status", "cancelled"));
+        return;
+      }
+      boolean[] confirmed = {false};
+      popup = showAlert(new AlertDialog.Builder(context(), Theme.dialogTheme())
+        .setMessage(Lang.getString(R.string.MiniAppDownloadConfirm, name))
+        .setPositiveButton(Lang.getString(R.string.MiniAppDownload), (dialog, which) -> {
+          confirmed[0] = true;
+          Runnable download = () -> enqueueDownload(generation, url, name);
+          if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q &&
+              context().permissions().requestWriteExternalStorage(Permissions.WriteType.DOWNLOADS, granted -> {
+                if (granted) {
+                  download.run();
+                } else {
+                  requestingDownload = false;
+                  if (generation == documentGeneration) sendEvent("file_download_requested", json("status", "cancelled"));
+                }
+              })) {
+            return;
+          }
+          download.run();
+        })
+        .setNegativeButton(Lang.getString(R.string.Cancel), (dialog, which) -> {}));
+      popup.setOnDismissListener(dialog -> {
+        if (popup == dialog) popup = null;
+        if (!confirmed[0]) {
+          requestingDownload = false;
+          if (generation == documentGeneration) sendEvent("file_download_requested", json("status", "cancelled"));
+        }
+      });
+    }));
+  }
+
+  private void enqueueDownload (int generation, String url, String name) {
+    requestingDownload = false;
+    if (isDestroyed() || generation != documentGeneration) {
+      return;
+    }
+    try {
+      DownloadManager manager = (DownloadManager) context().getSystemService(Context.DOWNLOAD_SERVICE);
+      if (manager == null) throw new IllegalStateException("Download service unavailable");
+      DownloadManager.Request request = new DownloadManager.Request(Uri.parse(url))
+        .setTitle(name)
+        .setDestinationInExternalPublicDir(Environment.DIRECTORY_DOWNLOADS, name)
+        .setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED);
+      manager.enqueue(request);
+      sendEvent("file_download_requested", json("status", "downloading"));
+    } catch (RuntimeException e) {
+      sendEvent("file_download_requested", json("status", "cancelled"));
+    }
+  }
+
+  private void showPopup (JSONObject data) throws JSONException {
+    if (popup != null || !isFocused()) {
+      return;
+    }
+    JSONArray options = data.getJSONArray("buttons");
+    String title = data.optString("title");
+    String message = data.getString("message");
+    if (options.length() < 1 || options.length() > 3 || title.length() > 64 || message.length() > 256) {
+      return;
+    }
+    AlertDialog.Builder builder = new AlertDialog.Builder(context(), Theme.dialogTheme()).setTitle(title).setMessage(message);
+    String[] chosen = {null};
+    for (int i = 0; i < options.length(); i++) {
+      JSONObject option = options.getJSONObject(i);
+      String id = option.optString("id");
+      String type = option.optString("type", "default");
+      String label = "ok".equals(type) ? Lang.getString(R.string.OK) :
+        "cancel".equals(type) ? Lang.getString(R.string.Cancel) :
+        "close".equals(type) ? Lang.getString(R.string.MiniAppClose) : option.optString("text");
+      if (id.length() > 64 || label.isEmpty() || label.length() > 64) {
+        return;
+      }
+      android.content.DialogInterface.OnClickListener listener = (dialog, which) -> chosen[0] = id;
+      if (i == 0) builder.setPositiveButton(label, listener);
+      else if (i == 1) builder.setNegativeButton(label, listener);
+      else builder.setNeutralButton(label, listener);
+    }
+    int generation = documentGeneration;
+    popup = showAlert(builder);
+    popup.setOnDismissListener(dialog -> {
+      if (popup == dialog) popup = null;
+      if (documentGeneration == generation) {
+        sendEvent("popup_closed", chosen[0] != null ? json("button_id", chosen[0]) : json());
+      }
+    });
+  }
+
+  private void invokeCustomMethod (JSONObject data) throws JSONException {
+    String requestId = data.getString("req_id");
+    String method = data.getString("method");
+    JSONObject parameters = data.getJSONObject("params");
+    if (requestId.length() > 64 || method.length() > 128 || pendingCustomRequests >= 8) {
+      sendEvent("custom_method_invoked", json("req_id", requestId, "error", "REQUEST_LIMIT_EXCEEDED"));
+      return;
+    }
+    int generation = documentGeneration;
+    pendingCustomRequests++;
+    tdlib.send(new TdApi.SendWebAppCustomRequest(botUserId, method, parameters.toString()), (result, error) -> runOnUiThreadOptional(() -> {
+      if (generation != documentGeneration) {
+        return;
+      }
+      pendingCustomRequests--;
+      if (error != null) {
+        sendEvent("custom_method_invoked", json("req_id", requestId, "error", error.message));
+      } else {
+        try {
+          sendEvent("custom_method_invoked", json("req_id", requestId, "result", new JSONTokener(result.result).nextValue()));
+        } catch (JSONException e) {
+          sendEvent("custom_method_invoked", json("req_id", requestId, "error", "INVALID_RESPONSE"));
+        }
+      }
+    }));
+  }
+
+  private boolean requestingWriteAccess;
+  private boolean requestingPhone;
+
+  private void requestPhone () {
+    if (requestingPhone || popup != null || !isFocused()) {
+      return;
+    }
+    TdApi.User self = tdlib.cache().user(tdlib.myUserId());
+    if (self == null || self.phoneNumber == null || self.phoneNumber.isEmpty()) {
+      sendEvent("phone_requested", json("status", "cancelled"));
+      return;
+    }
+    requestingPhone = true;
+    int generation = documentGeneration;
+    boolean[] confirmed = {false};
+    popup = showAlert(new AlertDialog.Builder(context(), Theme.dialogTheme())
+      .setTitle(Lang.getString(R.string.ShareYourPhoneNumberTitle))
+      .setMessage(Lang.getString(R.string.ShareYourPhoneNumberDesc, tdlib.cache().userName(botUserId)))
+      .setPositiveButton(Lang.getString(R.string.OK), (dialog, which) -> {
+        confirmed[0] = true;
+        TdApi.InputMessageContact contact = new TdApi.InputMessageContact(
+          new TdApi.Contact(self.phoneNumber, self.firstName, self.lastName, "", self.id));
+        tdlib.send(new TdApi.CreatePrivateChat(botUserId, false), (chat, error) -> runOnUiThreadOptional(() -> {
+          if (generation != documentGeneration || tdlib.myUserId() != self.id) {
+            requestingPhone = false;
+            return;
+          }
+          if (error != null) {
+            onPhoneSent(generation, error);
+          } else {
+            tdlib.send(new TdApi.SendMessage(chat.id, null, null, Td.newSendOptions(), null, contact),
+              (message, sendError) -> runOnUiThreadOptional(() -> onPhoneSent(generation, sendError)));
+          }
+        }));
+      })
+      .setNegativeButton(Lang.getString(R.string.Cancel), (dialog, which) -> {}));
+    popup.setOnDismissListener(dialog -> {
+      if (popup == dialog) popup = null;
+      if (!confirmed[0]) {
+        requestingPhone = false;
+        if (generation == documentGeneration) sendEvent("phone_requested", json("status", "cancelled"));
+      }
+    });
+  }
+
+  private void onPhoneSent (int generation, @Nullable TdApi.Error error) {
+    requestingPhone = false;
+    if (generation == documentGeneration) {
+      sendEvent("phone_requested", json("status", error == null ? "sent" : "cancelled"));
+      if (error != null) UI.showError(error);
+    }
+  }
+
+  private void requestWriteAccess () {
+    if (requestingWriteAccess || !isFocused() || popup != null) {
+      return;
+    }
+    requestingWriteAccess = true;
+    int generation = documentGeneration;
+    tdlib.send(new TdApi.CanBotSendMessages(botUserId), (ok, error) -> runOnUiThreadOptional(() -> {
+      if (generation != documentGeneration || !isFocused() || popup != null) {
+        requestingWriteAccess = false;
+        if (generation == documentGeneration) sendEvent("write_access_requested", json("status", "cancelled"));
+        return;
+      }
+      if (error == null) {
+        requestingWriteAccess = false;
+        sendEvent("write_access_requested", json("status", "allowed"));
+        return;
+      }
+      boolean[] allowed = {false};
+      popup = showAlert(new AlertDialog.Builder(context(), Theme.dialogTheme())
+        .setMessage(Lang.getString(R.string.MiniAppWriteAccess, tdlib.cache().userName(botUserId)))
+        .setPositiveButton(Lang.getString(R.string.Allow), (dialog, which) -> {
+          allowed[0] = true;
+          tdlib.send(new TdApi.AllowBotToSendMessages(botUserId), (result, failure) -> runOnUiThreadOptional(() -> {
+            requestingWriteAccess = false;
+            if (generation == documentGeneration) {
+              sendEvent("write_access_requested", json("status", failure == null ? "allowed" : "cancelled"));
+            }
+          }));
+        })
+        .setNegativeButton(Lang.getString(R.string.Cancel), (dialog, which) -> {}));
+      popup.setOnDismissListener(dialog -> {
+        if (popup == dialog) popup = null;
+        if (!allowed[0]) {
+          requestingWriteAccess = false;
+          if (generation == documentGeneration) {
+            sendEvent("write_access_requested", json("status", "cancelled"));
+          }
+        }
+      });
+    }));
+  }
+
+  private void sendData (String data) {
+    if (keyboardButtonText == null || dataSending || messageSent || data.isEmpty() || data.getBytes(StringUtils.UTF_8).length > 4096) {
+      return;
+    }
+    dataSending = true;
+    tdlib.send(new TdApi.SendWebAppData(botUserId, keyboardButtonText, data), (ok, error) -> runOnUiThreadOptional(() -> {
+      dataSending = false;
+      if (error != null) {
+        UI.showError(error);
+      } else {
+        onMessageSent();
+      }
+    }));
+  }
+
+  private void onMessageSent () {
+    messageSent = true;
+    if (isFocused()) {
+      navigateBack();
+    }
+  }
+
+  private static TdApi.ThemeParameters themeParameters () {
+    return new TdApi.ThemeParameters(Theme.fillingColor() & 0xffffff, Theme.getColor(ColorId.background) & 0xffffff,
+      Theme.getColor(ColorId.headerBackground) & 0xffffff, Theme.fillingColor() & 0xffffff, Theme.fillingColor() & 0xffffff,
+      Theme.getColor(ColorId.separator) & 0xffffff, Theme.textAccentColor() & 0xffffff, Theme.getColor(ColorId.textNeutral) & 0xffffff,
+      Theme.getColor(ColorId.textNeutral) & 0xffffff, Theme.getColor(ColorId.textLight) & 0xffffff, Theme.getColor(ColorId.textNegative) & 0xffffff,
+      Theme.getColor(ColorId.textPlaceholder) & 0xffffff, Theme.getColor(ColorId.textLink) & 0xffffff,
+      Theme.getColor(ColorId.fillingPositive) & 0xffffff, Theme.getColor(ColorId.fillingPositiveContent) & 0xffffff);
+  }
+
+  private void sendTheme () {
+    TdApi.ThemeParameters t = themeParameters();
+    sendEvent("theme_changed", json("theme_params", json(
+      "bg_color", color(t.backgroundColor), "secondary_bg_color", color(t.secondaryBackgroundColor),
+      "header_bg_color", color(t.headerBackgroundColor), "bottom_bar_bg_color", color(t.bottomBarBackgroundColor),
+      "section_bg_color", color(t.sectionBackgroundColor), "section_separator_color", color(t.sectionSeparatorColor),
+      "text_color", color(t.textColor), "accent_text_color", color(t.accentTextColor),
+      "section_header_text_color", color(t.sectionHeaderTextColor), "subtitle_text_color", color(t.subtitleTextColor),
+      "destructive_text_color", color(t.destructiveTextColor), "hint_color", color(t.hintColor),
+      "link_color", color(t.linkColor), "button_color", color(t.buttonColor), "button_text_color", color(t.buttonTextColor))));
+  }
+
+  private static String color (int value) {
+    return String.format(java.util.Locale.US, "#%06x", value & 0xffffff);
+  }
+
+  private void sendViewport () {
+    if (webView != null) {
+      sendEvent("viewport_changed", json("height", webView.getHeight() / Screen.density(), "is_state_stable", true, "is_expanded", true));
+      sendSafeAreas();
+    }
+  }
+
+  private void sendSafeAreas () {
+    if (webView == null || fullscreen == null) return;
+    Insets area = fullscreen.safeArea(webView);
+    float scale = Screen.density();
+    sendEvent("safe_area_changed", json("top", area.top / scale, "bottom", area.bottom / scale,
+      "left", area.left / scale, "right", area.right / scale));
+    sendEvent("content_safe_area_changed", json("top", Math.max(area.top, fullscreen.contentTop(webView)) / scale,
+      "bottom", area.bottom / scale, "left", area.left / scale, "right", area.right / scale));
+  }
+
+  private void sendFullscreenState () {
+    if (fullscreen != null) {
+      sendEvent("fullscreen_changed", json("is_fullscreen", fullscreen.isFullscreen()));
+      sendViewport();
+    }
+  }
+
+  private void updateFullscreenActivity () {
+    if (fullscreen != null) fullscreen.setActive(isFocused() && context.getActivityState() == UI.State.RESUMED && !isDestroyed());
+  }
+
+  private void sendEvent (String event, JSONObject data) {
+    if (!isDestroyed() && tdlib.myUserId() == accountUserId && reply != null) {
+      reply.postMessage(json("eventType", event, "eventData", data).toString());
+    }
+  }
+
+  private static JSONObject json (Object... entries) {
+    JSONObject object = new JSONObject();
+    try {
+      for (int i = 0; i < entries.length; i += 2) {
+        object.put((String) entries[i], entries[i + 1]);
+      }
+    } catch (JSONException e) {
+      throw new IllegalArgumentException(e);
+    }
+    return object;
+  }
+
+  private void requestClose () {
+    if (fullscreen != null) fullscreen.setRequested(false);
+    if (confirmClosing && !messageSent) {
+      showConfirm(Lang.getString(R.string.MiniAppCloseConfirm), Lang.getString(R.string.MiniAppClose), this::navigateBack);
+    } else {
+      navigateBack();
+    }
+  }
+
+  @Override
+  public boolean performOnBackPressed (boolean fromTop, boolean commit) {
+    if (commit) {
+      if (appBackButton) {
+        sendEvent("back_button_pressed", json());
+      } else {
+        requestClose();
+      }
+    }
+    return true;
+  }
+
+  @Override
+  public void onThemeChanged (ThemeDelegate from, ThemeDelegate to) {
+    super.onThemeChanged(from, to);
+    sendTheme();
+  }
+
+  @Override
+  protected void onFocusStateChanged () {
+    super.onFocusStateChanged();
+    updateFullscreenActivity();
+    reportPreparedResult();
+    if (messageSent && isFocused()) {
+      UI.post(this::navigateBack);
+    } else {
+      sendEvent(isFocused() ? "activated" : "deactivated", json());
+    }
+  }
+
+  @Override
+  public void onActivityPause () {
+    super.onActivityPause();
+    if (fullscreen != null) fullscreen.setActive(false);
+    if (webView != null) {
+      webView.onPause();
+      sendEvent("deactivated", json());
+    }
+  }
+
+  @Override
+  public void onActivityResume () {
+    super.onActivityResume();
+    updateFullscreenActivity();
+    if (webView != null) {
+      webView.onResume();
+      if (isFocused()) sendEvent("activated", json());
+    }
+  }
+
+  @Override
+  public void destroy () {
+    documentGeneration++;
+    reply = null;
+    if (fullscreen != null) fullscreen.destroy();
+    cancelFileChooser();
+    if (popup != null) popup.dismiss();
+    if (launchId != 0) {
+      tdlib.ui().unregisterWebApp(launchId);
+      tdlib.send(new TdApi.CloseWebApp(launchId), tdlib.typedOkHandler());
+      launchId = 0;
+    }
+    if (webView != null) {
+      webView.stopLoading();
+      webView.destroy();
+      webView = null;
+    }
+    super.destroy();
+  }
+
+  private void cancelFileChooser () {
+    if (fileChooser != null) {
+      ValueCallback<Uri[]> pending = fileChooser;
+      fileChooser = null;
+      context().putActivityResultHandler(Intents.ACTIVITY_RESULT_MINI_APP_FILE, null);
+      pending.onReceiveValue(null);
+    }
+  }
+}

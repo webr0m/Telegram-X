@@ -19,6 +19,7 @@ plugins {
 }
 
 val config = tgxConfig.config.get()
+val betaVersionSuffix = providers.gradleProperty("betaVersionSuffix").getOrElse("")
 val customGoogleServices = config.googleServicesFile?.let { rootDir.resolve(it) }
 val usedGoogleServices = customGoogleServices ?: file("google-services.json")
 if (customGoogleServices != null && !customGoogleServices.exists()) {
@@ -915,7 +916,7 @@ android {
         output.versionCode.set(modifiedVersionCode)
 
         baseVersionName = output.versionName.get()
-        val modifiedVersionName = "$baseVersionName.$baseVersionCode$flavorVersionNameSuffix$abiSuffix$buildTypeSuffix"
+        val modifiedVersionName = "$baseVersionName.$baseVersionCode$betaVersionSuffix$flavorVersionNameSuffix$abiSuffix$buildTypeSuffix"
         output.versionName.set(modifiedVersionName)
 
         val cleanVersionName = modifiedVersionName.replace(Regex("-arm(?=-|$)"), "")
@@ -1108,6 +1109,7 @@ dependencies {
   )
   implementation(libs.androidx.collection)
   implementation(libs.androidx.interpolator)
+  implementation(libs.androidx.webkit)
   // CameraX: https://developer.android.com/jetpack/androidx/releases/camera
   flavorImplementation(
     libs.androidx.camera.camera2.legacy,

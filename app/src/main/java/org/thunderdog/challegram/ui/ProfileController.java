@@ -696,6 +696,10 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       strings.append(R.string.AddContact);
     }
 
+    if (mode == Mode.USER && user.type instanceof TdApi.UserTypeBot bot && bot.hasMainWebApp) {
+      ids.append(R.id.btn_openMiniApp);
+      strings.append(R.string.MiniAppOpen);
+    }
     if (mode == Mode.SECRET) {
       ids.append(R.id.more_btn_cloudChat);
       strings.append(R.string.OpenCloudChat);
@@ -1440,6 +1444,11 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
   @Override
   public void onMoreItemPressed (int id) {
+    if (id == R.id.btn_openMiniApp && mode == Mode.USER && user != null &&
+        user.type instanceof TdApi.UserTypeBot bot && bot.hasMainWebApp) {
+      MiniAppController.open(this, user.id, "", null, null, null);
+      return;
+    }
     if (id == R.id.btn_boostWithUnusedSlot) {
       offerUnusedChatBoost();
       return;

@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="MiniApp">Mini App</string>
+  <string name="MiniAppOpen">Open Mini App</string>
+  <string name="MiniAppClose">Close</string>
+  <string name="MiniAppOpenConfirm">Open the Mini App from %1$s? The bot will receive your public name, username, profile photo and language. Only share information you trust this bot with.</string>
+  <string name="MiniAppCloseConfirm">Close this Mini App? Your unsaved changes may be lost.</string>
+  <string name="MiniAppWebViewRequired">Update Android System WebView to open Mini Apps.</string>
+  <string name="MiniAppLoadFailed">The Mini App could not be loaded. Go back and open it again to retry.</string>
+  <string name="MiniAppWriteAccess">Allow %1$s to send you messages?</string>
+  <string name="MiniAppUnavailable">This bot cannot open a Mini App here.</string>
+  <string name="MiniAppDownload">Download</string>
+  <string name="MiniAppDownloadConfirm">Save %1$s from this Mini App to Downloads?</string>
+  <string name="MiniAppFullscreen">Full screen</string>
+  <string name="MiniAppExitFullscreen">Exit full screen</string>
+  <string name="MiniAppShareMessage">Share message</string>
+  <string name="MiniAppShareMessageConfirm">Send this message to %1$s?</string>
+  <string name="MiniAppAttachmentTerms">Mini Apps are provided by third-party developers. By adding this bot, you accept the Telegram Mini App Terms of Service. The Mini App can receive your public profile details and information about the chat where you open it.</string>
+  <string name="MiniAppAddAndOpen">Add and open</string>
+  <string name="MiniAppReadTerms">Read terms</string>
+  <string name="MiniAppNoAttachmentBots">No Mini Apps available for this chat. Open an attachment-menu link from a supported bot to add it here.</string>
+  <string name="MiniAppRemoveAttachment">Remove from attachment menu</string>
+  <string name="MiniAppRemoveAttachmentConfirm">Remove this Mini App from your attachment and side menus?</string>
+</resources>

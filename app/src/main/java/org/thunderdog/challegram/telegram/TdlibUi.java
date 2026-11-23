@@ -95,6 +95,8 @@ import org.thunderdog.challegram.tool.Screen;
 import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.UI;
 import org.thunderdog.challegram.ui.CallListController;
+import org.thunderdog.challegram.ui.MiniAppController;
+import org.thunderdog.challegram.ui.MiniAppAttachments;
 import org.thunderdog.challegram.ui.ChatFolderInviteLinkController;
 import org.thunderdog.challegram.ui.ChatJoinRequestsController;
 import org.thunderdog.challegram.ui.ChatLinkMembersController;
@@ -225,6 +227,41 @@ import tgx.td.data.MessageWithProperties;
 public class TdlibUi extends Handler {
   private final Tdlib tdlib;
   private String termsOfServicePromptId;
+  private final Map<Long, Runnable> webAppSessions = new HashMap<>();
+  private final List<Runnable> attachmentMenuBotListeners = new ArrayList<>();
+
+  public void addAttachmentMenuBotListener (Runnable listener) {
+    attachmentMenuBotListeners.add(listener);
+  }
+
+  public void removeAttachmentMenuBotListener (Runnable listener) {
+    attachmentMenuBotListeners.remove(listener);
+  }
+
+  void notifyAttachmentMenuBotsChanged () {
+    post(() -> {
+      for (Runnable listener : new ArrayList<>(attachmentMenuBotListeners)) {
+        listener.run();
+      }
+    });
+  }
+
+  public void registerWebApp (long launchId, Runnable onMessageSent) {
+    webAppSessions.put(launchId, onMessageSent);
+  }
+
+  public void unregisterWebApp (long launchId) {
+    webAppSessions.remove(launchId);
+  }
+
+  void onWebAppMessageSent (long launchId) {
+    post(() -> {
+      Runnable callback = webAppSessions.remove(launchId);
+      if (callback != null) {
+        callback.run();
+      }
+    });
+  }
 
   /*package*/ TdlibUi (Tdlib tdlib) {
     super(Looper.getMainLooper());
@@ -5669,13 +5706,39 @@ public class TdlibUi extends Handler {
         break;
       }
 
+      case TdApi.InternalLinkTypeMainWebApp.CONSTRUCTOR:
+      case TdApi.InternalLinkTypeWebApp.CONSTRUCTOR: {
+        ViewController<?> owner = context instanceof ViewController<?> ?
+          (ViewController<?>) context : context.context().navigation().getCurrentStackItem();
+        if (owner == null || owner.tdlib() != tdlib) {
+          ok = false;
+          break;
+        }
+        long chatId = openParameters != null && openParameters.messageId != null ?
+          openParameters.messageId.getChatId() : owner.getChatId();
+        if (linkType instanceof TdApi.InternalLinkTypeMainWebApp app) {
+          MiniAppController.openLink(owner, chatId, app.botUsername, null, app.startParameter, app.mode);
+        } else {
+          TdApi.InternalLinkTypeWebApp app = (TdApi.InternalLinkTypeWebApp) linkType;
+          MiniAppController.openLink(owner, chatId, app.botUsername, app.webAppShortName, app.startParameter, app.mode);
+        }
+        break;
+      }
+
+      case TdApi.InternalLinkTypeAttachmentMenuBot.CONSTRUCTOR: {
+        ViewController<?> owner = context instanceof ViewController<?> ?
+          (ViewController<?>) context : context.context().navigation().getCurrentStackItem();
+        if (owner != null && owner.tdlib() == tdlib) {
+          MiniAppAttachments.openLink(owner, (TdApi.InternalLinkTypeAttachmentMenuBot) linkType);
+        } else {
+          ok = false;
+        }
+        break;
+      }
+
       case TdApi.InternalLinkTypeStory.CONSTRUCTOR:
       case TdApi.InternalLinkTypeLiveStory.CONSTRUCTOR:
       case TdApi.InternalLinkTypeStoryAlbum.CONSTRUCTOR:
-
-      case TdApi.InternalLinkTypeAttachmentMenuBot.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeWebApp.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeMainWebApp.CONSTRUCTOR:
 
       case TdApi.InternalLinkTypeInvoice.CONSTRUCTOR:
 

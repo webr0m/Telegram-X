@@ -217,8 +217,8 @@ public class MediaLayout extends FrameLayoutFix implements
     this.target = target;
     this.rtl = Lang.rtl();
     this.needVote = false;
-    final MediaBottomBar.BarItem[] items;
-    final int index;
+    MediaBottomBar.BarItem[] items;
+    int index;
 
     switch (mode) {
       case MODE_LOCATION: {
@@ -273,6 +273,21 @@ public class MediaLayout extends FrameLayoutFix implements
       }
     }
 
+    if (this.mode == MODE_DEFAULT && target != null && getTargetChatId() != 0 &&
+        !tgx.td.ChatId.isSecret(getTargetChatId())) {
+      MediaBottomBar.BarItem[] extended = new MediaBottomBar.BarItem[items.length + 1];
+      MediaBottomBar.BarItem apps = new MediaBottomBar.BarItem(
+        R.drawable.deproko_baseline_bots_24, R.string.MiniApp, ColorId.attachInlineBot);
+      if (rtl) {
+        extended[0] = apps;
+        System.arraycopy(items, 0, extended, 1, items.length);
+        index++;
+      } else {
+        System.arraycopy(items, 0, extended, 0, items.length);
+        extended[items.length] = apps;
+      }
+      items = extended;
+    }
     controllers = new MediaBottomBaseController<?>[items.length];
 
     if (mode == MODE_DEFAULT) {
@@ -482,6 +497,7 @@ public class MediaLayout extends FrameLayoutFix implements
       case 2: return new MediaBottomGalleryController(this);
       case 3: return new MediaBottomLocationController(this);
       case 4: return new MediaBottomInlineBotsController(this);
+      case 5: return new MediaBottomMiniAppsController(this);
       default: throw new IllegalArgumentException("Unknown index passed: " + index);
     }
   }
@@ -694,7 +710,8 @@ public class MediaLayout extends FrameLayoutFix implements
       return false;
     }
 
-    switch (toIndex) {
+    int section = mode == MODE_DEFAULT && rtl ? controllers.length - toIndex - 1 : toIndex;
+    switch (section) {
       case 3: {
         boolean googleMapsInstalled;
         try {

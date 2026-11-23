@@ -9488,11 +9488,16 @@ public class MessagesController extends ViewController<MessagesController.Argume
   }
 
   private void openBotMenuButton (TdApi.BotMenuButton menuButton) {
+    if (chat == null) {
+      return;
+    }
     if (StringUtils.isEmpty(menuButton.url)) {
       onCommandClick();
       return;
     }
-    tdlib.ui().openUrl(this, menuButton.url, new TdlibUi.UrlOpenParameters().controller(this));
+    ReplyInfo reply = getCurrentReplyId();
+    MiniAppController.open(this, tdlib.chatUserId(chat), menuButton.url, null,
+      getMessageTopicId(reply), reply != null ? reply.toInputMessageReply() : null);
   }
 
   private void onCommandClick () {
@@ -9686,6 +9691,13 @@ public class MessagesController extends ViewController<MessagesController.Argume
     pickDateOrProceed(Td.newSendOptions(), (sendOptions, disableMarkdown) ->
       sendText(command, false, true, false, sendOptions)
     );
+  }
+
+  @Override
+  public void onWebAppPressed (String buttonText, String url) {
+    if (chat != null) {
+      MiniAppController.open(this, tdlib.chatUserId(chat), url, buttonText, getMessageTopicId(), null);
+    }
   }
 
   @Override

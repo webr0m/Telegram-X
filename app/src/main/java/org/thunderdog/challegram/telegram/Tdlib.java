@@ -9144,14 +9144,25 @@ public class Tdlib implements TdlibProvider, Settings.SettingsChangeListener, Da
 
   // Updates: ATTACH MENU BOTS
 
+  private TdApi.AttachmentMenuBot[] attachmentMenuBots = new TdApi.AttachmentMenuBot[0];
+
+  public TdApi.AttachmentMenuBot[] attachmentMenuBots () {
+    synchronized (dataLock) {
+      return attachmentMenuBots.clone();
+    }
+  }
+
   @TdlibThread
   private void updateAttachmentMenuBots (TdApi.UpdateAttachmentMenuBots update) {
-    // TODO
+    synchronized (dataLock) {
+      attachmentMenuBots = update.bots.clone();
+    }
+    ui().notifyAttachmentMenuBotsChanged();
   }
 
   @TdlibThread
   private void updateWebAppMessageSent (TdApi.UpdateWebAppMessageSent update) {
-    // TODO
+    ui().onWebAppMessageSent(update.webAppLaunchId);
   }
 
   // Updates: NOTIFICATIONS

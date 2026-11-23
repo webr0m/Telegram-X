@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="MiniApp">Mini App</string>
+  <string name="MiniAppOpen">Abrir miniapp</string>
+  <string name="MiniAppClose">Cerrar</string>
+  <string name="MiniAppOpenConfirm">¿Abrir la miniapp de %1$s? El bot recibirá tu nombre público, nombre de usuario, foto de perfil e idioma. Comparte únicamente información que confíes a este bot.</string>
+  <string name="MiniAppCloseConfirm">¿Cerrar esta miniapp? Podrías perder los cambios sin guardar.</string>
+  <string name="MiniAppWebViewRequired">Actualiza Android System WebView para abrir miniapps.</string>
+  <string name="MiniAppLoadFailed">No se pudo cargar la miniapp. Vuelve atrás y ábrela de nuevo para reintentar.</string>
+  <string name="MiniAppWriteAccess">¿Permitir que %1$s te envíe mensajes?</string>
+  <string name="MiniAppUnavailable">Este bot no puede abrir una miniapp aquí.</string>
+  <string name="MiniAppDownload">Descargar</string>
+  <string name="MiniAppDownloadConfirm">¿Guardar %1$s de esta miniapp en Descargas?</string>
+  <string name="MiniAppFullscreen">Pantalla completa</string>
+  <string name="MiniAppExitFullscreen">Salir de pantalla completa</string>
+  <string name="MiniAppShareMessage">Compartir mensaje</string>
+  <string name="MiniAppShareMessageConfirm">¿Enviar este mensaje a %1$s?</string>
+  <string name="MiniAppAttachmentTerms">Las miniapps son de desarrolladores externos. Al añadir este bot, aceptas los términos de servicio de las miniapps de Telegram. La miniapp puede recibir los datos de tu perfil público e información sobre el chat donde la abres.</string>
+  <string name="MiniAppAddAndOpen">Añadir y abrir</string>
+  <string name="MiniAppReadTerms">Leer términos</string>
+  <string name="MiniAppNoAttachmentBots">No hay miniapps disponibles para este chat. Abre el enlace de adjuntos de un bot compatible para añadirlo aquí.</string>
+  <string name="MiniAppRemoveAttachment">Quitar del menú de adjuntos</string>
+  <string name="MiniAppRemoveAttachmentConfirm">¿Quitar esta miniapp de los menús de adjuntos y lateral?</string>
+</resources>
