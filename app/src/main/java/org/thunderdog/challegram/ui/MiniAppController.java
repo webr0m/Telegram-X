@@ -79,6 +79,7 @@ import tgx.td.Td;
 
 /** A TDLib-authenticated Mini App with an origin-scoped, main-frame-only bridge. */
 public final class MiniAppController extends ViewController<Void> implements Menu, MoreDelegate, org.thunderdog.challegram.telegram.AuthorizationListener {
+  interface Navigator { boolean navigate (MiniAppController app); }
   private final long botUserId;
   private final long accountUserId;
   private final long chatId;
@@ -147,7 +148,12 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   static void openAttachment (ViewController<?> owner, long botUserId, long chatId, String url,
                               @Nullable TdApi.MessageTopic topic, @Nullable TdApi.InputMessageReplyTo reply) {
-    confirmOpen(owner, botUserId, chatId, url, null, "", null, topic, reply, null, true);
+    openAttachment(owner, botUserId, chatId, url, topic, reply, null);
+  }
+
+  static void openAttachment (ViewController<?> owner, long botUserId, long chatId, String url,
+                              @Nullable TdApi.MessageTopic topic, @Nullable TdApi.InputMessageReplyTo reply, @Nullable Navigator navigator) {
+    confirmOpen(owner, botUserId, chatId, url, null, "", null, topic, reply, null, true, navigator);
   }
 
   public static void openLink (ViewController<?> owner, long chatId, String username,
@@ -176,6 +182,13 @@ public final class MiniAppController extends ViewController<Void> implements Men
                                   @Nullable String shortName, String startParameter, @Nullable String keyboardButtonText,
                                   @Nullable TdApi.MessageTopic topicId, @Nullable TdApi.InputMessageReplyTo replyTo,
                                   @Nullable TdApi.WebAppOpenMode mode, boolean attachmentLaunch) {
+    confirmOpen(owner, botUserId, chatId, url, shortName, startParameter, keyboardButtonText, topicId, replyTo, mode, attachmentLaunch, null);
+  }
+
+  private static void confirmOpen (ViewController<?> owner, long botUserId, long chatId, String url,
+                                  @Nullable String shortName, String startParameter, @Nullable String keyboardButtonText,
+                                  @Nullable TdApi.MessageTopic topicId, @Nullable TdApi.InputMessageReplyTo replyTo,
+                                  @Nullable TdApi.WebAppOpenMode mode, boolean attachmentLaunch, @Nullable Navigator navigator) {
     TdApi.User user = owner.tdlib().cache().user(botUserId);
     if (owner.isDestroyed() || !owner.tdlib().isAuthorized() || user == null || !(user.type instanceof TdApi.UserTypeBot) ||
         ChatId.isSecret(chatId) || Td.hasRestriction(user.restrictionInfo, Settings.instance().needRestrictContent())) {
@@ -185,10 +198,14 @@ public final class MiniAppController extends ViewController<Void> implements Men
     owner.showConfirm(Lang.getString(R.string.MiniAppOpenConfirm, owner.tdlib().cache().userName(botUserId)),
       Lang.getString(R.string.MiniAppOpen), () -> {
         if (owner.isFocused() && !owner.isDestroyed()) {
+          if (navigator == null && !owner.context().miniAppTabs().hasRoomForNewLaunch()) {
+            UI.showToast(R.string.MiniAppTabsFull, android.widget.Toast.LENGTH_SHORT);
+            return;
+          }
           MiniAppController app = new MiniAppController(owner.context(), owner.tdlib(), botUserId, chatId,
             url, shortName, startParameter, keyboardButtonText, topicId, replyTo, mode);
           app.attachmentLaunch = attachmentLaunch;
-          owner.navigateTo(app);
+          if (!(navigator != null ? navigator.navigate(app) : owner.navigateTo(app))) app.destroy();
         }
       });
   }
@@ -236,6 +253,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
     labels.append(Lang.getString(R.string.MiniAppMinimize));
     ids.append(R.id.btn_miniAppTabs);
     labels.append(Lang.getString(R.string.MiniAppTabs));
+    ids.append(R.id.btn_miniAppPayments);
+    labels.append(Lang.getString(R.string.MiniAppPaymentHistory));
     if (settingsButtonVisible) {
       ids.append(R.id.btn_miniAppSettings);
       labels.append(Lang.getString(R.string.Settings));
@@ -256,6 +275,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
       minimize();
     } else if (id == R.id.btn_miniAppTabs) {
       context().miniAppTabs().show();
+    } else if (id == R.id.btn_miniAppPayments) {
+      navigateTo(new MiniAppPaymentHistoryController(context(), tdlib));
     } else if (id == R.id.btn_miniAppFullscreen) {
       if (!fullscreen.isSupported() || !fullscreen.setRequested(true)) {
         sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
@@ -412,6 +433,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
           progress.setVisibility(View.GONE);
           sendTheme();
           sendViewport();
+          if (!failed) context().miniAppTabs().onFreshSessionOpened(MiniAppController.this);
         }
 
         @Override
@@ -1300,6 +1322,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     }
     if (webView != null) {
       webView.stopLoading();
+      if (webView.getParent() instanceof ViewGroup parent) parent.removeView(webView);
       webView.destroy();
       webView = null;
     }
@@ -1311,12 +1334,20 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   boolean minimizeForTabSwitch (@Nullable Runnable afterParking) {
-    if (!isFocused() || openingInvoice || preparingMessage || fileChooser != null || popup != null && popup.isShowing()) return false;
-    Keyboard.hide(webView);
-    fullscreen.setRequested(false);
-    minimized = true;
+    if (!canParkTab()) return false;
+    prepareTabExchange();
     if (!context().miniAppTabs().minimize(this, afterParking)) { minimized = false; return false; }
     return true;
+  }
+
+  boolean canParkTab () {
+    return isFocused() && !messageSent && !dataSending && !openingInvoice && !preparingMessage && fileChooser == null && (popup == null || !popup.isShowing());
+  }
+
+  void prepareTabExchange () {
+    Keyboard.hide(webView);
+    if (fullscreen != null) fullscreen.setRequested(false);
+    minimized = true;
   }
 
   @Nullable Bitmap captureTabPreview () {
@@ -1362,6 +1393,33 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   boolean needsCloseConfirmation () { return confirmClosing && !messageSent; }
+
+  MiniAppTabSnapshot snapshot () {
+    int topicKind = topicId instanceof TdApi.MessageTopicThread ? 1 : topicId instanceof TdApi.MessageTopicForum ? 2 :
+      topicId instanceof TdApi.MessageTopicDirectMessages ? 3 : topicId instanceof TdApi.MessageTopicSavedMessages ? 4 : 0;
+    long topic = topicId instanceof TdApi.MessageTopicThread thread ? thread.messageThreadId : topicId instanceof TdApi.MessageTopicForum forum ? forum.forumTopicId :
+      topicId instanceof TdApi.MessageTopicDirectMessages direct ? direct.directMessagesChatTopicId : topicId instanceof TdApi.MessageTopicSavedMessages saved ? saved.savedMessagesTopicId : 0;
+    int kind = shortName != null ? 1 : sourceUrl.isEmpty() ? attachmentLaunch ? 2 : 0 : 3;
+    String title = tabTitle();
+    return new MiniAppTabSnapshot(botUserId, chatId, kind, shortName == null ? "" : shortName,
+      startParameter.matches("[A-Za-z0-9_-]{0,512}") ? startParameter : "", title.substring(0, Math.min(256, title.length())), topicKind, topic, viewport.isCompact());
+  }
+
+  static boolean reopenTab (ViewController<?> owner, MiniAppTabSnapshot tab) {
+    return reopenTab(owner, tab, null);
+  }
+
+  static boolean reopenTab (ViewController<?> owner, MiniAppTabSnapshot tab, @Nullable Navigator navigator) {
+    TdApi.User bot = owner.tdlib().cache().user(tab.botId);
+    if (!owner.isFocused() || owner.isDestroyed() || !owner.tdlib().isAuthorized() || bot == null || !(bot.type instanceof TdApi.UserTypeBot) ||
+        ChatId.isSecret(tab.chatId) || Td.hasRestriction(bot.restrictionInfo, Settings.instance().needRestrictContent())) return false;
+    if (tab.kind == 3) { owner.tdlib().ui().openPrivateProfile(owner, tab.botId, null); return true; }
+    if (tab.kind == 2) { MiniAppAttachments.open(owner, tab.botId, tab.chatId, "", tab.topic(), null, navigator); return true; }
+    MiniAppController app = new MiniAppController(owner.context(), owner.tdlib(), tab.botId, tab.chatId, "", tab.kind == 1 ? tab.name : null,
+      tab.parameter, null, tab.topic(), null, tab.compact ? new TdApi.WebAppOpenModeCompact() : new TdApi.WebAppOpenModeFullSize());
+    if (!(navigator != null ? navigator.navigate(app) : owner.navigateTo(app))) { app.destroy(); return false; }
+    return true;
+  }
 
   String tabTitle () { return tdlib.cache().userName(botUserId) + (shortName != null ? " / " + shortName : ""); }
 

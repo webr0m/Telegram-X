@@ -26,7 +26,7 @@
   <string name="MiniAppMinimize">Minimize</string>
   <string name="MiniAppTabs">Mini App tabs</string>
   <string name="MiniAppTabsCount">Mini Apps (%1$s)</string>
-  <string name="MiniAppTabsFull">Four Mini Apps are already minimized. Close one to minimize another.</string>
+  <string name="MiniAppTabsFull">Close a saved Mini App tab before minimizing another.</string>
   <string name="MiniAppResume">Resume</string>
   <string name="MiniAppPayment">Checkout</string>
   <string name="MiniAppPaymentFailed">Payment could not be completed. You can review the invoice and try again.</string>
@@ -86,4 +86,26 @@
   <string name="MiniAppTabsCloseAll">Close all Mini Apps</string>
   <string name="MiniAppTabsCloseOthers">Close other Mini Apps</string>
   <string name="MiniAppTabsCloseConfirm">Close %1$s Mini App tabs? Their unsaved changes may be lost.</string>
+  <string name="MiniAppPaymentRecordFailed">The payment record could not be saved. Try again before authorizing payment.</string>
+  <string name="MiniAppPaymentCheck">Check payment confirmations</string>
+  <string name="MiniAppPaymentHistory">Payments and receipts</string>
+  <string name="MiniAppReceipt">Payment receipt</string>
+  <string name="MiniAppReceiptUnavailable">The receipt could not be loaded. You can try again.</string>
+  <string name="MiniAppReceiptTransaction">Stars transaction: %1$s</string>
+  <string name="MiniAppReceiptTotal">Total paid: %1$s</string>
+  <string name="MiniAppReceiptPeriod">Subscription period: %1$s seconds</string>
+  <string name="MiniAppPaymentsEmpty">Payments made from this checkout will appear here.</string>
+  <string name="MiniAppPaymentPaid">Payment confirmed</string>
+  <string name="MiniAppTabNewSession">Saved tab — opens a new session</string>
+  <string name="MiniAppTabRestoreConfirm">Reopen this Mini App with a new session? The page will reload. Unsaved page contents and the previous reply are not restored. For custom links, open the bot to launch the Mini App again.</string>
+  <string name="MiniAppReceiptRawAmount">%1$s %2$s (minor units)</string>
+  <string name="MiniAppHistorySearching">Searching history: %1$s messages checked</string>
+  <string name="MiniAppHistoryPaused">History paused: %1$s messages checked</string>
+  <string name="MiniAppHistoryRetry">History could not advance. %1$s messages checked; retry to continue.</string>
+  <string name="MiniAppHistoryComplete">History period reviewed: %1$s messages. A pending payment still needs a matching receipt.</string>
+  <string name="MiniAppHistoryPause">Pause history search</string>
+  <string name="MiniAppHistoryContinue">Search or continue older history</string>
+  <string name="MiniAppHistoryRestart">Search again from recent messages</string>
+  <string name="MiniAppHistoryBusy">A search batch is already running. Wait for it to finish or pause it.</string>
+  <string name="MiniAppHistoryOpenSeller">Open seller chat</string>
 </resources>

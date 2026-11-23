@@ -203,6 +203,11 @@ public class NavigationProcessor extends Handler {
           previous.getValue().setAlpha(1f);
         }
 
+        Runnable onRemoved = previous != null && previous == retainedOnForward ? onForwardRemoved : null;
+        if (onRemoved != null) stack.remove(stack.indexOf(previous));
+        retainedOnForward = null;
+        onForwardRemoved = null;
+
         if (NavigationController.DROP_SHADOW_ENABLED) {
           navigation.setShadowsVisibility(View.GONE);
         }
@@ -213,6 +218,7 @@ public class NavigationProcessor extends Handler {
         if (current != null) {
           current.onFocus();
         }
+        if (onRemoved != null) onRemoved.run();
       }
     } else {
       sendMessage(Message.obtain(this, REPLACE_CURRENT_NEXT));
@@ -238,6 +244,13 @@ public class NavigationProcessor extends Handler {
 
   private ViewController<?> retainedOnBack;
   private Runnable onRetainedRemoved;
+  private ViewController<?> retainedOnForward;
+  private Runnable onForwardRemoved;
+
+  void retainOnForward (ViewController<?> controller, Runnable onRemoved) {
+    retainedOnForward = controller;
+    onForwardRemoved = onRemoved;
+  }
 
   void retainOnBack (ViewController<?> controller, Runnable onRemoved) {
     retainedOnBack = controller;

@@ -228,6 +228,12 @@ public class TdlibUi extends Handler {
   private final Tdlib tdlib;
   private String termsOfServicePromptId;
   private final Map<Long, Runnable> webAppSessions = new HashMap<>();
+  private org.thunderdog.challegram.ui.MiniAppPayments miniAppPayments;
+
+  public org.thunderdog.challegram.ui.MiniAppPayments payments () {
+    if (miniAppPayments == null) miniAppPayments = new org.thunderdog.challegram.ui.MiniAppPayments(tdlib);
+    return miniAppPayments;
+  }
   private final List<Runnable> attachmentMenuBotListeners = new ArrayList<>();
 
   public void addAttachmentMenuBotListener (Runnable listener) {

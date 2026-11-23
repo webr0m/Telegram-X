@@ -720,6 +720,14 @@ public class NavigationController implements Future<View>, ThemeChangeListener, 
     return true;
   }
 
+  /** Replaces the current screen while transferring its ownership to a live tab slot. */
+  public final boolean navigateToRetainingCurrent (ViewController<?> expected, ViewController<?> incoming, Runnable onRemoved) {
+    if (getStack().getCurrent() != expected || expected == incoming || incoming == null || incoming.isDestroyed() ||
+        getStack().indexOf(incoming) >= 0 || isAnimating || isCurrentControllerAnimating()) return false;
+    processor.retainOnForward(expected, onRemoved);
+    return navigateTo(incoming);
+  }
+
   private static final int TRANSLATION_HORIZONTAL = 1;
   private static final int TRANSLATION_VERTICAL = 2;
   private static final int TRANSLATION_FADE = 3;

@@ -28,6 +28,11 @@ public final class MiniAppAttachments {
     loadBot(owner, botId, bot -> openInChat(owner, bot, chatId, url, topic, reply));
   }
 
+  static void open (ViewController<?> owner, long botId, long chatId, String url,
+                    @Nullable TdApi.MessageTopic topic, @Nullable TdApi.InputMessageReplyTo reply, @Nullable MiniAppController.Navigator navigator) {
+    loadBot(owner, botId, bot -> openInChat(owner, bot, chatId, url, topic, reply, navigator));
+  }
+
   public static void openLink (ViewController<?> owner, TdApi.InternalLinkTypeAttachmentMenuBot link) {
     owner.tdlib().send(new TdApi.SearchPublicChat(link.botUsername), (chat, error) -> owner.runOnUiThreadOptional(() -> {
       if (!owner.isFocused()) return;
@@ -103,11 +108,16 @@ public final class MiniAppAttachments {
 
   private static void openInChat (ViewController<?> owner, TdApi.AttachmentMenuBot bot, long chatId, String url,
                                   @Nullable TdApi.MessageTopic topic, @Nullable TdApi.InputMessageReplyTo reply) {
+    openInChat(owner, bot, chatId, url, topic, reply, null);
+  }
+
+  private static void openInChat (ViewController<?> owner, TdApi.AttachmentMenuBot bot, long chatId, String url,
+                                  @Nullable TdApi.MessageTopic topic, @Nullable TdApi.InputMessageReplyTo reply, @Nullable MiniAppController.Navigator navigator) {
     if (!MiniAppChatPolicy.supports(owner.tdlib(), bot, owner.tdlib().chat(chatId))) {
       unavailable();
       return;
     }
-    Runnable open = () -> MiniAppController.openAttachment(owner, bot.botUserId, chatId, url, topic, reply);
+    Runnable open = () -> MiniAppController.openAttachment(owner, bot.botUserId, chatId, url, topic, reply, navigator);
     if (bot.isAdded) {
       open.run();
       return;

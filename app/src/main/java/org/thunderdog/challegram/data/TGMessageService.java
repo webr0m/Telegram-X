@@ -1270,7 +1270,7 @@ public final class TGMessageService extends TGMessageServiceImpl {
 
   public TGMessageService (MessagesManager context, TdApi.Message msg, TdApi.MessagePaymentSuccessful paymentSuccessful) {
     super(context, msg);
-    // TODO click to view receipt
+    setOnClickListener(() -> org.thunderdog.challegram.ui.MiniAppReceiptController.open(controller(), msg.chatId, msg.id));
     String amount = CurrencyUtils.buildAmount(paymentSuccessful.currency, paymentSuccessful.totalAmount);
     TdlibSender targetSender = new TdlibSender(tdlib, msg.chatId, tdlib.sender(msg.chatId));
     String subscriptionDate = paymentSuccessful.subscriptionUntilDate != 0 ? Lang.getDatestamp(paymentSuccessful.subscriptionUntilDate, TimeUnit.SECONDS) : null;

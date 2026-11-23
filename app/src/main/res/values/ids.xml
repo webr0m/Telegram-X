@@ -1744,5 +1744,8 @@
   <item type="id" name="controller_miniAppPayment" />
   <item type="id" name="controller_miniAppPaymentProvider" />
   <item type="id" name="controller_miniAppCard" />
+  <item type="id" name="btn_miniAppPayments" />
+  <item type="id" name="controller_miniAppReceipt" />
+  <item type="id" name="controller_miniAppPaymentHistory" />
 </resources>
 <!-- endregion -->

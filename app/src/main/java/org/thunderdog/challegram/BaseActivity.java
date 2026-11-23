@@ -363,6 +363,7 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
         this.tdlib.messageViewer().removeListener(messageViewListener);
       }
       this.tdlib = tdlib;
+      tdlib.ui().payments().checkPending();
       recordAudioVideoController.setTdlib(tdlib);
       tdlib.setOnline(wasOnline);
       tdlib.messageViewer().addListener(messageViewListener);
@@ -370,6 +371,9 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
         drawer.onCurrentTdlibChanged(tdlib);
       }
       onTdlibChanged();
+      org.thunderdog.challegram.tool.UI.post(() -> {
+        if (navigation != null && contentView != null && this.tdlib != null) miniAppTabs().bindAccount();
+      });
       runEmulatorChecks();
     }
   }
@@ -585,6 +589,7 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
     Lang.addLanguageListener(this);
 
     navigation.getStack().addChangeListener(navigationStackChangeListener);
+    if (needTdlib() && hasTdlib()) miniAppTabs().bindAccount();
     backPressedCallback.setEnabled(isBackPressActionAvailable(handleOnBackPress(false, false)));
     getOnBackPressedDispatcher().addCallback(backPressedCallback);
   }

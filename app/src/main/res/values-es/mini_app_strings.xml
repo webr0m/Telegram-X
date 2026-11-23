@@ -26,7 +26,7 @@
   <string name="MiniAppMinimize">Minimizar</string>
   <string name="MiniAppTabs">Pestañas de miniapps</string>
   <string name="MiniAppTabsCount">Miniapps (%1$s)</string>
-  <string name="MiniAppTabsFull">Ya hay cuatro miniapps minimizadas. Cierra una para minimizar otra.</string>
+  <string name="MiniAppTabsFull">Cierra una pestaña de miniapp guardada antes de minimizar otra.</string>
   <string name="MiniAppResume">Reanudar</string>
   <string name="MiniAppPayment">Confirmar compra</string>
   <string name="MiniAppPaymentFailed">No se pudo completar el pago. Revisa la factura e inténtalo de nuevo.</string>
@@ -86,4 +86,26 @@
   <string name="MiniAppTabsCloseAll">Cerrar todas las miniapps</string>
   <string name="MiniAppTabsCloseOthers">Cerrar las otras miniapps</string>
   <string name="MiniAppTabsCloseConfirm">¿Cerrar %1$s pestañas de miniapps? Se pueden perder los cambios sin guardar.</string>
+  <string name="MiniAppPaymentRecordFailed">No se pudo guardar el registro del pago. Inténtalo de nuevo antes de autorizarlo.</string>
+  <string name="MiniAppPaymentCheck">Revisar confirmaciones de pagos</string>
+  <string name="MiniAppPaymentHistory">Pagos y recibos</string>
+  <string name="MiniAppReceipt">Recibo del pago</string>
+  <string name="MiniAppReceiptUnavailable">No se pudo cargar el recibo. Puedes volver a intentarlo.</string>
+  <string name="MiniAppReceiptTransaction">Transacción de Stars: %1$s</string>
+  <string name="MiniAppReceiptTotal">Total pagado: %1$s</string>
+  <string name="MiniAppReceiptPeriod">Período de suscripción: %1$s segundos</string>
+  <string name="MiniAppPaymentsEmpty">Aquí aparecerán los pagos realizados desde este formulario.</string>
+  <string name="MiniAppPaymentPaid">Pago confirmado</string>
+  <string name="MiniAppTabNewSession">Pestaña guardada — abre una sesión nueva</string>
+  <string name="MiniAppTabRestoreConfirm">¿Reabrir esta miniapp con una sesión nueva? Se recargará la página. No se restauran el contenido sin guardar ni la respuesta anterior. Para enlaces personalizados, abre el bot y vuelve a iniciar la miniapp.</string>
+  <string name="MiniAppReceiptRawAmount">%1$s %2$s (unidades menores)</string>
+  <string name="MiniAppHistorySearching">Buscando en el historial: %1$s mensajes revisados</string>
+  <string name="MiniAppHistoryPaused">Historial en pausa: %1$s mensajes revisados</string>
+  <string name="MiniAppHistoryRetry">No se pudo avanzar en el historial. %1$s mensajes revisados; reintenta para continuar.</string>
+  <string name="MiniAppHistoryComplete">Intervalo revisado: %1$s mensajes. Un pago pendiente todavía necesita un recibo que coincida.</string>
+  <string name="MiniAppHistoryPause">Pausar búsqueda histórica</string>
+  <string name="MiniAppHistoryContinue">Buscar o continuar en el historial antiguo</string>
+  <string name="MiniAppHistoryRestart">Volver a buscar desde los mensajes recientes</string>
+  <string name="MiniAppHistoryBusy">Ya hay un lote de búsqueda en curso. Espera a que termine o páusalo.</string>
+  <string name="MiniAppHistoryOpenSeller">Abrir chat del vendedor</string>
 </resources>

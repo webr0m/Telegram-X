@@ -60,6 +60,8 @@ public final class MiniAppPaymentController extends ViewController<Void> {
   private PaymentsClient googlePay;
   private MiniAppGooglePayLauncher googlePayLauncher;
   private boolean googlePayReady, googlePayPending;
+  private final Runnable paymentListener = this::onPaymentsChanged;
+  private boolean followingPayment;
 
   public MiniAppPaymentController (Context context, Tdlib tdlib, String slug, RunnableData<String> callback) {
     this(context, tdlib, new TdApi.InputInvoiceName(slug), callback);
@@ -92,6 +94,7 @@ public final class MiniAppPaymentController extends ViewController<Void> {
   @Override public boolean canSlideBackFrom (NavigationController navigation, float x, float y) { return false; }
 
   @Override protected View onCreateView (Context context) {
+    tdlib.ui().payments().addListener(paymentListener);
     ScrollView scroll = new ScrollView(context);
     content = new LinearLayout(context);
     content.setOrientation(LinearLayout.VERTICAL);
@@ -438,11 +441,38 @@ public final class MiniAppPaymentController extends ViewController<Void> {
     status.setText(R.string.MiniAppPaymentProcessing);
     TdApi.InputCredentials submittedCredentials = credentials;
     credentials = null;
+    followingPayment = true;
+    String currency = form.type instanceof TdApi.PaymentFormTypeRegular regular ? regular.invoice.currency : "XTR";
+    if (!tdlib.ui().payments().reserve(invoice, form, currency, total(), saved -> {
+      if (!validAccount() || state.isFinished()) {
+        if (saved) tdlib.ui().payments().fail(MiniAppPaymentRecord.key(invoice));
+        return;
+      }
+      if (!saved) { state.failed(); setBusy(false); status.setText(R.string.MiniAppPaymentRecordFailed); return; }
+      sendPayment(submittedCredentials);
+    })) {
+      if (tdlib.ui().payments().find(MiniAppPaymentRecord.key(invoice)) == null) {
+        state.failed(); setBusy(false); status.setText(R.string.MiniAppPaymentRecordFailed); return;
+      }
+      state.pending();
+      setBusy(false);
+      showPending(null);
+      onPaymentsChanged();
+    }
+  }
+
+  private void sendPayment (TdApi.InputCredentials submittedCredentials) {
     tdlib.send(new TdApi.SendPaymentForm(invoice, form.id, order != null ? order.orderInfoId : "", shipping != null ? shipping.id : "", submittedCredentials, tipAmount),
-      (result, error) -> runOnUiThreadOptional(() -> {
-        if (!validAccount()) return;
+      (result, error) -> UI.post(() -> {
+        if (tdlib.myUserId() != accountUserId || !tdlib.isAuthorized()) return;
+        if (error == null && result.success) tdlib.ui().payments().accepted(MiniAppPaymentRecord.key(invoice));
+        else if (MiniAppPaymentRecord.rejected(error)) tdlib.ui().payments().fail(MiniAppPaymentRecord.key(invoice));
+        if (isDestroyed() || !validAccount()) return;
         setBusy(false);
         if (error != null) {
+          if (!MiniAppPaymentRecord.rejected(error)) {
+            state.pending(); showPending(null); UI.showError(error); return;
+          }
           state.failed();
           status.setText(R.string.MiniAppPaymentFailed);
           UI.showError(error);
@@ -455,24 +485,40 @@ public final class MiniAppPaymentController extends ViewController<Void> {
               else { form = fresh; render(); }
             }));
           }
-        } else if (result.success) finish("paid");
+        } else if (result.success) {
+          finish("paid");
+        }
         else {
           state.pending();
-          status.setText(R.string.MiniAppPaymentPending);
-          pay.setEnabled(false);
-          if (MiniAppController.httpsOrigin(result.verificationUrl) != null) button(Lang.getString(R.string.MiniAppPaymentVerify), () -> openUrl(result.verificationUrl));
-          button(Lang.getString(R.string.MiniAppPaymentDone), () -> finish("pending"));
+          showPending(result.verificationUrl);
+          tdlib.ui().payments().checkPending();
         }
       }));
   }
+
+  private void showPending (String verificationUrl) {
+    status.setText(R.string.MiniAppPaymentPending);
+    pay.setEnabled(false);
+    if (verificationUrl != null && MiniAppController.httpsOrigin(verificationUrl) != null) button(Lang.getString(R.string.MiniAppPaymentVerify), () -> openUrl(verificationUrl));
+    button(Lang.getString(R.string.MiniAppPaymentCheck), () -> tdlib.ui().payments().checkPending());
+    button(Lang.getString(R.string.MiniAppPaymentHistory), () -> navigateTo(new MiniAppPaymentHistoryController(context(), tdlib)));
+    button(Lang.getString(R.string.MiniAppPaymentDone), () -> finish("pending"));
+  }
+
+  private void onPaymentsChanged () {
+    if (!followingPayment || !validAccount() || state.isFinished()) return;
+    MiniAppPaymentRecord record = tdlib.ui().payments().find(MiniAppPaymentRecord.key(invoice));
+    if (record != null && record.status.equals("paid") && isFocused()) finish("paid");
+  }
+
+  @Override protected void onFocusStateChanged () { super.onFocusStateChanged(); onPaymentsChanged(); }
 
   private void openUrl (String url) {
     if (MiniAppController.httpsOrigin(url) != null) tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().controller(this).requireOpenPrompt());
   }
 
   private void finish (String status) {
-    if (state.complete(status)) callback.runWithData(status);
-    navigateBack();
+    if (state.complete(status)) { callback.runWithData(status); navigateBack(); }
   }
 
   @Override public boolean performOnBackPressed (boolean fromTop, boolean commit) {
@@ -482,6 +528,7 @@ public final class MiniAppPaymentController extends ViewController<Void> {
 
   @Override public void destroy () {
     if (isDestroyed()) return;
+    tdlib.ui().payments().removeListener(paymentListener);
     if (googlePayLauncher != null) googlePayLauncher.destroy();
     if (dialog != null) dialog.dismiss();
     if (state.complete(state.closeStatus())) callback.runWithData(state.result());
