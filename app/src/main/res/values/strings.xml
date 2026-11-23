@@ -1817,6 +1817,8 @@
   <string name="ThemeBlue">Blue</string>
   <string name="ThemeNight">Night Black</string>
   <string name="ThemeNightBlue">Night Blue</string>
+  <string name="ThemeTelegramAndroidLight">Telegram Android Light</string>
+  <string name="ThemeTelegramAndroidDark">Telegram Android Dark</string>
   <string name="ThemeBlackWhite">Black-white</string>
   <string name="ThemeRed">Red</string>
   <string name="ThemeCustom">Custom</string>

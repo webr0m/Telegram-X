@@ -247,6 +247,9 @@ public class TGBackground {
       case ThemeId.NIGHT_BLACK:
       case ThemeId.NIGHT_BLUE:
         return 0; // Disabled by default
+      case ThemeId.TELEGRAM_ANDROID_LIGHT:
+      case ThemeId.TELEGRAM_ANDROID_DARK:
+        return 0; // The theme supplies a background name instead of a legacy ID
 
       case ThemeId.BLUE:
       case ThemeId.CLASSIC:

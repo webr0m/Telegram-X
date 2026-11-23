@@ -27,6 +27,8 @@ import org.thunderdog.challegram.theme.builtin.ThemeNightBlue;
 import org.thunderdog.challegram.theme.builtin.ThemeOrange;
 import org.thunderdog.challegram.theme.builtin.ThemePink;
 import org.thunderdog.challegram.theme.builtin.ThemeRed;
+import org.thunderdog.challegram.theme.builtin.ThemeTelegramAndroidDark;
+import org.thunderdog.challegram.theme.builtin.ThemeTelegramAndroidLight;
 import org.thunderdog.challegram.theme.builtin.ThemeWhiteBlack;
 import org.thunderdog.challegram.unsorted.Settings;
 
@@ -104,6 +106,10 @@ public class ThemeSet {
         return new ThemeRed();
       case ThemeId.WHITE_BLACK:
         return new ThemeWhiteBlack();
+      case ThemeId.TELEGRAM_ANDROID_LIGHT:
+        return new ThemeTelegramAndroidLight();
+      case ThemeId.TELEGRAM_ANDROID_DARK:
+        return new ThemeTelegramAndroidDark();
 
       case ThemeId.NIGHT_BLUE:
         return new ThemeNightBlue();

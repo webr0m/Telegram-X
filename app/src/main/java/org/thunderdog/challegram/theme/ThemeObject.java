@@ -34,7 +34,7 @@ public abstract class ThemeObject implements ThemeDelegate {
   }
 
   @Override
-  public final String getDefaultWallpaper () {
+  public String getDefaultWallpaper () {
     return TGBackground.getBackgroundForLegacyWallpaperId(TGBackground.getDefaultWallpaperId(id));
   }
 

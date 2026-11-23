@@ -665,6 +665,14 @@ abstract class GenerateThemesTask : DefaultTask() {
 
         var open = false
 
+        theme.wallpaper?.let { wallpaper ->
+          writer.appendLine(" {")
+          writer.append("  override fun getDefaultWallpaper (): String = \"")
+          writer.append(wallpaper.replace("\\", "\\\\").replace("\"", "\\\"").replace("\$", "\\\$"))
+          writer.appendLine("\"")
+          open = true
+        }
+
         var first = true
         for (property in theme.namesByProperty) {
           val names: MutableSet<String>

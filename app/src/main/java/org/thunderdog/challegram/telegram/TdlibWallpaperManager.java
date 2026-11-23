@@ -63,13 +63,28 @@ public class TdlibWallpaperManager {
         TGBackground currentBackground = tdlib.settings().getWallpaper(newWallpaperUsageId, true);
         if (StringUtils.isEmpty(oldWallpaper) && (currentBackground == null || currentBackground.isEmpty())) {
           fetchBackground(newThemeId, true);
-        } else if (!StringUtils.isEmpty(oldWallpaper) && currentBackground != null && oldWallpaper.equals(extractWallpaperName(currentBackground.getName()))) {
+        } else if (!StringUtils.isEmpty(oldWallpaper) && currentBackground != null && matchesDefaultWallpaper(oldWallpaper, currentBackground)) {
           fetchBackground(newThemeId, true);
         }
       }
     } else {
       fetchBackground(newThemeId, false);
     }
+  }
+
+  private static boolean matchesDefaultWallpaper (String wallpaper, TGBackground currentBackground) {
+    String name = extractWallpaperName(currentBackground.getName());
+    if (wallpaper.equals(name)) {
+      return true;
+    }
+    if (name == null || !currentBackground.isPattern()) {
+      return false;
+    }
+    TdApi.BackgroundTypePattern pattern = (TdApi.BackgroundTypePattern) currentBackground.getType();
+    if (pattern.isMoving || pattern.isInverted) {
+      return false;
+    }
+    return wallpaper.equals(name + "?intensity=" + pattern.intensity + "&bg_color=" + TGBackground.getNameForFill(pattern.fill));
   }
 
   private void fetchBackground (int themeId, boolean force) {

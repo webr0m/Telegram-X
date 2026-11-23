@@ -236,6 +236,7 @@ public class Theme {
       case ThemeId.BLACK_WHITE:
         return ColorId.themeBlackWhite;
       case ThemeId.BLUE:
+      case ThemeId.TELEGRAM_ANDROID_LIGHT:
         return ColorId.themeBlue;
       case ThemeId.CLASSIC:
         return ColorId.themeClassic;
@@ -246,6 +247,7 @@ public class Theme {
       case ThemeId.NIGHT_BLACK:
         return ColorId.themeNightBlack;
       case ThemeId.NIGHT_BLUE:
+      case ThemeId.TELEGRAM_ANDROID_DARK:
         return ColorId.themeNightBlue;
       case ThemeId.ORANGE:
         return ColorId.themeOrange;

@@ -13,6 +13,7 @@ class Theme (val file: File) {
 
   var id: Int = 0
   var name: String = ""
+  var wallpaper: String? = null
   var creationTime: Long = 0
   var parentTheme: Int = 0
   var bubbleTheme: Int = 0
@@ -79,6 +80,7 @@ class Theme (val file: File) {
                     Section.SETTINGS -> when (name) {
                       "id" -> this.id = stringValue.toInt()
                       "name" -> this.name = stringValue.unwrapDoubleQuotes()
+                      "wallpaper" -> this.wallpaper = stringValue.unwrapDoubleQuotes()
                       "time" -> this.creationTime = stringValue.toLong()
                       "tinted" -> this.isTinted = stringValue.toBoolean()
                       else -> error("Unknown theme setting: $name")

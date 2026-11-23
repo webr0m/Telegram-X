@@ -97,6 +97,10 @@ public class ThemeManager implements FactorAnimator.Target, GlobalAccountListene
         return R.string.ThemeNight;
       case ThemeId.NIGHT_BLUE:
         return R.string.ThemeNightBlue;
+      case ThemeId.TELEGRAM_ANDROID_LIGHT:
+        return R.string.ThemeTelegramAndroidLight;
+      case ThemeId.TELEGRAM_ANDROID_DARK:
+        return R.string.ThemeTelegramAndroidDark;
       case ThemeId.BLACK_WHITE:
         return R.string.ThemeBlackWhite;
       case ThemeId.CUSTOM:
@@ -142,6 +146,8 @@ public class ThemeManager implements FactorAnimator.Target, GlobalAccountListene
       ThemeId.CYAN,
       ThemeId.NIGHT_BLUE,
       ThemeId.NIGHT_BLACK,
+      ThemeId.TELEGRAM_ANDROID_LIGHT,
+      ThemeId.TELEGRAM_ANDROID_DARK,
       ThemeId.BLACK_WHITE,
       ThemeId.WHITE_BLACK,
     } : new int[] {
@@ -153,7 +159,9 @@ public class ThemeManager implements FactorAnimator.Target, GlobalAccountListene
       ThemeId.PINK,
       ThemeId.CYAN,
       ThemeId.NIGHT_BLUE,
-      ThemeId.NIGHT_BLACK
+      ThemeId.NIGHT_BLACK,
+      ThemeId.TELEGRAM_ANDROID_LIGHT,
+      ThemeId.TELEGRAM_ANDROID_DARK
     };
     List<ThemeInfo> themes = new ArrayList<>(builtInThemeIds.length);
     for (int themeId : builtInThemeIds) {
@@ -507,6 +515,8 @@ public class ThemeManager implements FactorAnimator.Target, GlobalAccountListene
       case ThemeId.RED:
       case ThemeId.WHITE_BLACK:
       case ThemeId.CLASSIC:
+      case ThemeId.TELEGRAM_ANDROID_LIGHT:
+      case ThemeId.TELEGRAM_ANDROID_DARK:
         return themeId;
 
       case ThemeId.TEMPORARY:
@@ -634,6 +644,8 @@ public class ThemeManager implements FactorAnimator.Target, GlobalAccountListene
       case ThemeId.PINK:
       case ThemeId.CYAN:
       case ThemeId.CLASSIC:
+      case ThemeId.TELEGRAM_ANDROID_LIGHT:
+      case ThemeId.TELEGRAM_ANDROID_DARK:
         return savedThemeId;
       default: {
         if (allowCustom) {
