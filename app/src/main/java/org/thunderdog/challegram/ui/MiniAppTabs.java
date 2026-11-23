@@ -27,7 +27,7 @@ import org.thunderdog.challegram.tool.Screen;
 import org.thunderdog.challegram.tool.UI;
 
 /** Activity-owned live tabs. No WebView, authentication URL or account data is persisted. */
-public final class MiniAppTabs implements NavigationStack.ChangeListener {
+public final class MiniAppTabs implements NavigationStack.ChangeListener, BaseActivity.PasscodeListener, BaseActivity.SimpleStateListener {
   private static final int MAX_TABS = 4;
   private final BaseActivity activity;
   private final ArrayList<MiniAppController> tabs = new ArrayList<>();
@@ -68,6 +68,8 @@ public final class MiniAppTabs implements NavigationStack.ChangeListener {
       return insets;
     });
     activity.navigation().getStack().addChangeListener(this);
+    activity.addPasscodeListener(this);
+    activity.addSimpleStateListener(this);
   }
 
   boolean minimize (MiniAppController app, Runnable afterParking) {
@@ -115,7 +117,8 @@ public final class MiniAppTabs implements NavigationStack.ChangeListener {
     ViewController<?> current = activity.navigation().getStack().getCurrent();
     manage.setText(Lang.getString(R.string.MiniAppTabsCount, Integer.toString(tabs.size())));
     rebuildStrip();
-    boolean visible = !tabs.isEmpty() && !(current instanceof MiniAppController) && !(current instanceof MiniAppPaymentController) &&
+    boolean visible = !tabs.isEmpty() && !activity.isPasscodeShowing() && activity.getActivityState() == UI.State.RESUMED &&
+      !(current instanceof MiniAppController) && !(current instanceof MiniAppPaymentController) &&
       !(current instanceof MiniAppPaymentProvider) && !(current instanceof MiniAppCardController);
     setBarVisible(visible);
   }
@@ -131,7 +134,7 @@ public final class MiniAppTabs implements NavigationStack.ChangeListener {
 
   public void show () {
     refresh();
-    if (destroyed || tabs.isEmpty() || activity.isPasscodeShowing()) return;
+    if (destroyed || tabs.isEmpty() || activity.isPasscodeShowing() || activity.getActivityState() != UI.State.RESUMED) return;
     ArrayList<MiniAppController> snapshot = new ArrayList<>(tabs);
     dismissPicker();
     ScrollView scroll = new ScrollView(activity);
@@ -274,11 +277,25 @@ public final class MiniAppTabs implements NavigationStack.ChangeListener {
     destroyed = true;
     clear();
     activity.navigation().getStack().removeChangeListener(this);
+    activity.removePasscodeListener(this);
+    activity.removeSimpleStateListener(this);
     ((FrameLayout) activity.getContentView()).removeView(bar);
   }
 
   @Override
   public void onStackChanged (NavigationStack stack) {
+    refresh();
+  }
+
+  @Override
+  public void onPasscodeShowing (BaseActivity context, boolean isShowing) {
+    if (isShowing) dismissPicker();
+    refresh();
+  }
+
+  @Override
+  public void onActivityStateChanged (BaseActivity context, int newState, int oldState) {
+    if (newState != UI.State.RESUMED) dismissPicker();
     refresh();
   }
 }
