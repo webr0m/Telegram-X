@@ -5736,11 +5736,18 @@ public class TdlibUi extends Handler {
         break;
       }
 
+      case TdApi.InternalLinkTypeInvoice.CONSTRUCTOR: {
+        ViewController<?> owner = context instanceof ViewController<?> ?
+          (ViewController<?>) context : context.context().navigation().getCurrentStackItem();
+        if (owner != null && owner.tdlib() == tdlib) {
+          org.thunderdog.challegram.ui.MiniAppPaymentController.open(owner, ((TdApi.InternalLinkTypeInvoice) linkType).invoiceName);
+        } else ok = false;
+        break;
+      }
+
       case TdApi.InternalLinkTypeStory.CONSTRUCTOR:
       case TdApi.InternalLinkTypeLiveStory.CONSTRUCTOR:
       case TdApi.InternalLinkTypeStoryAlbum.CONSTRUCTOR:
-
-      case TdApi.InternalLinkTypeInvoice.CONSTRUCTOR:
 
       case TdApi.InternalLinkTypeRestorePurchases.CONSTRUCTOR:
       case TdApi.InternalLinkTypeGiftCollection.CONSTRUCTOR:

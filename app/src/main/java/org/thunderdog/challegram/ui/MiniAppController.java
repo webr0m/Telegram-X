@@ -78,7 +78,7 @@ import tgx.td.ChatId;
 import tgx.td.Td;
 
 /** A TDLib-authenticated Mini App with an origin-scoped, main-frame-only bridge. */
-public final class MiniAppController extends ViewController<Void> implements Menu, MoreDelegate {
+public final class MiniAppController extends ViewController<Void> implements Menu, MoreDelegate, org.thunderdog.challegram.telegram.AuthorizationListener {
   private final long botUserId;
   private final long accountUserId;
   private final long chatId;
@@ -114,6 +114,13 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private String preparedError;
   private boolean initialFullscreen;
   private boolean settingsButtonVisible;
+  private MiniAppViewport viewport;
+  private boolean minimized;
+  private boolean openingInvoice, invoiceResultPending;
+  private int invoiceGeneration;
+  private String invoiceSlug, invoiceStatus;
+  private boolean allowVerticalSwipes = true;
+  private float handleDownY;
 
   private MiniAppController (Context context, Tdlib tdlib, long botUserId, long chatId,
                             String sourceUrl, @Nullable String shortName, String startParameter,
@@ -223,6 +230,12 @@ public final class MiniAppController extends ViewController<Void> implements Men
     StringList labels = new StringList(3);
     ids.append(R.id.btn_miniAppFullscreen);
     labels.append(Lang.getString(R.string.MiniAppFullscreen));
+    ids.append(R.id.btn_miniAppCompact);
+    labels.append(Lang.getString(viewport.isCompact() ? R.string.MiniAppExpand : R.string.MiniAppCompact));
+    ids.append(R.id.btn_miniAppMinimize);
+    labels.append(Lang.getString(R.string.MiniAppMinimize));
+    ids.append(R.id.btn_miniAppTabs);
+    labels.append(Lang.getString(R.string.MiniAppTabs));
     if (settingsButtonVisible) {
       ids.append(R.id.btn_miniAppSettings);
       labels.append(Lang.getString(R.string.Settings));
@@ -236,7 +249,14 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   @Override
   public void onMoreItemPressed (int id) {
-    if (id == R.id.btn_miniAppFullscreen) {
+    if (id == R.id.btn_miniAppCompact) {
+      fullscreen.setRequested(false);
+      viewport.setCompact(!viewport.isCompact());
+    } else if (id == R.id.btn_miniAppMinimize) {
+      minimize();
+    } else if (id == R.id.btn_miniAppTabs) {
+      context().miniAppTabs().show();
+    } else if (id == R.id.btn_miniAppFullscreen) {
       if (!fullscreen.isSupported() || !fullscreen.setRequested(true)) {
         sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
       }
@@ -255,6 +275,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   @SuppressLint({"SetJavaScriptEnabled", "RestrictedApi"})
   @Override
   protected View onCreateView (Context context) {
+    tdlib.listeners().addAuthorizationChangeListener(this);
     header = new DoubleHeaderView(context);
     header.setThemedTextColor(this);
     header.initWithMargin(Screen.dp(49), true);
@@ -262,12 +283,32 @@ public final class MiniAppController extends ViewController<Void> implements Men
     header.setSubtitle(Lang.getString(R.string.MiniApp));
     LinearLayout root = new LinearLayout(context);
     root.setOrientation(LinearLayout.VERTICAL);
-    FrameLayout host = new FrameLayout(context);
-    host.addView(root, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+    MiniAppViewport host = viewport = new MiniAppViewport(context, root);
+    viewport.setCompact(mode instanceof TdApi.WebAppOpenModeCompact);
+    host.setOnClickListener(v -> viewport.setCompact(false));
     fullscreen = new MiniAppFullscreen(context(), host, root, this::sendFullscreenState, this::requestClose);
     initialFullscreen = mode instanceof TdApi.WebAppOpenModeFullScreen;
     fullscreen.setRequested(initialFullscreen);
     ViewSupport.setThemedBackground(root, ColorId.filling, this);
+    TextView handle = new TextView(context);
+    handle.setText("―");
+    handle.setTextColor(Theme.textAccentColor());
+    addThemeTextAccentColorListener(handle);
+    handle.setGravity(Gravity.CENTER);
+    handle.setContentDescription(Lang.getString(R.string.MiniAppExpand));
+    handle.setOnClickListener(v -> viewport.setCompact(false));
+    handle.setOnTouchListener((v, event) -> {
+      if (event.getActionMasked() == android.view.MotionEvent.ACTION_DOWN) { handleDownY = event.getRawY(); return true; }
+      if (event.getActionMasked() == android.view.MotionEvent.ACTION_UP) {
+        float distance = event.getRawY() - handleDownY;
+        if (allowVerticalSwipes && distance > Screen.dp(80)) minimize();
+        else if (allowVerticalSwipes && distance < -Screen.dp(40)) viewport.setCompact(false);
+        else if (Math.abs(distance) < Screen.dp(12)) v.performClick();
+        return true;
+      }
+      return true;
+    });
+    root.addView(handle, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(32)));
     progress = new ProgressBar(context, null, android.R.attr.progressBarStyleHorizontal);
     root.addView(progress, new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(3)));
     errorText = new TextView(context);
@@ -354,7 +395,10 @@ public final class MiniAppController extends ViewController<Void> implements Men
           lastInteractionTime = 0;
           appBackButton = confirmClosing = false;
           settingsButtonVisible = false;
+          allowVerticalSwipes = true;
+          fullscreen.setOrientationLocked(false);
           preparingMessage = preparedResultPending = false;
+          openingInvoice = invoiceResultPending = false;
           mainButton.setVisibility(View.GONE);
           secondaryButton.setVisibility(View.GONE);
           if (popup != null) {
@@ -438,6 +482,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
           if (app != null) {
             initialFullscreen = app.mode instanceof TdApi.WebAppOpenModeFullScreen;
             fullscreen.setRequested(initialFullscreen);
+            viewport.setCompact(app.mode instanceof TdApi.WebAppOpenModeCompact);
           }
           onUrl(app != null ? app.url : null, error);
         }));
@@ -500,7 +545,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     }
   }
 
-  private static @Nullable String httpsOrigin (@Nullable String url) {
+  static @Nullable String httpsOrigin (@Nullable String url) {
     if (url == null) {
       return null;
     }
@@ -525,7 +570,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void receiveEvent (@Nullable String message) {
-    if (tdlib.myUserId() != accountUserId || message == null || message.length() > 6 * 1024 * 1024) {
+    if (!tdlib.isAuthorized() || minimized || tdlib.myUserId() != accountUserId || message == null || message.length() > 6 * 1024 * 1024) {
       return;
     }
     try {
@@ -539,13 +584,23 @@ public final class MiniAppController extends ViewController<Void> implements Men
           sendTheme();
           sendViewport();
           sendFullscreenState();
+          sendVisibility();
           break;
         case "web_app_request_theme":
           sendTheme();
           break;
         case "web_app_request_viewport":
-        case "web_app_expand":
           sendViewport();
+          break;
+        case "web_app_expand":
+          viewport.setCompact(false);
+          sendViewport();
+          break;
+        case "web_app_toggle_orientation_lock":
+          fullscreen.setOrientationLocked(data.optBoolean("locked"));
+          break;
+        case "web_app_setup_swipe_behavior":
+          allowVerticalSwipes = data.optBoolean("allow_vertical_swipe", true);
           break;
         case "web_app_request_safe_area":
           sendSafeAreas();
@@ -689,7 +744,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
           sendEvent("emoji_status_access_requested", json("status", "cancelled"));
           break;
         case "web_app_open_invoice":
-          sendEvent("invoice_closed", json("slug", data.optString("slug"), "status", "failed"));
+          openInvoice(data.optString("slug"));
           break;
         case "web_app_start_accelerometer":
           sendEvent("accelerometer_failed", json("error", "UNSUPPORTED"));
@@ -1083,6 +1138,10 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   private void onMessageSent () {
     messageSent = true;
+    if (minimized) {
+      context().miniAppTabs().discard(this);
+      return;
+    }
     if (isFocused()) {
       navigateBack();
     }
@@ -1115,7 +1174,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   private void sendViewport () {
     if (webView != null) {
-      sendEvent("viewport_changed", json("height", webView.getHeight() / Screen.density(), "is_state_stable", true, "is_expanded", true));
+      sendEvent("viewport_changed", json("height", webView.getHeight() / Screen.density(), "is_state_stable", true,
+        "is_expanded", fullscreen.isFullscreen() || !viewport.isCompact()));
       sendSafeAreas();
     }
   }
@@ -1160,6 +1220,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void requestClose () {
+    if (openingInvoice) return;
     if (fullscreen != null) fullscreen.setRequested(false);
     if (confirmClosing && !messageSent) {
       showConfirm(Lang.getString(R.string.MiniAppCloseConfirm), Lang.getString(R.string.MiniAppClose), this::navigateBack);
@@ -1191,10 +1252,15 @@ public final class MiniAppController extends ViewController<Void> implements Men
     super.onFocusStateChanged();
     updateFullscreenActivity();
     reportPreparedResult();
+    reportInvoiceResult();
+    if (webView != null) {
+      if (isFocused() && context.getActivityState() == UI.State.RESUMED) webView.onResume();
+      else webView.onPause();
+    }
     if (messageSent && isFocused()) {
       UI.post(this::navigateBack);
     } else {
-      sendEvent(isFocused() ? "activated" : "deactivated", json());
+      sendVisibility();
     }
   }
 
@@ -1204,7 +1270,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     if (fullscreen != null) fullscreen.setActive(false);
     if (webView != null) {
       webView.onPause();
-      sendEvent("deactivated", json());
+      sendEvent("visibility_changed", json("is_visible", false));
     }
   }
 
@@ -1213,13 +1279,15 @@ public final class MiniAppController extends ViewController<Void> implements Men
     super.onActivityResume();
     updateFullscreenActivity();
     if (webView != null) {
-      webView.onResume();
-      if (isFocused()) sendEvent("activated", json());
+      if (isFocused()) webView.onResume();
+      sendVisibility();
     }
   }
 
   @Override
   public void destroy () {
+    if (isDestroyed()) return;
+    tdlib.listeners().removeAuthorizationChangeListener(this);
     documentGeneration++;
     reply = null;
     if (fullscreen != null) fullscreen.destroy();
@@ -1236,6 +1304,97 @@ public final class MiniAppController extends ViewController<Void> implements Men
       webView = null;
     }
     super.destroy();
+  }
+
+  private void minimize () {
+    minimizeForTabSwitch(null);
+  }
+
+  boolean minimizeForTabSwitch (@Nullable Runnable afterParking) {
+    if (!isFocused() || openingInvoice || preparingMessage || fileChooser != null || popup != null && popup.isShowing()) return false;
+    Keyboard.hide(webView);
+    fullscreen.setRequested(false);
+    minimized = true;
+    if (!context().miniAppTabs().minimize(this, afterParking)) { minimized = false; return false; }
+    return true;
+  }
+
+  @Nullable Bitmap captureTabPreview () {
+    if (webView == null || webView.getWidth() <= 0 || webView.getHeight() <= 0 ||
+        (context().getWindow().getAttributes().flags & android.view.WindowManager.LayoutParams.FLAG_SECURE) != 0) return null;
+    try {
+      int width = Math.min(320, webView.getWidth());
+      int height = Math.max(1, Math.min(180, Math.round(webView.getHeight() * (float) width / webView.getWidth())));
+      Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.RGB_565);
+      android.graphics.Canvas canvas = new android.graphics.Canvas(bitmap);
+      canvas.scale((float) width / webView.getWidth(), (float) width / webView.getWidth());
+      webView.draw(canvas);
+      return bitmap;
+    } catch (RuntimeException | OutOfMemoryError ignored) { return null; }
+  }
+
+  private void sendVisibility () {
+    sendEvent("visibility_changed", json("is_visible", isFocused() && !minimized && context.getActivityState() == UI.State.RESUMED));
+  }
+
+  void onMinimized () {
+    minimized = true;
+    if (webView != null) webView.onPause();
+  }
+
+  void onRestored () {
+    minimized = false;
+    lastInteractionTime = 0;
+  }
+
+  boolean canRestoreTab () {
+    return !isDestroyed() && !messageSent && tdlib.isAuthorized() && tdlib.myUserId() == accountUserId;
+  }
+
+  @Override
+  public void onAuthorizationStateChanged (TdApi.AuthorizationState state) {
+    if (!(state instanceof TdApi.AuthorizationStateReady)) UI.post(() -> {
+      if (!isDestroyed()) {
+        if (minimized) context().miniAppTabs().discard(this);
+        else destroy();
+      }
+    });
+  }
+
+  boolean needsCloseConfirmation () { return confirmClosing && !messageSent; }
+
+  String tabTitle () { return tdlib.cache().userName(botUserId) + (shortName != null ? " / " + shortName : ""); }
+
+  private void openInvoice (String slug) {
+    if (openingInvoice || !isFocused()) return;
+    if (!MiniAppInvoiceState.validSlug(slug)) {
+      sendEvent("invoice_closed", json("slug", slug, "status", "failed"));
+      return;
+    }
+    openingInvoice = true;
+    invoiceGeneration = documentGeneration;
+    final int generation = documentGeneration;
+    invoiceSlug = slug;
+    fullscreen.setRequested(false);
+    MiniAppPaymentController checkout = new MiniAppPaymentController(context(), tdlib, slug, status -> {
+      if (!isDestroyed() && generation == documentGeneration && invoiceGeneration == generation && slug.equals(invoiceSlug)) {
+        invoiceStatus = status;
+        invoiceResultPending = true;
+        reportInvoiceResult();
+      }
+    });
+    if (!navigationController().navigateTo(checkout)) {
+      checkout.destroy();
+      openingInvoice = false;
+      sendEvent("invoice_closed", json("slug", slug, "status", "failed"));
+    }
+  }
+
+  private void reportInvoiceResult () {
+    if (invoiceResultPending && isFocused()) {
+      invoiceResultPending = openingInvoice = false;
+      sendEvent("invoice_closed", json("slug", invoiceSlug, "status", invoiceStatus));
+    }
   }
 
   private void cancelFileChooser () {

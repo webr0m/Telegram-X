@@ -236,6 +236,14 @@ public class NavigationProcessor extends Handler {
     }
   }
 
+  private ViewController<?> retainedOnBack;
+  private Runnable onRetainedRemoved;
+
+  void retainOnBack (ViewController<?> controller, Runnable onRemoved) {
+    retainedOnBack = controller;
+    onRetainedRemoved = onRemoved;
+  }
+
   public void setPrevAsCurrent () {
     if (checkUiThread()) {
       if (navigation.isAnimating()) {
@@ -250,9 +258,14 @@ public class NavigationProcessor extends Handler {
 
         if (next != null) {
           next.attachNavigationController(navigation);
-          next.destroy();
+          if (next != retainedOnBack) next.destroy();
           next.detachNavigationController();
         }
+
+        Runnable onRemoved = next != null && next == retainedOnBack ? onRetainedRemoved : null;
+        retainedOnBack = null;
+        onRetainedRemoved = null;
+        if (onRemoved != null) onRemoved.run();
 
         clearAnimationDelayed();
 

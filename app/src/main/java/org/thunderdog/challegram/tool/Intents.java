@@ -83,6 +83,7 @@ public class Intents {
   public static final int ACTIVITY_RESULT_VIDEO_CAPTURE = 109;
   public static final int ACTIVITY_RESULT_MANAGE_STORAGE = 110;
   public static final int ACTIVITY_RESULT_MINI_APP_FILE = 111;
+  public static final int ACTIVITY_RESULT_MINI_APP_GOOGLE_PAY = 112;
 
   private static final String PACKAGE_NAME = BuildConfig.APPLICATION_ID; // AppContext.get().getPackageName();
 

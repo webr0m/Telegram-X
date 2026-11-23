@@ -335,6 +335,13 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
 
   protected Tdlib tdlib;
 
+  private org.thunderdog.challegram.ui.MiniAppTabs miniAppTabs;
+
+  public final org.thunderdog.challegram.ui.MiniAppTabs miniAppTabs () {
+    if (miniAppTabs == null) miniAppTabs = new org.thunderdog.challegram.ui.MiniAppTabs(this);
+    return miniAppTabs;
+  }
+
   public final boolean hasTdlib () {
     return tdlib != null;
   }
@@ -348,6 +355,7 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
 
   protected final void setTdlib (Tdlib tdlib) {
     if (this.tdlib != tdlib) {
+      if (miniAppTabs != null) miniAppTabs.clear();
       boolean wasOnline = false;
       if (this.tdlib != null) {
         wasOnline = this.tdlib.isOnline();
@@ -1260,6 +1268,7 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
 
   @Override
   public void onDestroy () {
+    if (miniAppTabs != null) miniAppTabs.destroy();
     try {
       super.onDestroy();
     } catch (Throwable t) {

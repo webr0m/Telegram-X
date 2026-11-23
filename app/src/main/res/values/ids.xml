@@ -1738,5 +1738,11 @@
   <item name="btn_tonBuyOnChain" type="id" />
   <item name="btn_tonOnRampProvider" type="id" />
   <item name="btn_tonRevenueDays" type="id" />
+  <item type="id" name="btn_miniAppCompact" />
+  <item type="id" name="btn_miniAppMinimize" />
+  <item type="id" name="btn_miniAppTabs" />
+  <item type="id" name="controller_miniAppPayment" />
+  <item type="id" name="controller_miniAppPaymentProvider" />
+  <item type="id" name="controller_miniAppCard" />
 </resources>
 <!-- endregion -->

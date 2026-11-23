@@ -1103,6 +1103,8 @@ public class TGInlineKeyboard {
 
       switch (type.getConstructor()) {
         case TdApi.InlineKeyboardButtonTypeBuy.CONSTRUCTOR:
+          org.thunderdog.challegram.ui.MiniAppPaymentController.openMessage(parent.messagesController(), parent.getMessage());
+          break;
         case TdApi.InlineKeyboardButtonTypeCopyText.CONSTRUCTOR:
           // TODO
           break;

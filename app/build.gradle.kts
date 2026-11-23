@@ -1132,6 +1132,12 @@ dependencies {
     libs.androidx.camera.view.latest
   )
   // Google Play Services: https://developers.google.com/android/guides/releases
+  // Wallet 20 requires API 23; retain the API 21 and legacy hosts.
+  flavorImplementation(
+    "com.google.android.gms:play-services-wallet:18.1.3",
+    "com.google.android.gms:play-services-wallet:19.4.0",
+    "com.google.android.gms:play-services-wallet:20.0.0"
+  )
   flavorImplementation(
     libs.google.play.services.base.legacy,
     libs.google.play.services.base.lollipop,

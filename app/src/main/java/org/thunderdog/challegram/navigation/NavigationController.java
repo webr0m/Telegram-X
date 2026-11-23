@@ -710,6 +710,16 @@ public class NavigationController implements Future<View>, ThemeChangeListener, 
     }
   }
 
+  /** Removes the current screen without destroying it. The caller owns its eventual destruction. */
+  public final boolean navigateBackRetainingCurrent (ViewController<?> expected, Runnable onRemoved) {
+    if (getStack().getCurrent() != expected || isAnimating || getStack().getCurrentIndex() <= 0 || isCurrentControllerAnimating()) {
+      return false;
+    }
+    processor.retainOnBack(expected, onRemoved);
+    processor.navigateBack();
+    return true;
+  }
+
   private static final int TRANSLATION_HORIZONTAL = 1;
   private static final int TRANSLATION_VERTICAL = 2;
   private static final int TRANSLATION_FADE = 3;
@@ -1816,6 +1826,18 @@ public class NavigationController implements Future<View>, ThemeChangeListener, 
   }
 
   private int bottomInset, bottomInsetWithoutIme;
+  private int persistentBottomInset;
+
+  /** Reserves space for an activity-owned footer without covering a chat's composer. */
+  public void setPersistentBottomInset (int height) {
+    if (persistentBottomInset == height) return;
+    persistentBottomInset = height;
+    ViewGroup.LayoutParams layout = getValue().getLayoutParams();
+    if (layout instanceof ViewGroup.MarginLayoutParams margins) {
+      margins.bottomMargin = height;
+      getValue().setLayoutParams(margins);
+    }
+  }
 
   public void applyBottomInset (ViewController<?> controller) {
     if (controller.supportsBottomInset()) {
@@ -1844,7 +1866,7 @@ public class NavigationController implements Future<View>, ThemeChangeListener, 
   }
 
   public void dispatchSystemInsets (View child, ViewGroup.MarginLayoutParams layoutParams, Rect legacyInsets, Rect systemInsets, Rect systemInsetWithoutIme) {
-    Views.setMargins(layoutParams, legacyInsets.left, legacyInsets.top, legacyInsets.right, 0);
+    Views.setMargins(layoutParams, legacyInsets.left, legacyInsets.top, legacyInsets.right, persistentBottomInset);
     setBottomInset(systemInsets.bottom, systemInsetWithoutIme.bottom);
   }
 }

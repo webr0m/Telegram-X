@@ -38,6 +38,27 @@ final class MiniAppFullscreen {
   private Insets safeInsets = Insets.NONE;
   private int previousOrientation;
   private boolean requested, active, destroyed;
+  private boolean orientationLocked, orientationOwned;
+
+  void setOrientationLocked (boolean locked) {
+    orientationLocked = locked;
+    updateOrientation();
+  }
+
+  private void updateOrientation () {
+    boolean needed = !destroyed && active && (isFullscreen() || orientationLocked);
+    if (needed) {
+      if (!orientationOwned) {
+        previousOrientation = activity.getRequestedOrientation();
+        orientationOwned = true;
+      }
+      activity.setOrientation(orientationLocked && Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR2 ?
+        ActivityInfo.SCREEN_ORIENTATION_LOCKED : ActivityInfo.SCREEN_ORIENTATION_USER);
+    } else if (orientationOwned) {
+      orientationOwned = false;
+      activity.setOrientation(previousOrientation);
+    }
+  }
 
   MiniAppFullscreen (BaseActivity activity, FrameLayout host, View content, Runnable onChanged, Runnable onClose) {
     this.activity = activity;
@@ -72,6 +93,7 @@ final class MiniAppFullscreen {
     } else if ((!requested || !active || destroyed) && dialog != null) {
       dismiss();
     }
+    updateOrientation();
   }
 
   private void show () {
@@ -130,14 +152,13 @@ final class MiniAppFullscreen {
       return insets;
     });
     dialog = windowDialog;
-    previousOrientation = activity.getRequestedOrientation();
     try {
       windowDialog.show();
       window.setLayout(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT);
       WindowInsetsControllerCompat bars = WindowCompat.getInsetsController(window, frame);
       bars.setSystemBarsBehavior(WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE);
       bars.hide(WindowInsetsCompat.Type.systemBars());
-      activity.setOrientation(ActivityInfo.SCREEN_ORIENTATION_USER);
+      updateOrientation();
       ViewCompat.requestApplyInsets(frame);
       frame.addOnLayoutChangeListener((v, l, t, r, b, ol, ot, or, ob) -> onChanged.run());
       onChanged.run();
@@ -159,7 +180,7 @@ final class MiniAppFullscreen {
       ((ViewGroup) content.getParent()).removeView(content);
     }
     host.addView(content, new FrameLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
-    activity.setOrientation(previousOrientation);
+    updateOrientation();
     safeInsets = Insets.NONE;
     controls = null;
     frame = null;
