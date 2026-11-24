@@ -59,7 +59,7 @@ To build the current beta:
 ```shell
 git clone --recursive https://github.com/webr0m/Telegram-X -b feature/official-flows tgx
 cd tgx
-./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.300"
+./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.303"
 ```
 
 The beta installs as a **separate application** (`org.example.tgx`, debug-signed) and does not replace or touch
