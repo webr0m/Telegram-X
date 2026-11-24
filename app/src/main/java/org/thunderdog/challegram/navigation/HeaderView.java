@@ -1173,12 +1173,35 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
 
   // private OverlayHeaderView overlayView;
   private int overlayColor;
+  private int customBackgroundColor;
 
+  /** A scrim painted over the whole header, including its controls, while an overlay covers the screen. */
   public void setOverlayColor (int color) {
     if (this.overlayColor != color) {
       this.overlayColor = color;
-      setWillNotDraw(Color.alpha(color) <= 0);
+      updateDrawFlags();
       invalidate();
+    }
+  }
+
+  /** A background painted under the header controls, for a color a page has chosen for its own header. */
+  public void setCustomBackgroundColor (int color) {
+    if (this.customBackgroundColor != color) {
+      this.customBackgroundColor = color;
+      updateDrawFlags();
+      invalidate();
+    }
+  }
+
+  private void updateDrawFlags () {
+    setWillNotDraw(Color.alpha(overlayColor) <= 0 && Color.alpha(customBackgroundColor) <= 0);
+  }
+
+  @Override
+  protected void onDraw (Canvas c) {
+    super.onDraw(c);
+    if (Color.alpha(customBackgroundColor) > 0) {
+      c.drawRect(0, 0, getMeasuredWidth(), filling.getBottom(), Paints.fillingPaint(customBackgroundColor));
     }
   }
 

@@ -19,13 +19,13 @@ import android.view.Gravity;
 import android.view.HapticFeedbackConstants;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.PermissionRequest;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.ValueCallback;
-import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
@@ -47,6 +47,7 @@ import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.core.Background;
 import org.thunderdog.challegram.navigation.BackHeaderButton;
 import org.thunderdog.challegram.navigation.DoubleHeaderView;
+import org.thunderdog.challegram.navigation.HeaderButton;
 import org.thunderdog.challegram.navigation.NavigationController;
 import org.thunderdog.challegram.navigation.HeaderView;
 import org.thunderdog.challegram.navigation.Menu;
@@ -78,7 +79,7 @@ import tgx.td.ChatId;
 import tgx.td.Td;
 
 /** A TDLib-authenticated Mini App with an origin-scoped, main-frame-only bridge. */
-public final class MiniAppController extends ViewController<Void> implements Menu, MoreDelegate, org.thunderdog.challegram.telegram.AuthorizationListener {
+public final class MiniAppController extends ViewController<Void> implements Menu, MoreDelegate, org.thunderdog.challegram.telegram.AuthorizationListener, MiniAppDeviceServices.Gateway, MiniAppSecureServices.Gateway {
   interface Navigator { boolean navigate (MiniAppController app); }
   private final long botUserId;
   private final long accountUserId;
@@ -95,7 +96,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private ProgressBar progress;
   private TextView errorText;
   private LinearLayout buttons;
-  private Button mainButton, secondaryButton;
+  private MiniAppButtonView mainButton, secondaryButton;
   private @Nullable JavaScriptReplyProxy reply;
   private @Nullable AlertDialog popup;
   private String origin;
@@ -110,7 +111,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private boolean failed;
   private MiniAppFullscreen fullscreen;
   private boolean attachmentLaunch;
-  private boolean preparingMessage, preparedResultPending;
+  private boolean preparingMessage, preparedResultPending, requestingChat;
   private int preparedGeneration;
   private String preparedError;
   private boolean initialFullscreen;
@@ -122,6 +123,14 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private String invoiceSlug, invoiceStatus;
   private boolean allowVerticalSwipes = true;
   private float handleDownY;
+  private MiniAppDeviceServices deviceServices;
+  private MiniAppSecureServices secureServices;
+  private int deviceRunToken;
+  private int headerColorKind = MiniAppHeaderColor.THEME;
+  private int headerColorValue;
+  private boolean headerLightContent;
+  private @Nullable HeaderButton headerMoreButton;
+  private boolean pendingEmojiAccess;
 
   private MiniAppController (Context context, Tdlib tdlib, long botUserId, long chatId,
                             String sourceUrl, @Nullable String shortName, String startParameter,
@@ -237,7 +246,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   @Override
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
-    header.addMoreButton(menu, this);
+    headerMoreButton = header.addMoreButton(menu, this);
   }
 
   @Override
@@ -251,6 +260,10 @@ public final class MiniAppController extends ViewController<Void> implements Men
     labels.append(Lang.getString(viewport.isCompact() ? R.string.MiniAppExpand : R.string.MiniAppCompact));
     ids.append(R.id.btn_miniAppMinimize);
     labels.append(Lang.getString(R.string.MiniAppMinimize));
+    if (webView != null && !failed && webView.getUrl() != null) {
+      ids.append(R.id.btn_miniAppReload);
+      labels.append(Lang.getString(R.string.MiniAppReload));
+    }
     ids.append(R.id.btn_miniAppTabs);
     labels.append(Lang.getString(R.string.MiniAppTabs));
     ids.append(R.id.btn_miniAppPayments);
@@ -273,6 +286,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
       viewport.setCompact(!viewport.isCompact());
     } else if (id == R.id.btn_miniAppMinimize) {
       minimize();
+    } else if (id == R.id.btn_miniAppReload) {
+      webView.reload();
     } else if (id == R.id.btn_miniAppTabs) {
       context().miniAppTabs().show();
     } else if (id == R.id.btn_miniAppPayments) {
@@ -310,6 +325,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
     fullscreen = new MiniAppFullscreen(context(), host, root, this::sendFullscreenState, this::requestClose);
     initialFullscreen = mode instanceof TdApi.WebAppOpenModeFullScreen;
     fullscreen.setRequested(initialFullscreen);
+    deviceServices = new MiniAppDeviceServices(context(), this);
+    secureServices = new MiniAppSecureServices(context(), this, accountUserId, botUserId);
     ViewSupport.setThemedBackground(root, ColorId.filling, this);
     TextView handle = new TextView(context);
     handle.setText("―");
@@ -366,6 +383,22 @@ public final class MiniAppController extends ViewController<Void> implements Men
         }
 
         @Override
+        public void onPermissionRequest (PermissionRequest request) {
+          if (request == null) return;
+          if (isDestroyed() || deviceServices == null || !isFocused() || minimized ||
+              context().getActivityState() != UI.State.RESUMED) {
+            request.deny();
+            return;
+          }
+          MiniAppMediaAccess.Grant grant = deviceServices.onWebViewPermissionRequest(request.getResources());
+          if (grant.resources.length == 0) {
+            request.deny();
+          } else {
+            request.grant(grant.resources);
+          }
+        }
+
+        @Override
         public boolean onShowFileChooser (WebView view, ValueCallback<Uri[]> callback, FileChooserParams parameters) {
           if (!isFocused()) {
             callback.onReceiveValue(null);
@@ -418,8 +451,15 @@ public final class MiniAppController extends ViewController<Void> implements Men
           settingsButtonVisible = false;
           allowVerticalSwipes = true;
           fullscreen.setOrientationLocked(false);
-          preparingMessage = preparedResultPending = false;
+          preparingMessage = preparedResultPending = requestingChat = false;
           openingInvoice = invoiceResultPending = false;
+          pendingEmojiAccess = false;
+          headerColorKind = MiniAppHeaderColor.THEME;
+          headerColorValue = 0;
+          applyHeaderColor();
+          deviceServices.invalidate();
+          deviceServices.mediaDocumentStarted();
+          if (secureServices != null) secureServices.invalidate();
           mainButton.setVisibility(View.GONE);
           secondaryButton.setVisibility(View.GONE);
           if (popup != null) {
@@ -469,9 +509,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
     return host;
   }
 
-  private Button newButton (Context context, String event) {
-    Button button = new Button(context);
-    button.setAllCaps(false);
+  private MiniAppButtonView newButton (Context context, String event) {
+    MiniAppButtonView button = new MiniAppButtonView(context, tdlib);
     button.setVisibility(View.GONE);
     button.setOnClickListener(v -> {
       lastInteractionTime = SystemClock.elapsedRealtime();
@@ -485,6 +524,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
     failed = true;
     documentGeneration++;
     reply = null;
+    if (deviceServices != null) deviceServices.invalidate();
+    if (secureServices != null) secureServices.invalidate();
     progress.setVisibility(View.GONE);
     errorText.setText(resource);
     errorText.setVisibility(View.VISIBLE);
@@ -561,6 +602,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
         });
       // This WebKit version keeps document-start injection available on the legacy flavor.
       WebViewCompat.addDocumentStartJavaScript(webView, bootstrap, origins);
+      updateDeviceActivity();
       webView.loadUrl(url.url);
     } catch (Exception e) {
       showError(R.string.MiniAppLoadFailed);
@@ -663,7 +705,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
           }
           break;
         case "web_app_open_link":
-          openExternalLink(data.getString("url"));
+          openExternalLink(data.getString("url"), data.optBoolean("try_instant_view", false), data.optString("try_browser"));
           break;
         case "web_app_open_tg_link": {
           String path = data.getString("path_full");
@@ -712,16 +754,18 @@ public final class MiniAppController extends ViewController<Void> implements Men
           break;
         case "web_app_trigger_haptic_feedback":
           if (isFocused() && context.getActivityState() == UI.State.RESUMED) {
-            webView.performHapticFeedback("selection_change".equals(data.optString("type")) ?
-              HapticFeedbackConstants.KEYBOARD_TAP : HapticFeedbackConstants.LONG_PRESS);
+            int constant = hapticConstant(MiniAppHaptic.effectFor(MiniAppHaptic.parse(data), Build.VERSION.SDK_INT));
+            if (constant >= 0) {
+              webView.performHapticFeedback(constant);
+            }
           }
           break;
         case "web_app_request_fullscreen":
-          if (fullscreen.isSupported() && (fullscreen.isFullscreen() || hasRecentInteraction())) {
-            if (!fullscreen.setRequested(true)) {
-              sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
-            }
-          } else {
+          if (!fullscreen.isSupported() || (!fullscreen.isFullscreen() && !hasRecentInteraction())) {
+            sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
+          } else if (fullscreen.isFullscreen()) {
+            sendEvent("fullscreen_failed", json("error", "ALREADY_FULLSCREEN"));
+          } else if (!fullscreen.setRequested(true)) {
             sendEvent("fullscreen_failed", json("error", "UNSUPPORTED"));
           }
           break;
@@ -730,61 +774,104 @@ public final class MiniAppController extends ViewController<Void> implements Men
           sendFullscreenState();
           break;
         case "web_app_check_home_screen":
-          sendEvent("home_screen_checked", json("status", "unsupported"));
+          deviceServices.checkHomeScreen();
+          break;
+        case "web_app_add_to_home_screen":
+          deviceServices.addToHomeScreen();
           break;
         case "web_app_secure_storage_save_key":
+          secureServices.saveSecureKey(data);
+          break;
         case "web_app_secure_storage_get_key":
+          secureServices.getSecureKey(data);
+          break;
         case "web_app_secure_storage_restore_key":
+          secureServices.restoreSecureKey(data);
+          break;
         case "web_app_secure_storage_clear":
-          sendEvent("secure_storage_failed", json("req_id", data.optString("req_id"), "error", "UNSUPPORTED"));
+          secureServices.clearSecureStorage(data);
           break;
         case "web_app_check_location":
-          sendEvent("location_checked", json("available", false));
+          deviceServices.checkLocation();
           break;
         case "web_app_request_location":
-          sendEvent("location_requested", json());
+          deviceServices.requestLocation(data);
+          break;
+        case "web_app_open_location_settings":
+          deviceServices.openLocationSettings();
+          break;
+        case "web_app_check_media_access":
+          deviceServices.checkMediaAccess(data);
+          break;
+        case "web_app_request_media_access":
+          deviceServices.requestMediaAccess(data);
           break;
         case "web_app_biometry_get_info":
-          sendEvent("biometry_info_received", json("available", false));
+          secureServices.getBiometryInfo();
+          break;
+        case "web_app_biometry_request_access":
+          secureServices.requestBiometryAccess(data);
+          break;
+        case "web_app_biometry_request_auth":
+          secureServices.requestBiometryAuth(data);
+          break;
+        case "web_app_biometry_update_token":
+          secureServices.updateBiometryToken(data);
+          break;
+        case "web_app_biometry_open_settings":
+          secureServices.openBiometrySettings();
           break;
         case "web_app_read_text_from_clipboard":
-          sendEvent("clipboard_text_received", json("req_id", data.optString("req_id")));
+          deviceServices.readTextFromClipboard(data);
           break;
         case "web_app_send_prepared_message":
           sharePreparedMessage(data);
+          break;
+        case "web_app_request_chat":
+          requestChat(data);
           break;
         case "web_app_switch_inline_query":
           switchInlineQuery(data);
           break;
         case "web_app_open_scan_qr_popup":
-          sendEvent("scan_qr_popup_closed", json());
+          deviceServices.openScanQrPopup(data);
           break;
+        case "web_app_close_scan_qr_popup":
+          deviceServices.closeScanQrPopup();
+          break;
+        case "web_app_set_header_color": {
+          MiniAppHeaderColor.Value color = MiniAppHeaderColor.parse(data);
+          headerColorKind = color.kind;
+          headerColorValue = color.argb;
+          applyHeaderColor();
+          break;
+        }
         case "web_app_set_emoji_status":
-          sendEvent("emoji_status_failed", json("error", "UNSUPPORTED"));
+          setEmojiStatus(data);
           break;
         case "web_app_request_emoji_status_access":
-          sendEvent("emoji_status_access_requested", json("status", "cancelled"));
+          requestEmojiStatusAccess();
           break;
         case "web_app_open_invoice":
           openInvoice(data.optString("slug"));
           break;
         case "web_app_start_accelerometer":
-          sendEvent("accelerometer_failed", json("error", "UNSUPPORTED"));
+          deviceServices.startSensor(MiniAppSensors.ACCELEROMETER, data);
           break;
         case "web_app_start_device_orientation":
-          sendEvent("device_orientation_failed", json("error", "UNSUPPORTED"));
+          deviceServices.startSensor(MiniAppSensors.ORIENTATION, data);
           break;
         case "web_app_start_gyroscope":
-          sendEvent("gyroscope_failed", json("error", "UNSUPPORTED"));
+          deviceServices.startSensor(MiniAppSensors.GYROSCOPE, data);
           break;
         case "web_app_stop_accelerometer":
-          sendEvent("accelerometer_stopped", json());
+          deviceServices.stopSensor(MiniAppSensors.ACCELEROMETER);
           break;
         case "web_app_stop_device_orientation":
-          sendEvent("device_orientation_stopped", json());
+          deviceServices.stopSensor(MiniAppSensors.ORIENTATION);
           break;
         case "web_app_stop_gyroscope":
-          sendEvent("gyroscope_stopped", json());
+          deviceServices.stopSensor(MiniAppSensors.GYROSCOPE);
           break;
         default:
           break;
@@ -798,13 +885,36 @@ public final class MiniAppController extends ViewController<Void> implements Men
     return color.matches("#[0-9a-fA-F]{6}");
   }
 
-  private void setupButton (Button button, JSONObject data) {
-    String text = data.optString("text");
-    button.setText(data.optBoolean("is_progress_visible") ? text + " …" : text);
-    button.setVisibility(data.optBoolean("is_visible") && !text.trim().isEmpty() ? View.VISIBLE : View.GONE);
-    button.setEnabled(data.optBoolean("is_active", true) && !data.optBoolean("is_progress_visible"));
-    button.setTextColor(validColor(data.optString("text_color")) ? Color.parseColor(data.optString("text_color")) : Theme.getColor(ColorId.fillingPositiveContent));
-    button.setBackgroundColor(validColor(data.optString("color")) ? Color.parseColor(data.optString("color")) : Theme.getColor(ColorId.fillingPositive));
+  /** {@code HapticFeedbackConstants} value of a {@link MiniAppHaptic} effect, or a negative value for none. */
+  private static int hapticConstant (int effect) {
+    switch (effect) {
+      case MiniAppHaptic.EFFECT_LONG_PRESS:
+        return HapticFeedbackConstants.LONG_PRESS;
+      case MiniAppHaptic.EFFECT_KEYBOARD_TAP:
+        return HapticFeedbackConstants.KEYBOARD_TAP;
+      case MiniAppHaptic.EFFECT_CLOCK_TICK:
+        return HapticFeedbackConstants.CLOCK_TICK;
+      case MiniAppHaptic.EFFECT_CONTEXT_CLICK:
+        return HapticFeedbackConstants.CONTEXT_CLICK;
+      case MiniAppHaptic.EFFECT_TEXT_HANDLE_MOVE:
+        return HapticFeedbackConstants.TEXT_HANDLE_MOVE;
+      case MiniAppHaptic.EFFECT_CONFIRM:
+        return HapticFeedbackConstants.CONFIRM;
+      case MiniAppHaptic.EFFECT_REJECT:
+        return HapticFeedbackConstants.REJECT;
+      case MiniAppHaptic.EFFECT_SEGMENT_FREQUENT_TICK:
+        return HapticFeedbackConstants.SEGMENT_FREQUENT_TICK;
+      default:
+        return -1;
+    }
+  }
+
+  private void setupButton (MiniAppButtonView button, JSONObject data) {
+    MiniAppButtonParams.Value params = MiniAppButtonParams.parse(data);
+    button.setParams(params);
+    button.setEnabled(MiniAppButtonParams.isClickable(params));
+    button.setVisibility(params.visible ? View.VISIBLE : View.GONE);
+    button.setBackgroundColor(params.backgroundColor != 0 ? params.backgroundColor : Theme.getColor(ColorId.fillingPositive));
   }
 
   private void arrangeButtons (String position) {
@@ -818,17 +928,166 @@ public final class MiniAppController extends ViewController<Void> implements Men
     buttons.addView(secondaryFirst ? mainButton : secondaryButton);
   }
 
-  private void openExternalLink (String url) {
+  private void openExternalLink (String url, boolean tryInstantView, String tryBrowser) {
     Uri uri = Uri.parse(url);
-    if (hasRecentInteraction() && ("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))) {
-      fullscreen.setRequested(false);
-      tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().controller(this).requireOpenPrompt());
+    if (!hasRecentInteraction() || !("https".equalsIgnoreCase(uri.getScheme()) || "http".equalsIgnoreCase(uri.getScheme()))) {
+      return;
     }
+    fullscreen.setRequested(false);
+    String browser = MiniAppBrowser.packageName(tryBrowser);
+    if (browser != null) {
+      if (tdlib.isTrustedHost(url, true)) {
+        openInBrowser(url, browser);
+      } else {
+        confirmOpen(url, () -> openInBrowser(url, browser));
+      }
+    } else if (!tryInstantView || Settings.instance().getInstantViewMode() == Settings.INSTANT_VIEW_MODE_NONE ||
+        tdlib.isTrustedHost(url, true)) {
+      openInDefaultBrowser(url);
+    } else {
+      // Keeping the reader inside the app is a bigger concession than handing the link over, so a host the
+      // user has not already trusted is asked about first, with the wording the link prompt uses.
+      confirmOpen(url, () -> tdlib.ui().openUrl(this, url,
+        new TdlibUi.UrlOpenParameters().controller(this).forceInstantView()));
+    }
+  }
+
+  private void confirmOpen (String url, Runnable onOpen) {
+    showAlert(new AlertDialog.Builder(context(), Theme.dialogTheme())
+      .setMessage(Lang.getString(R.string.OpenThisLink, url))
+      .setPositiveButton(Lang.getString(R.string.Open), (dialog, which) -> onOpen.run())
+      .setNegativeButton(Lang.getString(R.string.Cancel), null));
+  }
+
+  private void openInBrowser (String url, String packageName) {
+    if (!MiniAppBrowser.open(this, url, packageName)) {
+      openInDefaultBrowser(url);
+    }
+  }
+
+  private void openInDefaultBrowser (String url) {
+    tdlib.ui().openUrl(this, url, new TdlibUi.UrlOpenParameters().controller(this).requireOpenPrompt());
   }
 
   private boolean hasRecentInteraction () {
     return isFocused() && context.getActivityState() == UI.State.RESUMED && lastInteractionTime != 0 &&
       SystemClock.elapsedRealtime() - lastInteractionTime < 10000;
+  }
+
+  /** A header color picked by the page also picks the color of everything drawn on top of it. */
+  @Override
+  protected int getHeaderTextColorId () {
+    return headerLightContent ? ColorId.white : super.getHeaderTextColorId();
+  }
+
+  @Override
+  protected int getHeaderIconColorId () {
+    return headerLightContent ? ColorId.white : super.getHeaderIconColorId();
+  }
+
+  private void applyHeaderColor () {
+    TdApi.ThemeParameters params = themeParameters();
+    int color = MiniAppHeaderColor.resolve(headerColorKind, headerColorValue, params.backgroundColor, params.secondaryBackgroundColor);
+    headerLightContent = color != 0 && MiniAppHeaderColor.usesLightContent(color);
+    // The header belongs to whoever is on screen: a page repainting it from the background would color the
+    // controls of another controller, so the state is kept and applied when this one comes back.
+    if (!isFocused() || headerView == null) return;
+    headerView.setCustomBackgroundColor(color);
+    headerView.resetColors(this, null);
+    if (header != null) {
+      header.setTextColor(Theme.getColor(getHeaderTextColorId()));
+    }
+    if (headerMoreButton != null) {
+      headerMoreButton.setThemeColorId(getHeaderIconColorId());
+    }
+  }
+
+  private void setEmojiStatus (JSONObject data) {
+    MiniAppEmojiStatus.Prepared prepared = MiniAppEmojiStatus.prepare(data, System.currentTimeMillis() / 1000L);
+    if (!prepared.isValid()) {
+      sendEvent("emoji_status_failed", json("error", prepared.error));
+      return;
+    }
+    if (!tdlib.hasPremium()) {
+      sendEvent("emoji_status_failed", json("error", "UNSUPPORTED"));
+      return;
+    }
+    int generation = documentGeneration;
+    tdlib.send(prepared.request, (result, error) -> runOnUiThreadOptional(() -> {
+      if (isDestroyed() || documentGeneration != generation) return;
+      sendEvent(error != null ? "emoji_status_failed" : "emoji_status_set", error != null ? json("error", "SERVER_ERROR") : json());
+    }));
+  }
+
+  private void requestEmojiStatusAccess () {
+    if (tdlib.hasPremium()) {
+      sendEvent("emoji_status_access_requested", json("status", "allowed"));
+    } else {
+      pendingEmojiAccess = true;
+      tdlib.ui().openPremiumSettings(this, new TdApi.PremiumSourceFeature(new TdApi.PremiumFeatureEmojiStatus()));
+    }
+  }
+
+  /** The answer goes out when the user comes back, because subscribing to Premium may have just happened. */
+  private void reportEmojiAccess () {
+    if (pendingEmojiAccess && isFocused() && !minimized) {
+      pendingEmojiAccess = false;
+      sendEvent("emoji_status_access_requested", json("status", MiniAppEmojiStatus.accessStatus(tdlib.hasPremium())));
+    }
+  }
+
+  private void updateDeviceActivity () {
+    if (deviceServices == null) return;
+    boolean active = isFocused() && !minimized && context.getActivityState() == UI.State.RESUMED;
+    deviceServices.setActive(active);
+    // Coming back from the system settings may have changed a permission without the page asking again
+    if (active) {
+      deviceServices.onMediaStateChanged();
+    }
+  }
+
+  // MiniAppDeviceServices.Gateway
+
+  @Override
+  public void publish (String event, JSONObject data) {
+    sendEvent(event, data);
+  }
+
+  @Override
+  public boolean isReadyForDeviceAccess () {
+    return isFocused() && !minimized && context.getActivityState() == UI.State.RESUMED && hasRecentInteraction();
+  }
+
+  @Override
+  public int nextRunToken () {
+    return ++deviceRunToken;
+  }
+
+  @Override
+  public AlertDialog showSecureDialog (AlertDialog.Builder builder) {
+    return showAlert(builder);
+  }
+
+  @Override
+  public @Nullable String homeScreenLink () {
+    if (!sourceUrl.isEmpty()) {
+      return httpsOrigin(sourceUrl) != null ? sourceUrl : null;
+    }
+    String username = shortName != null ? Td.primaryUsername(tdlib.cache().user(botUserId)) : null;
+    if (StringUtils.isEmpty(username)) return null;
+    String parameter = startParameter.matches("[A-Za-z0-9_-]{0,512}") ? startParameter : "";
+    return "https://" + tdlib.tMeHost() + "/" + username + "/" + shortName +
+      (parameter.isEmpty() ? "" : "?startapp=" + parameter);
+  }
+
+  @Override
+  public CharSequence homeScreenTitle () {
+    return tabTitle();
+  }
+
+  @Override
+  public String homeScreenId () {
+    return "miniapp_" + accountUserId + "_" + botUserId + (shortName != null ? "_" + shortName : "");
   }
 
   private void switchInlineQuery (JSONObject data) throws JSONException {
@@ -900,6 +1159,50 @@ public final class MiniAppController extends ViewController<Void> implements Men
       fullscreen.setActive(false);
       if (!navigateTo(picker)) {
         picker.destroy();
+        updateFullscreenActivity();
+      }
+    }));
+  }
+
+  private void requestChat (JSONObject data) {
+    String id = data.optString("req_id");
+    if (requestingChat || !hasRecentInteraction()) {
+      sendEvent("requested_chat_failed", json("error", "USER_DECLINED"));
+      return;
+    }
+    if (id.isEmpty() || id.length() > 512) {
+      sendEvent("requested_chat_failed", json("error", "BUTTON_EXPIRED"));
+      return;
+    }
+    requestingChat = true;
+    int generation = documentGeneration;
+    // TDLib remembers the restrictions of the last button it fetched in a single slot, so the fetched ids and
+    // the ids handed to shareChatWithBot have to be the same ones and nothing else may interleave.
+    tdlib.send(new TdApi.GetPreparedKeyboardButton(botUserId, id), (button, error) -> runOnUiThreadOptional(() -> {
+      if (generation != documentGeneration) return;
+      MiniAppRequestedChat spec = error == null ? MiniAppRequestedChat.from(button) : null;
+      if (spec == null) {
+        requestingChat = false;
+        sendEvent("requested_chat_failed", json("error", "BUTTON_EXPIRED"));
+        return;
+      }
+      if (minimized || !isFocused()) {
+        requestingChat = false;
+        sendEvent("requested_chat_failed", json("error", "USER_DECLINED"));
+        return;
+      }
+      MiniAppRequestedChatController picker = new MiniAppRequestedChatController(context(), tdlib, botUserId, id, spec,
+        failure -> {
+          if (isDestroyed() || generation != documentGeneration) return;
+          requestingChat = false;
+          if (failure == null) sendEvent("requested_chat_sent", json());
+          else sendEvent("requested_chat_failed", json("error", failure));
+        });
+      fullscreen.setActive(false);
+      if (!navigateTo(picker)) {
+        picker.destroy();
+        requestingChat = false;
+        sendEvent("requested_chat_failed", json("error", "UNSUPPORTED"));
         updateFullscreenActivity();
       }
     }));
@@ -1025,17 +1328,24 @@ public final class MiniAppController extends ViewController<Void> implements Men
     String requestId = data.getString("req_id");
     String method = data.getString("method");
     JSONObject parameters = data.getJSONObject("params");
-    if (requestId.length() > 64 || method.length() > 128 || pendingCustomRequests >= 8) {
+    // The SDK polls this one on its own for about three seconds after a shared phone number, ten requests at a
+    // time. It still goes to the bot, but the page must not lose its own budget because of a loop it did not start.
+    boolean isSdkContactPoll = "getRequestedContact".equals(method);
+    if (requestId.length() > 64 || method.length() > 128 || (!isSdkContactPoll && pendingCustomRequests >= 8)) {
       sendEvent("custom_method_invoked", json("req_id", requestId, "error", "REQUEST_LIMIT_EXCEEDED"));
       return;
     }
     int generation = documentGeneration;
-    pendingCustomRequests++;
+    if (!isSdkContactPoll) {
+      pendingCustomRequests++;
+    }
     tdlib.send(new TdApi.SendWebAppCustomRequest(botUserId, method, parameters.toString()), (result, error) -> runOnUiThreadOptional(() -> {
       if (generation != documentGeneration) {
         return;
       }
-      pendingCustomRequests--;
+      if (!isSdkContactPoll) {
+        pendingCustomRequests--;
+      }
       if (error != null) {
         sendEvent("custom_method_invoked", json("req_id", requestId, "error", error.message));
       } else {
@@ -1267,14 +1577,23 @@ public final class MiniAppController extends ViewController<Void> implements Men
   public void onThemeChanged (ThemeDelegate from, ThemeDelegate to) {
     super.onThemeChanged(from, to);
     sendTheme();
+    applyHeaderColor();
   }
 
   @Override
   protected void onFocusStateChanged () {
     super.onFocusStateChanged();
+    if (isFocused()) {
+      applyHeaderColor();
+    } else if (headerView != null) {
+      // The header is shared by the whole stack: leaving this color behind would repaint whatever comes next.
+      headerView.setCustomBackgroundColor(0);
+    }
     updateFullscreenActivity();
+    updateDeviceActivity();
     reportPreparedResult();
     reportInvoiceResult();
+    reportEmojiAccess();
     if (webView != null) {
       if (isFocused() && context.getActivityState() == UI.State.RESUMED) webView.onResume();
       else webView.onPause();
@@ -1290,6 +1609,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   public void onActivityPause () {
     super.onActivityPause();
     if (fullscreen != null) fullscreen.setActive(false);
+    if (deviceServices != null) deviceServices.setActive(false);
     if (webView != null) {
       webView.onPause();
       sendEvent("visibility_changed", json("is_visible", false));
@@ -1300,6 +1620,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   public void onActivityResume () {
     super.onActivityResume();
     updateFullscreenActivity();
+    updateDeviceActivity();
     if (webView != null) {
       if (isFocused()) webView.onResume();
       sendVisibility();
@@ -1313,7 +1634,18 @@ public final class MiniAppController extends ViewController<Void> implements Men
     documentGeneration++;
     reply = null;
     if (fullscreen != null) fullscreen.destroy();
+    if (deviceServices != null) {
+      deviceServices.destroy();
+      deviceServices = null;
+    }
+    if (secureServices != null) {
+      secureServices.destroy();
+      secureServices = null;
+    }
     cancelFileChooser();
+    if (headerView != null) headerView.setCustomBackgroundColor(0);
+    if (mainButton != null) mainButton.performDestroy();
+    if (secondaryButton != null) secondaryButton.performDestroy();
     if (popup != null) popup.dismiss();
     if (launchId != 0) {
       tdlib.ui().unregisterWebApp(launchId);
@@ -1336,7 +1668,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   boolean minimizeForTabSwitch (@Nullable Runnable afterParking) {
     if (!canParkTab()) return false;
     prepareTabExchange();
-    if (!context().miniAppTabs().minimize(this, afterParking)) { minimized = false; return false; }
+    if (!context().miniAppTabs().minimize(this, afterParking)) { minimized = false; updateDeviceActivity(); return false; }
     return true;
   }
 
@@ -1348,6 +1680,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     Keyboard.hide(webView);
     if (fullscreen != null) fullscreen.setRequested(false);
     minimized = true;
+    updateDeviceActivity();
   }
 
   @Nullable Bitmap captureTabPreview () {
@@ -1370,12 +1703,14 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   void onMinimized () {
     minimized = true;
+    updateDeviceActivity();
     if (webView != null) webView.onPause();
   }
 
   void onRestored () {
     minimized = false;
     lastInteractionTime = 0;
+    updateDeviceActivity();
   }
 
   boolean canRestoreTab () {
@@ -1384,6 +1719,9 @@ public final class MiniAppController extends ViewController<Void> implements Men
 
   @Override
   public void onAuthorizationStateChanged (TdApi.AuthorizationState state) {
+    if (state instanceof TdApi.AuthorizationStateLoggingOut) {
+      MiniAppSecureServices.wipeAccount(accountUserId);
+    }
     if (!(state instanceof TdApi.AuthorizationStateReady)) UI.post(() -> {
       if (!isDestroyed()) {
         if (minimized) context().miniAppTabs().discard(this);

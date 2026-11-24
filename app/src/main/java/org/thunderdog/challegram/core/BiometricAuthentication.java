@@ -43,6 +43,10 @@ public class BiometricAuthentication {
   public interface Callback {
     void onAuthenticated (BiometricPrompt.AuthenticationResult result, boolean strong);
     void onAuthenticationError (CharSequence message, boolean isFatal);
+    /** Same information, with the code needed to tell a cancellation from a hardware failure. */
+    default void onAuthenticationError (CharSequence message, boolean isFatal, int errorCode) {
+      onAuthenticationError(message, isFatal);
+    }
   }
 
   private static @Nullable BiometricManager getManager () {
@@ -119,9 +123,9 @@ public class BiometricAuthentication {
     public final void onAuthenticationError (int errorCode, @NonNull CharSequence errString) {
       if (StringUtils.isEmpty(errString)) {
         Log.e("BiometricAuthentication error %d", errorCode);
-        callback.onAuthenticationError(Lang.getString(R.string.BiometricsError), true);
+        callback.onAuthenticationError(Lang.getString(R.string.BiometricsError), true, errorCode);
       } else {
-        callback.onAuthenticationError(errString, true);
+        callback.onAuthenticationError(errString, true, errorCode);
       }
       onComplete();
     }
@@ -161,6 +165,21 @@ public class BiometricAuthentication {
     boolean strong,
     Callback callback
   ) {
+    return authenticate(context, title, negativeButtonText, strong, null, callback);
+  }
+
+  /**
+   * @param crypto A cipher already initialised with a key that demands authentication; it comes back through
+   *               {@link BiometricPrompt.AuthenticationResult#getCryptoObject()} and is the only way to use it.
+   */
+  public static CancellationSignal authenticate (
+    BaseActivity context,
+    CharSequence title,
+    CharSequence negativeButtonText,
+    boolean strong,
+    @Nullable BiometricPrompt.CryptoObject crypto,
+    Callback callback
+  ) {
     // A delayed start of the previous prompt, e.g. of another activity, would run after it's gone
     if (pendingSignal != null) {
       pendingSignal.cancel();
@@ -194,7 +213,11 @@ public class BiometricAuthentication {
           return;
         }
         lastTimestamp = SystemClock.uptimeMillis();
-        prompt.authenticate(info);
+        if (crypto != null) {
+          prompt.authenticate(info, crypto);
+        } else {
+          prompt.authenticate(info);
+        }
       }
     };
     signal.setOnCancelListener(() -> {

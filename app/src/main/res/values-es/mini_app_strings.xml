@@ -24,6 +24,7 @@
   <string name="MiniAppCompact">Vista compacta</string>
   <string name="MiniAppExpand">Expandir</string>
   <string name="MiniAppMinimize">Minimizar</string>
+  <string name="MiniAppReload">Recargar</string>
   <string name="MiniAppTabs">Pestañas de miniapps</string>
   <string name="MiniAppTabsCount">Miniapps (%1$s)</string>
   <string name="MiniAppTabsFull">Cierra una pestaña de miniapp guardada antes de minimizar otra.</string>
@@ -108,4 +109,8 @@
   <string name="MiniAppHistoryRestart">Volver a buscar desde los mensajes recientes</string>
   <string name="MiniAppHistoryBusy">Ya hay un lote de búsqueda en curso. Espera a que termine o páusalo.</string>
   <string name="MiniAppHistoryOpenSeller">Abrir chat del vendedor</string>
+  <string name="MiniAppScanQrSubtitle">Escanea el código QR para este Mini App.</string>
+  <string name="MiniAppBiometryAccess">Acceso biométrico</string>
+  <string name="MiniAppBiometryAccessConfirm">¿Permitir que esta miniapp use el sensor biométrico de este dispositivo para autenticarte?</string>
+  <string name="MiniAppShareChat">Elige un chat</string>
 </resources>

@@ -116,6 +116,8 @@ public class CameraController extends ViewController<Void> implements CameraDele
 
   public interface QrCodeListener {
     void onQrCodeScanned (String qrCode);
+    /** Called when the scanner was dismissed without decoding anything. */
+    default void onQrScanCancelled () { }
   }
 
   public static final int MODE_MAIN = 0;
@@ -129,15 +131,19 @@ public class CameraController extends ViewController<Void> implements CameraDele
   private String savedQrCodeData;
   private boolean qrCodeConfirmed;
   private int qrSubtitleRes;
+  private @Nullable CharSequence qrSubtitleText;
   private boolean qrModeDebug;
+  private boolean qrAcceptAnyPayload;
   private @AvatarPickerMode int avatarPickerMode = AvatarPickerMode.NONE;
 
-  public void setQrListener (@Nullable QrCodeListener qrCodeListener, @StringRes int subtitleRes, boolean qrModeDebug) {
+  public void setQrListener (@Nullable QrCodeListener qrCodeListener, @StringRes int subtitleRes, @Nullable CharSequence subtitleText, boolean qrModeDebug, boolean qrAcceptAnyPayload) {
     this.qrCodeListener = qrCodeListener;
     this.qrSubtitleRes = subtitleRes;
+    this.qrSubtitleText = subtitleText;
     this.qrModeDebug = qrModeDebug;
+    this.qrAcceptAnyPayload = qrAcceptAnyPayload;
     if (this.cameraMode == MODE_QR && rootLayout != null) {
-      rootLayout.setQrModeSubtitle(subtitleRes);
+      rootLayout.setQrModeSubtitle(subtitleRes, subtitleText);
       rootLayout.setQrMode(true, qrModeDebug);
     }
   }
@@ -766,7 +772,7 @@ public class CameraController extends ViewController<Void> implements CameraDele
       flashButton.setVisibility(View.GONE);
       blurView.setVisibility(View.GONE);
       rootLayout.setQrMode(true, qrModeDebug);
-      rootLayout.setQrModeSubtitle(qrSubtitleRes);
+      rootLayout.setQrModeSubtitle(qrSubtitleRes, qrSubtitleText);
     } else {
       switchCameraButton.setVisibility(View.VISIBLE);
       flashButton.setVisibility(View.VISIBLE);
@@ -925,6 +931,12 @@ public class CameraController extends ViewController<Void> implements CameraDele
       executeScheduledAnimation();
     } else {
       closeCamera();
+    }
+    if (cameraMode == MODE_QR && qrCodeListener != null && !qrCodeConfirmed) {
+      QrCodeListener listener = qrCodeListener;
+      qrCodeListener = null;
+      qrAcceptAnyPayload = false;
+      listener.onQrScanCancelled();
     }
   }
 
@@ -1597,7 +1609,8 @@ public class CameraController extends ViewController<Void> implements CameraDele
 
   @Override
   public void onQrCodeFound (String qrCodeData, @Nullable RectF boundingBox, int height, int width, int rotation, boolean isLegacyZxing) {
-    if (qrCodeListener != null && !qrCodeData.isEmpty() && (qrCodeData.startsWith("tg://") || qrCodeData.startsWith(context.currentTdlib().tMeUrl())) && !qrCodeConfirmed) {
+    if (qrCodeListener != null && !qrCodeData.isEmpty() && !qrCodeConfirmed &&
+        (qrAcceptAnyPayload || qrCodeData.startsWith("tg://") || qrCodeData.startsWith(context.currentTdlib().tMeUrl()))) {
       savedQrCodeData = qrCodeData;
       rootLayout.setQrCorner(boundingBox, height, width, rotation, isLegacyZxing);
     }

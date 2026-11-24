@@ -24,6 +24,7 @@
   <string name="MiniAppCompact">Compact view</string>
   <string name="MiniAppExpand">Expand</string>
   <string name="MiniAppMinimize">Minimize</string>
+  <string name="MiniAppReload">Reload</string>
   <string name="MiniAppTabs">Mini App tabs</string>
   <string name="MiniAppTabsCount">Mini Apps (%1$s)</string>
   <string name="MiniAppTabsFull">Close a saved Mini App tab before minimizing another.</string>
@@ -108,4 +109,8 @@
   <string name="MiniAppHistoryRestart">Search again from recent messages</string>
   <string name="MiniAppHistoryBusy">A search batch is already running. Wait for it to finish or pause it.</string>
   <string name="MiniAppHistoryOpenSeller">Open seller chat</string>
+  <string name="MiniAppScanQrSubtitle">Scan the QR code for this Mini App.</string>
+  <string name="MiniAppBiometryAccess">Biometric access</string>
+  <string name="MiniAppBiometryAccessConfirm">Allow this Mini App to use the biometric sensor of this device to authenticate you?</string>
+  <string name="MiniAppShareChat">Choose a chat</string>
 </resources>

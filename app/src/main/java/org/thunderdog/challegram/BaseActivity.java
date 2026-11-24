@@ -3448,7 +3448,7 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
     }
     camera.setMode(options.mode, options.readyListener);
     camera.setAvatarPickerMode(options.avatarPickerMode);
-    camera.setQrListener(options.qrCodeListener, options.qrModeSubtitle, options.qrModeDebug);
+    camera.setQrListener(options.qrCodeListener, options.qrModeSubtitle, options.qrModeSubtitleText, options.qrModeDebug, options.qrAcceptAnyPayload);
     camera.setMediaEditorDelegates(options.delegate, options.selectDelegate, options.sendDelegate);
     if (needCreateCamera) {
       camera.getValue(); // Ensure view creation

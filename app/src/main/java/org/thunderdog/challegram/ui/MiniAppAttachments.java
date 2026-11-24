@@ -9,6 +9,7 @@ import android.widget.CheckBox;
 import androidx.annotation.Nullable;
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.R;
+import org.thunderdog.challegram.component.popups.ModernActionedLayout;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.navigation.ViewController;
 import org.thunderdog.challegram.telegram.Tdlib;
@@ -101,9 +102,66 @@ public final class MiniAppAttachments {
         else if (info.chatId != 0) openInChat(owner, bot, info.chatId, url, info.topicId, null);
         else unavailable();
       }));
+    } else if (target instanceof TdApi.InternalLinkTypeChatInvite invite) {
+      resolveInvite(owner, bot, url, invite.inviteLink);
     } else {
       unavailable();
     }
+  }
+
+  /**
+   * An attachment can point at a chat the account is not in. TDLib asks the client to check the link, let the
+   * user agree, and join it; only then is there a chat the Mini App can be attached to.
+   */
+  private static void resolveInvite (ViewController<?> owner, TdApi.AttachmentMenuBot bot, String url, String inviteLink) {
+    Tdlib tdlib = owner.tdlib();
+    tdlib.send(new TdApi.CheckChatInviteLink(inviteLink), (info, error) -> owner.runOnUiThreadOptional(() -> {
+      if (!owner.isFocused()) return;
+      int decision = error != null ? MiniAppInviteJoin.FAIL :
+        MiniAppInviteJoin.decide(info, tdlib.chatAccessState(info.chatId));
+      if (error != null) {
+        UI.showError(error);
+      } else if (decision == MiniAppInviteJoin.OPEN) {
+        openInChat(owner, bot, info.chatId, url, null, null);
+      } else if (decision == MiniAppInviteJoin.ASK) {
+        askToJoin(owner, bot, url, inviteLink, info);
+      } else {
+        unavailable();
+      }
+    }));
+  }
+
+  private static void askToJoin (ViewController<?> owner, TdApi.AttachmentMenuBot bot, String url, String inviteLink,
+                                 TdApi.ChatInviteLinkInfo info) {
+    ViewController<?> current = owner.context().navigation().getCurrentStackItem();
+    if (current == null) {
+      unavailable();
+      return;
+    }
+    ModernActionedLayout.showJoinDialog(current, info, () -> joinInvite(owner, bot, url, inviteLink, info));
+  }
+
+  private static void joinInvite (ViewController<?> owner, TdApi.AttachmentMenuBot bot, String url, String inviteLink,
+                                  TdApi.ChatInviteLinkInfo info) {
+    long sourceChat = owner.getChatId();
+    owner.tdlib().send(new TdApi.JoinChatByInviteLink(inviteLink), (result, error) -> owner.runOnUiThreadOptional(() -> {
+      if (owner.isDestroyed() || !owner.isFocused() || owner.getChatId() != sourceChat) return;
+      if (error != null) {
+        UI.showError(error);
+        return;
+      }
+      switch (MiniAppInviteJoin.afterJoin(result)) {
+        case MiniAppInviteJoin.JOINED:
+          openInChat(owner, bot, MiniAppInviteJoin.joinedChatId(result), url, null, null);
+          break;
+        case MiniAppInviteJoin.PENDING_APPROVAL:
+          UI.showToast(Lang.getString(R.string.RequestJoinGroupSent, info.title), android.widget.Toast.LENGTH_LONG);
+          break;
+        default:
+          unavailable();
+          break;
+      }
+    }));
   }
 
   private static void openInChat (ViewController<?> owner, TdApi.AttachmentMenuBot bot, long chatId, String url,
