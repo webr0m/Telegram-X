@@ -697,6 +697,12 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
     tdlib.ui().addDeleteChatOptions(getChatId(), ids, strings, false, true);
 
+    // region @MadeByLLM("gpt-6", id = "stars-development")
+    if (supergroup != null && supergroupFull != null && supergroupFull.canGetStarRevenueStatistics) {
+      ids.append(R.id.btn_starsChatRevenue);
+      strings.append(R.string.TgxStarsRevenue);
+    }
+    // endregion
     if (ids.size() > 0) {
       showMore(ids.get(), strings.get(), 0);
     }
@@ -838,6 +844,14 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
   @Override
   public boolean onOptionItemPressed (View optionItemView, int id) {
+    // region @MadeByLLM("gpt-6", id = "stars-development")
+    if (id == R.id.btn_starsChatRevenue) {
+      if (chat != null && supergroup != null && supergroupFull != null && supergroupFull.canGetStarRevenueStatistics) {
+        navigateTo(new StarsRevenueController(context(), tdlib, new TdApi.MessageSenderChat(chat.id), TD.isCreator(supergroup.status)));
+      }
+      return true;
+    }
+    // endregion
     if (id == R.id.btn_copyText) {
       copyDescription();
     } else if (id == R.id.btn_editUsername) {
@@ -2519,6 +2533,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
   private void addFullCells (TdApi.UserFullInfo userFull) {
     checkBirthdate();
+    checkCollectibles();
     checkDescription();
     checkGroupsInCommon();
 
@@ -2764,6 +2779,23 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     return false;
   }
 
+  // region @MadeByLLM("gpt-6", id = "stars-development")
+  private void checkCollectibles () {
+    if (isEditing() || mode == Mode.SECRET || baseAdapter == null) {
+      return;
+    }
+    int index = baseAdapter.indexOfViewById(R.id.btn_tgxPublicCollectibles);
+    boolean visible = mode == Mode.CHANNEL ? supergroupFull != null && supergroupFull.giftCount > 0 :
+      userFull != null && userFull.giftCount > 0 && user != null && !tdlib.isSelfUserId(user.id);
+    if (visible && index == -1) {
+      addTopItem(new ListItem(ListItem.TYPE_SETTING, R.id.btn_tgxPublicCollectibles, R.drawable.baseline_stars_24,
+        R.string.TgxStarsPublicCollectibles), baseHeaderItemCount);
+    } else if (!visible && index != -1) {
+      removeTopItem(index);
+    }
+  }
+
+  // endregion
   private void checkBirthdate () {
     if (isEditing()) {
       return;
@@ -3226,6 +3258,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
   private void addFullChannelCells (TdApi.SupergroupFullInfo channelFull) {
     this.supergroupFull = channelFull;
+    checkCollectibles();
     checkDescription();
     checkManage();
     // checkChannelMembers();
@@ -4750,6 +4783,14 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     final int viewId = v.getId();
     if (viewId == R.id.avatar) {
       changeProfilePhoto();
+    // region @MadeByLLM("gpt-6", id = "stars-development")
+    } else if (viewId == R.id.btn_tgxPublicCollectibles) {
+      TdApi.MessageSender owner = mode == Mode.CHANNEL && chat != null ? new TdApi.MessageSenderChat(chat.id) :
+        user != null ? new TdApi.MessageSenderUser(user.id) : null;
+      if (owner != null) {
+        navigateTo(new StarsGiftMarketController(context, tdlib, owner));
+      }
+    // endregion
     } else if (viewId == R.id.btn_done) {
       applyChatChanges();
     } else if (viewId == R.id.menu_btn_copy) {
@@ -6265,6 +6306,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     tdlib.uiExecute(() -> {
       if (isUpdate) {
         checkUserButtons();
+        checkCollectibles();
         checkGroupsInCommon();
         checkDescription();
         if (mode == Mode.EDIT_BOT_USER) {

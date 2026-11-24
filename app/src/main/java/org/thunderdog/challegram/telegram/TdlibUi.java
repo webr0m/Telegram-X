@@ -89,6 +89,10 @@ import org.thunderdog.challegram.tool.Intents;
 import org.thunderdog.challegram.tool.Screen;
 import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.UI;
+import org.thunderdog.challegram.ui.TonWalletController;
+import org.thunderdog.challegram.ui.StarsGiftAuctionController;
+import org.thunderdog.challegram.ui.StarsCollectibleController;
+import org.thunderdog.challegram.ui.StarsController;
 import org.thunderdog.challegram.ui.ChatFolderInviteLinkController;
 import org.thunderdog.challegram.ui.ChatJoinRequestsController;
 import org.thunderdog.challegram.ui.ChatLinkMembersController;
@@ -4040,10 +4044,30 @@ public class TdlibUi extends Handler {
               // endregion
               break;
             }
+            // region @MadeByLLM("gpt-6", id = "stars-development")
+            case TdApi.SettingsSectionMyStars.CONSTRUCTOR: {
+              String subsection = ((TdApi.SettingsSectionMyStars) section).subsection;
+              if (tdlib.isAuthorized() && (StringUtils.isEmpty(subsection) || "top-up".equals(subsection) ||
+                  "gift".equals(subsection) || "stats".equals(subsection))) {
+                StarsController stars = new StarsController(context.context(), tdlib, "top-up".equals(subsection), 0, "");
+                if ("gift".equals(subsection)) {
+                  stars.addOneShotFocusListener(stars::pickGiftRecipient);
+                } else if ("stats".equals(subsection)) {
+                  stars.addOneShotFocusListener(stars::openPersonalRevenue);
+                }
+                result = stars;
+              } else {
+                unsupported.run();
+              }
+              break;
+            }
+            case TdApi.SettingsSectionMyGrams.CONSTRUCTOR: {
+              result = new TonWalletController(context.context(), tdlib);
+              break;
+            }
+            // endregion
             case TdApi.SettingsSectionQrCode.CONSTRUCTOR:
             case TdApi.SettingsSectionSearch.CONSTRUCTOR:
-            case TdApi.SettingsSectionMyStars.CONSTRUCTOR:
-            case TdApi.SettingsSectionMyGrams.CONSTRUCTOR:
             case TdApi.SettingsSectionPowerSaving.CONSTRUCTOR:
             case TdApi.SettingsSectionPremium.CONSTRUCTOR:
             case TdApi.SettingsSectionSendGift.CONSTRUCTOR:
@@ -4092,6 +4116,37 @@ public class TdlibUi extends Handler {
         break;
       }
 
+      // region @MadeByLLM("gpt-6", id = "stars-development")
+      case TdApi.InternalLinkTypeUpgradedGift.CONSTRUCTOR: {
+        TdApi.InternalLinkTypeUpgradedGift gift = (TdApi.InternalLinkTypeUpgradedGift) linkType;
+        if (tdlib.isAuthorized() && !StringUtils.isEmpty(gift.name)) {
+          ok = context.context().navigation().navigateTo(new StarsCollectibleController(context.context(), tdlib,
+            gift.name, tdlib.myUserId()));
+        } else {
+          unsupported.run();
+        }
+        break;
+      }
+      case TdApi.InternalLinkTypeGiftAuction.CONSTRUCTOR: {
+        TdApi.InternalLinkTypeGiftAuction auction = (TdApi.InternalLinkTypeGiftAuction) linkType;
+        if (tdlib.isAuthorized() && !StringUtils.isEmpty(auction.auctionId)) {
+          ok = context.context().navigation().navigateTo(new StarsGiftAuctionController(context.context(), tdlib, auction.auctionId, 0));
+        } else {
+          unsupported.run();
+        }
+        break;
+      }
+      case TdApi.InternalLinkTypeStarPurchase.CONSTRUCTOR: {
+        TdApi.InternalLinkTypeStarPurchase purchase = (TdApi.InternalLinkTypeStarPurchase) linkType;
+        if (tdlib.isAuthorized() && purchase.starCount > 0) {
+          ok = context.context().navigation().navigateTo(new StarsController(context.context(), tdlib,
+            true, purchase.starCount, purchase.purpose != null ? purchase.purpose : ""));
+        } else {
+          unsupported.run();
+        }
+        break;
+      }
+      // endregion
       case TdApi.InternalLinkTypeStory.CONSTRUCTOR:
       case TdApi.InternalLinkTypeLiveStory.CONSTRUCTOR:
       case TdApi.InternalLinkTypeStoryAlbum.CONSTRUCTOR:
@@ -4105,9 +4160,7 @@ public class TdlibUi extends Handler {
       case TdApi.InternalLinkTypeRestorePurchases.CONSTRUCTOR:
       case TdApi.InternalLinkTypeChatBoost.CONSTRUCTOR:
       case TdApi.InternalLinkTypeGiftCollection.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeGiftAuction.CONSTRUCTOR:
       case TdApi.InternalLinkTypeChatAffiliateProgram.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeUpgradedGift.CONSTRUCTOR:
 
       case TdApi.InternalLinkTypePassportDataRequest.CONSTRUCTOR:
 
@@ -4125,7 +4178,6 @@ public class TdlibUi extends Handler {
       case TdApi.InternalLinkTypeRequestManagedBot.CONSTRUCTOR:
       case TdApi.InternalLinkTypeSavedMessages.CONSTRUCTOR:
       case TdApi.InternalLinkTypeSearch.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeStarPurchase.CONSTRUCTOR:
       case TdApi.InternalLinkTypeTextCompositionStyle.CONSTRUCTOR:
       case TdApi.InternalLinkTypeTonConnect.CONSTRUCTOR:
       case TdApi.InternalLinkTypeTonWalletTransfer.CONSTRUCTOR: {

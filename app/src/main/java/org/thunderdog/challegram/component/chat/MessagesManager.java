@@ -1578,9 +1578,7 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
       case TdApi.InternalLinkTypeRestorePurchases.CONSTRUCTOR:
       case TdApi.InternalLinkTypeChatBoost.CONSTRUCTOR:
       case TdApi.InternalLinkTypeGiftCollection.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeGiftAuction.CONSTRUCTOR:
       case TdApi.InternalLinkTypeChatAffiliateProgram.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeUpgradedGift.CONSTRUCTOR:
 
       case TdApi.InternalLinkTypePassportDataRequest.CONSTRUCTOR:
 
@@ -1598,7 +1596,6 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
       case TdApi.InternalLinkTypeRequestManagedBot.CONSTRUCTOR:
       case TdApi.InternalLinkTypeSavedMessages.CONSTRUCTOR:
       case TdApi.InternalLinkTypeSearch.CONSTRUCTOR:
-      case TdApi.InternalLinkTypeStarPurchase.CONSTRUCTOR:
       case TdApi.InternalLinkTypeTextCompositionStyle.CONSTRUCTOR:
       case TdApi.InternalLinkTypeTonConnect.CONSTRUCTOR:
       case TdApi.InternalLinkTypeTonWalletTransfer.CONSTRUCTOR:
@@ -1632,10 +1629,16 @@ public class MessagesManager implements Client.ResultHandler, MessagesSearchMana
               }
               break;
             }
+            // region @MadeByLLM("gpt-6", id = "stars-development")
+            case TdApi.SettingsSectionMyStars.CONSTRUCTOR: {
+              String subsection = ((TdApi.SettingsSectionMyStars) settings.section).subsection;
+              return StringUtils.isEmpty(subsection) || "top-up".equals(subsection) || "gift".equals(subsection) || "stats".equals(subsection);
+            }
+            case TdApi.SettingsSectionMyGrams.CONSTRUCTOR:
+              return true;
+            // endregion
             case TdApi.SettingsSectionQrCode.CONSTRUCTOR:
             case TdApi.SettingsSectionSearch.CONSTRUCTOR:
-            case TdApi.SettingsSectionMyStars.CONSTRUCTOR:
-            case TdApi.SettingsSectionMyGrams.CONSTRUCTOR:
             case TdApi.SettingsSectionPowerSaving.CONSTRUCTOR:
             case TdApi.SettingsSectionPremium.CONSTRUCTOR:
             case TdApi.SettingsSectionSendGift.CONSTRUCTOR:

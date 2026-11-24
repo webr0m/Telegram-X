@@ -8456,6 +8456,18 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessageGiveaway.CONSTRUCTOR: {
           return new TGMessageGiveaway(context, msg, (TdApi.MessageGiveaway) content);
         }
+        // region @MadeByLLM("gpt-6", id = "stars-development")
+        case TdApi.MessageUpgradedGift.CONSTRUCTOR:
+        case TdApi.MessageUpgradedGiftPurchaseOffer.CONSTRUCTOR:
+        case TdApi.MessageUpgradedGiftPurchaseOfferRejected.CONSTRUCTOR:
+          return new TGMessageService(context, msg, content);
+
+        case TdApi.MessageTonWalletTransfer.CONSTRUCTOR: {
+          return new TGMessageService(context, msg, (TdApi.MessageTonWalletTransfer) content);
+        }
+
+        // endregion
+
         // unsupported
         case TdApi.MessageRichMessage.CONSTRUCTOR:
         case TdApi.MessageInvoice.CONSTRUCTOR:
@@ -8469,9 +8481,6 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessagePaidMedia.CONSTRUCTOR:
         case TdApi.MessageGiveawayPrizeStars.CONSTRUCTOR:
         case TdApi.MessageGift.CONSTRUCTOR:
-        case TdApi.MessageUpgradedGift.CONSTRUCTOR:
-        case TdApi.MessageUpgradedGiftPurchaseOffer.CONSTRUCTOR:
-        case TdApi.MessageUpgradedGiftPurchaseOfferRejected.CONSTRUCTOR:
         case TdApi.MessageRefundedUpgradedGift.CONSTRUCTOR:
         case TdApi.MessageStakeDice.CONSTRUCTOR:
 
@@ -8485,7 +8494,6 @@ public abstract class TGMessage implements InvalidateContentProvider, TdlibDeleg
         case TdApi.MessageGiftedGrams.CONSTRUCTOR:
         case TdApi.MessagePaymentSuccessfulBot.CONSTRUCTOR:
         case TdApi.MessageTonConnectRequest.CONSTRUCTOR:
-        case TdApi.MessageTonWalletTransfer.CONSTRUCTOR:
         case TdApi.MessageUnpaidMessagesAllowedByLink.CONSTRUCTOR:
         case TdApi.MessageWidget.CONSTRUCTOR:
           break;

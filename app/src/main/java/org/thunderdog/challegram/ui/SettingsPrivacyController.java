@@ -167,6 +167,7 @@ public class SettingsPrivacyController extends RecyclerViewController<SettingsPr
       new TdApi.UserPrivacySettingAllowFindingByPhoneNumber(),
       new TdApi.UserPrivacySettingShowLinkInForwardedMessages(),
       new TdApi.UserPrivacySettingAllowChatInvites(),
+      new TdApi.UserPrivacySettingAutosaveGifts(), // @MadeByLLM("gpt-6", id = "stars-development")
       new TdApi.UserPrivacySettingAllowPrivateVoiceAndVideoNoteMessages(),
       new TdApi.UserPrivacySettingAllowCalls(),
       new TdApi.UserPrivacySettingAllowPeerToPeerCalls()
