@@ -16,6 +16,55 @@ This is the complete source code and the build instructions for the official alt
 
 </details>
 
+## Mini Apps work in this fork
+
+This fork carries incremental [Mini Apps](https://core.telegram.org/bots/webapps) parity work on
+[`feature/official-flows`](https://github.com/webr0m/Telegram-X/tree/feature/official-flows) on top of
+[`main`](https://github.com/TGX-Android/Telegram-X), which stays identical to upstream. None of that branch
+is merged upstream, and debug APKs of each step are published as
+[beta releases](https://github.com/webr0m/Telegram-X/releases).
+
+Compared to the release this fork is based on:
+
+* **Page contract.** 63 incoming `web_app_*` events are dispatched, and every payload key the specification
+  defines for them is read except `force_request` and `return_back`, which have no field in the TDLib binding
+  this build uses. `error` values are the ones a page can actually switch on instead of a client-specific
+  dialect. Header, background and bottom-bar colors apply without covering the page's own controls; the
+  bottom button honors its full field set (text, both colors, shine, active, visible, progress) for the main
+  and the secondary button, along with back button, closing behavior, settings button and swipe behavior.
+* **Device APIs.** Clipboard read, geolocation (check, request, open system settings), accelerometer,
+  gyroscope and orientation lock, nine haptic sensations mapped onto the effect an Android release actually
+  has, a QR scanner carrying the label a page asked for, home-screen install state, camera / microphone
+  access prompts, and file downloads a page requests.
+* **Secure data.** `SecureStorage` and device-storage keys (get, save, clear, restore) with biometric info,
+  access request, authentication and token update driven by the system authenticator.
+* **Chats and payments.** `requestChat` with a native picker, phone-number and write-access requests, emoji
+  status read and set, sending a prepared message, switching an inline query, joining a chat through an
+  invite link, and invoice / checkout flows with native payment providers and an account-scoped payment
+  history whose receipts a resumable historical search can recover.
+* **Links.** `need_absolute`, `try_instant_view`, and `try_browser` so a page can name the browser package it
+  wants — falling back to the system default when that browser is not installed instead of dropping the tap.
+* **Tabs.** Up to five saved Mini Apps restored with fresh authenticated sessions, and switching between live
+  apps while all minimized slots are occupied without destroying the outgoing WebView.
+
+Still open: Gifts / TON surfaces beyond checkout, Stories and Business sharing, auto-download presets, tinting
+the navigation bar from `setBottomBarColor`, and end-to-end payment flows against a signed-in test account.
+
+Each step is gated by offline regression harnesses rather than by a device: nine suites running 828 checks,
+plus auditors for the incoming and outgoing event contracts, the reachable producers of each event, and the
+Mini App copy contract in `values/` and `values-es/`.
+
+To build the current beta:
+
+```shell
+git clone --recursive https://github.com/webr0m/Telegram-X -b feature/official-flows tgx
+cd tgx
+./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.300"
+```
+
+The beta installs as a **separate application** (`org.example.tgx`, debug-signed) and does not replace or touch
+an official Telegram X install. It is not signed for Google Play, so it has to be side-loaded.
+
 ## Build instructions
 
 ### Prerequisites
