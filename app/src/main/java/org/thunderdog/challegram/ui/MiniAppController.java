@@ -594,11 +594,14 @@ public final class MiniAppController extends ViewController<Void> implements Men
       }
       WebViewCompat.addWebMessageListener(webView, "TgxMiniAppBridge", origins,
         (view, message, sourceOrigin, isMainFrame, replyProxy) -> {
-          if (!failed && !isDestroyed() && isMainFrame && origin.equals(httpsOrigin(sourceOrigin.toString())) &&
-              origin.equals(httpsOrigin(view.getUrl()))) {
-            reply = replyProxy;
-            receiveEvent(message.getData());
-          }
+          String data = message.getData();
+          UI.post(() -> {
+            if (!failed && !isDestroyed() && isMainFrame && origin.equals(httpsOrigin(sourceOrigin.toString())) &&
+                origin.equals(httpsOrigin(view.getUrl()))) {
+              reply = replyProxy;
+              receiveEvent(data);
+            }
+          });
         });
       // This WebKit version keeps document-start injection available on the legacy flavor.
       WebViewCompat.addDocumentStartJavaScript(webView, bootstrap, origins);
