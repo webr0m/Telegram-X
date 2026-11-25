@@ -3547,12 +3547,27 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
     }
   }
 
+  private int miniAppNavigationColor;
+  private boolean miniAppNavigationLightContent;
+
+  /**
+   * Paints the system navigation bar with the bottom bar color a Mini App page asked for, reverting to the
+   * theme when the color is 0.
+   */
+  public void setMiniAppNavigationColor (int color, boolean lightContent) {
+    if (this.miniAppNavigationColor == color && this.miniAppNavigationLightContent == lightContent) return;
+    this.miniAppNavigationColor = color;
+    this.miniAppNavigationLightContent = lightContent;
+    updateNavigationBarColor();
+  }
+
   @SuppressWarnings("deprecation")
   private void updateNavigationBarColor () {
     if (Config.USE_CUSTOM_NAVIGATION_COLOR) {
       int color;
       boolean isLight;
-      if ((lastWindowVisibility & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0) {
+      boolean isFullscreen = (lastWindowVisibility & View.SYSTEM_UI_FLAG_FULLSCREEN) != 0;
+      if (isFullscreen) {
         color = UI.NAVIGATION_BAR_COLOR;
         isLight = false;
       } else {
@@ -3562,6 +3577,12 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
       if (desiredIntensityFactor != 0f) {
         color = ColorUtils.fromToArgb(color, ColorUtils.compositeColor(desiredColor != null ? desiredColor.getIntValue() : 0, 0x1E000000), desiredIntensityFactor);
         isLight = isLight && desiredAllowLight;
+      }
+      // Last color before the ones owned by the activity itself: a page painting its bottom bar covers a media
+      // layout blend, but a photo reveal or the passcode still win over it.
+      if (miniAppNavigationColor != 0 && !isFullscreen) {
+        color = miniAppNavigationColor;
+        isLight = !miniAppNavigationLightContent;
       }
       if (photoRevealFactor != 0f) {
         color = ColorUtils.fromToArgb(color, UI.NAVIGATION_BAR_COLOR, photoRevealFactor);

@@ -129,6 +129,8 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private int headerColorKind = MiniAppHeaderColor.THEME;
   private int headerColorValue;
   private boolean headerLightContent;
+  private int bottomBarColor;
+  private boolean navigationColorOwned;
   private @Nullable HeaderButton headerMoreButton;
   private boolean pendingEmojiAccess;
 
@@ -456,7 +458,10 @@ public final class MiniAppController extends ViewController<Void> implements Men
           pendingEmojiAccess = false;
           headerColorKind = MiniAppHeaderColor.THEME;
           headerColorValue = 0;
+          bottomBarColor = 0;
+          buttons.setBackgroundColor(0);
           applyHeaderColor();
+          applyNavigationColor();
           deviceServices.invalidate();
           deviceServices.mediaDocumentStarted();
           if (secureServices != null) secureServices.invalidate();
@@ -524,6 +529,11 @@ public final class MiniAppController extends ViewController<Void> implements Men
     failed = true;
     documentGeneration++;
     reply = null;
+    bottomBarColor = 0;
+    if (buttons != null) {
+      buttons.setBackgroundColor(0);
+    }
+    applyNavigationColor();
     if (deviceServices != null) deviceServices.invalidate();
     if (secureServices != null) secureServices.invalidate();
     progress.setVisibility(View.GONE);
@@ -704,7 +714,9 @@ public final class MiniAppController extends ViewController<Void> implements Men
           break;
         case "web_app_set_bottom_bar_color":
           if (validColor(data.optString("color"))) {
-            buttons.setBackgroundColor(Color.parseColor(data.getString("color")));
+            bottomBarColor = Color.parseColor(data.getString("color"));
+            buttons.setBackgroundColor(bottomBarColor);
+            applyNavigationColor();
           }
           break;
         case "web_app_open_link":
@@ -1005,6 +1017,22 @@ public final class MiniAppController extends ViewController<Void> implements Men
     }
   }
 
+  /**
+   * The system navigation bar continues the bottom bar the page painted, so it takes the same color and its
+   * icons switch to whatever that color needs. Leaving the screen drops it: the bar belongs to whoever is on
+   * top, and a page setting a color from the background would tint the controller that follows it.
+   * <p>
+   * The activity holds a single slot for it, shared by every Mini App, and the lifecycle callbacks reach
+   * controllers that are not on screen, so only the controller that painted the bar may hand it back.
+   */
+  private void applyNavigationColor () {
+    boolean onScreen = isFocused() && !minimized && context.getActivityState() == UI.State.RESUMED;
+    int color = onScreen ? bottomBarColor : 0;
+    if (color == 0 && !navigationColorOwned) return;
+    navigationColorOwned = color != 0;
+    context().setMiniAppNavigationColor(color, color != 0 && MiniAppHeaderColor.usesLightContent(color));
+  }
+
   private void setEmojiStatus (JSONObject data) {
     MiniAppEmojiStatus.Prepared prepared = MiniAppEmojiStatus.prepare(data, System.currentTimeMillis() / 1000L);
     if (!prepared.isValid()) {
@@ -1291,7 +1319,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void showPopup (JSONObject data) throws JSONException {
-    if (popup != null || !isFocused()) {
+      return;
       return;
     }
     JSONArray options = data.getJSONArray("buttons");
@@ -1320,7 +1348,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     int generation = documentGeneration;
     popup = showAlert(builder);
     popup.setOnDismissListener(dialog -> {
-      if (popup == dialog) popup = null;
+      if (documentGeneration == generation) {
       if (documentGeneration == generation) {
         sendEvent("popup_closed", chosen[0] != null ? json("button_id", chosen[0]) : json());
       }
@@ -1365,7 +1393,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private boolean requestingPhone;
 
   private void requestPhone () {
-    if (requestingPhone || popup != null || !isFocused()) {
+      return;
       return;
     }
     TdApi.User self = tdlib.cache().user(tdlib.myUserId());
@@ -1384,7 +1412,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
         TdApi.InputMessageContact contact = new TdApi.InputMessageContact(
           new TdApi.Contact(self.phoneNumber, self.firstName, self.lastName, "", self.id));
         tdlib.send(new TdApi.CreatePrivateChat(botUserId, false), (chat, error) -> runOnUiThreadOptional(() -> {
-          if (generation != documentGeneration || tdlib.myUserId() != self.id) {
+            requestingPhone = false;
             requestingPhone = false;
             return;
           }
@@ -1415,7 +1443,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void requestWriteAccess () {
-    if (requestingWriteAccess || !isFocused() || popup != null) {
+      return;
       return;
     }
     requestingWriteAccess = true;
@@ -1592,6 +1620,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
       // The header is shared by the whole stack: leaving this color behind would repaint whatever comes next.
       headerView.setCustomBackgroundColor(0);
     }
+    applyNavigationColor();
     updateFullscreenActivity();
     updateDeviceActivity();
     reportPreparedResult();
@@ -1613,6 +1642,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     super.onActivityPause();
     if (fullscreen != null) fullscreen.setActive(false);
     if (deviceServices != null) deviceServices.setActive(false);
+    applyNavigationColor();
     if (webView != null) {
       webView.onPause();
       sendEvent("visibility_changed", json("is_visible", false));
@@ -1624,6 +1654,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     super.onActivityResume();
     updateFullscreenActivity();
     updateDeviceActivity();
+    applyNavigationColor();
     if (webView != null) {
       if (isFocused()) webView.onResume();
       sendVisibility();
@@ -1636,6 +1667,10 @@ public final class MiniAppController extends ViewController<Void> implements Men
     tdlib.listeners().removeAuthorizationChangeListener(this);
     documentGeneration++;
     reply = null;
+    if (navigationColorOwned) {
+      navigationColorOwned = false;
+      context().setMiniAppNavigationColor(0, false);
+    }
     if (fullscreen != null) fullscreen.destroy();
     if (deviceServices != null) {
       deviceServices.destroy();
@@ -1671,7 +1706,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   boolean minimizeForTabSwitch (@Nullable Runnable afterParking) {
     if (!canParkTab()) return false;
     prepareTabExchange();
-    if (!context().miniAppTabs().minimize(this, afterParking)) { minimized = false; updateDeviceActivity(); return false; }
+    if (!context().miniAppTabs().minimize(this, afterParking)) { minimized = false; updateDeviceActivity(); applyNavigationColor(); return false; }
     return true;
   }
 
@@ -1684,6 +1719,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     if (fullscreen != null) fullscreen.setRequested(false);
     minimized = true;
     updateDeviceActivity();
+    applyNavigationColor();
   }
 
   @Nullable Bitmap captureTabPreview () {
@@ -1707,6 +1743,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   void onMinimized () {
     minimized = true;
     updateDeviceActivity();
+    applyNavigationColor();
     if (webView != null) webView.onPause();
   }
 
@@ -1714,6 +1751,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     minimized = false;
     lastInteractionTime = 0;
     updateDeviceActivity();
+    applyNavigationColor();
   }
 
   boolean canRestoreTab () {
@@ -1765,8 +1803,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   String tabTitle () { return tdlib.cache().userName(botUserId) + (shortName != null ? " / " + shortName : ""); }
 
   private void openInvoice (String slug) {
-    if (openingInvoice || !isFocused()) return;
-    if (!MiniAppInvoiceState.validSlug(slug)) {
+    if (openingInvoice || !isFocused() || !MiniAppInvoiceState.validSlug(slug)) {
       sendEvent("invoice_closed", json("slug", slug, "status", "failed"));
       return;
     }
