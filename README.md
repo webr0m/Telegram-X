@@ -30,8 +30,15 @@ Compared to the release this fork is based on:
   defines for them is read except `force_request` and `return_back`, which have no field in the TDLib binding
   this build uses. `error` values are the ones a page can actually switch on instead of a client-specific
   dialect. Header, background and bottom-bar colors apply without covering the page's own controls; the
-  bottom button honors its full field set (text, both colors, shine, active, visible, progress) for the main
-  and the secondary button, along with back button, closing behavior, settings button and swipe behavior.
+  bottom bar color also drives the system navigation bar — its fill where the platform still honors one, and
+  the icon contrast everywhere — and is handed back on every transition that takes the page off screen, so a
+  parked Mini App cannot repaint the bar of the one in front. The bottom button honors its full field set
+  (text, both colors, shine, active, visible, progress) for the main and the secondary button, along with
+  back button, closing behavior, settings button and swipe behavior. A request that cannot be served — a second
+  popup while one is already open, a duplicated phone-number or write-access prompt, an invoice page that fails
+  to load — is answered with the matching close or failure event rather than dropped, because the SDK releases
+  its one-shot request slot only inside the reply handler and a silent refusal would make every later call of
+  that kind throw until the page is reloaded.
 * **Device APIs.** Clipboard read, geolocation (check, request, open system settings), accelerometer,
   gyroscope and orientation lock, nine haptic sensations mapped onto the effect an Android release actually
   has, a QR scanner carrying the label a page asked for, home-screen install state, camera / microphone
@@ -47,19 +54,22 @@ Compared to the release this fork is based on:
 * **Tabs.** Up to five saved Mini Apps restored with fresh authenticated sessions, and switching between live
   apps while all minimized slots are occupied without destroying the outgoing WebView.
 
-Still open: Gifts / TON surfaces beyond checkout, Stories and Business sharing, auto-download presets, tinting
-the navigation bar from `setBottomBarColor`, and end-to-end payment flows against a signed-in test account.
+Still open: Gifts / TON surfaces beyond checkout, Stories and Business sharing, auto-download presets, painting
+the inset strip behind the gesture pill on Android 15+ edge-to-edge, and end-to-end payment flows against a
+signed-in test account.
 
-Each step is gated by offline regression harnesses rather than by a device: nine suites running 828 checks,
-plus auditors for the incoming and outgoing event contracts, the reachable producers of each event, and the
-Mini App copy contract in `values/` and `values-es/`.
+Each step is gated by offline regression harnesses rather than by a device: suites that replay each ported flow
+against a mutated copy of the sources, plus auditors for the incoming and outgoing event contracts, the reachable
+producers of each event, the thread each bridge site runs on, the reply every one-shot request slot is given before
+a page can throw, the system navigation-bar tint, and the Mini App copy contract in `values/` and `values-es/`.
+Every gate has been seen failing on a planted defect before its result was trusted.
 
 To build the current beta:
 
 ```shell
 git clone --recursive https://github.com/webr0m/Telegram-X -b feature/official-flows tgx
 cd tgx
-./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.303"
+./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.305"
 ```
 
 The beta installs as a **separate application** (`org.example.tgx`, debug-signed) and does not replace or touch
