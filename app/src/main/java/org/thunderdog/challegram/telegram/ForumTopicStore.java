@@ -1671,7 +1671,12 @@ public final class ForumTopicStore {
                 if (records.containsKey(key) || interested(key)) {
                   Record record = record(key);
                   record.mutationStamp = ++sequence;
-                  record.fullStamp = record.mutationStamp;
+                  // Only a cached full value can be made authoritative by the ack. Claiming
+                  // fullness without one makes merge() reject an older page, and a page is the only
+                  // place a row ever joins the list, so the topic would vanish until a new refresh.
+                  if (record.value != null) {
+                    record.fullStamp = record.mutationStamp;
+                  }
                 }
                 invalidate(key);
               }
