@@ -1506,7 +1506,20 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void sendData (String data) {
-    if (keyboardButtonText == null || dataSending || messageSent || data.isEmpty() || data.getBytes(StringUtils.UTF_8).length > 4096) {
+    if (data.isEmpty() || data.getBytes(StringUtils.UTF_8).length > 4096) {
+      return;
+    }
+    if (dataSending) {
+      return;
+    }
+    // `web_app_data_send` is one-way: the shim throws on a bad payload and posts the event otherwise, so it
+    // never waits for a reply and a rejection the user cannot see is a button that does nothing.
+    if (keyboardButtonText == null) {
+      UI.showToast(R.string.MiniAppDataSendUnavailable, android.widget.Toast.LENGTH_SHORT);
+      return;
+    }
+    if (messageSent) {
+      UI.showToast(R.string.MiniAppDataSendAlready, android.widget.Toast.LENGTH_SHORT);
       return;
     }
     dataSending = true;

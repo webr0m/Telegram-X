@@ -113,4 +113,6 @@
   <string name="MiniAppBiometryAccess">Biometric access</string>
   <string name="MiniAppBiometryAccessConfirm">Allow this Mini App to use the biometric sensor of this device to authenticate you?</string>
   <string name="MiniAppShareChat">Choose a chat</string>
+  <string name="MiniAppDataSendUnavailable">This Mini App cannot send data because it was not opened from a keyboard button.</string>
+  <string name="MiniAppDataSendAlready">This Mini App already sent its data. Open it again to send more.</string>
 </resources>
