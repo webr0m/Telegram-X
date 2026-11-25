@@ -99,6 +99,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private MiniAppButtonView mainButton, secondaryButton;
   private @Nullable JavaScriptReplyProxy reply;
   private @Nullable AlertDialog popup;
+  private boolean popupIsPage;
   private String origin;
   private long launchId;
   private int documentGeneration;
@@ -1319,13 +1320,22 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void showPopup (JSONObject data) throws JSONException {
+    if (popup != null) {
+      // Only the page's own popup may stay unanswered: its reply is already queued on the dismiss listener.
+      // Any other dialog holds the single slot without ever answering for a popup, so the page would be left
+      // waiting on one that is never shown.
+      if (!popupIsPage) sendEvent("popup_closed", json());
       return;
+    }
+    if (!isFocused()) {
+      sendEvent("popup_closed", json());
       return;
     }
     JSONArray options = data.getJSONArray("buttons");
     String title = data.optString("title");
     String message = data.getString("message");
     if (options.length() < 1 || options.length() > 3 || title.length() > 64 || message.length() > 256) {
+      sendEvent("popup_closed", json());
       return;
     }
     AlertDialog.Builder builder = new AlertDialog.Builder(context(), Theme.dialogTheme()).setTitle(title).setMessage(message);
@@ -1338,6 +1348,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
         "cancel".equals(type) ? Lang.getString(R.string.Cancel) :
         "close".equals(type) ? Lang.getString(R.string.MiniAppClose) : option.optString("text");
       if (id.length() > 64 || label.isEmpty() || label.length() > 64) {
+        sendEvent("popup_closed", json());
         return;
       }
       android.content.DialogInterface.OnClickListener listener = (dialog, which) -> chosen[0] = id;
@@ -1347,8 +1358,12 @@ public final class MiniAppController extends ViewController<Void> implements Men
     }
     int generation = documentGeneration;
     popup = showAlert(builder);
+    popupIsPage = true;
     popup.setOnDismissListener(dialog -> {
-      if (documentGeneration == generation) {
+      if (popup == dialog) {
+        popup = null;
+        popupIsPage = false;
+      }
       if (documentGeneration == generation) {
         sendEvent("popup_closed", chosen[0] != null ? json("button_id", chosen[0]) : json());
       }
@@ -1393,7 +1408,9 @@ public final class MiniAppController extends ViewController<Void> implements Men
   private boolean requestingPhone;
 
   private void requestPhone () {
-      return;
+    if (requestingPhone) return;
+    if (popup != null || !isFocused()) {
+      sendEvent("phone_requested", json("status", "cancelled"));
       return;
     }
     TdApi.User self = tdlib.cache().user(tdlib.myUserId());
@@ -1412,8 +1429,10 @@ public final class MiniAppController extends ViewController<Void> implements Men
         TdApi.InputMessageContact contact = new TdApi.InputMessageContact(
           new TdApi.Contact(self.phoneNumber, self.firstName, self.lastName, "", self.id));
         tdlib.send(new TdApi.CreatePrivateChat(botUserId, false), (chat, error) -> runOnUiThreadOptional(() -> {
+          if (generation != documentGeneration) return;
+          if (tdlib.myUserId() != self.id) {
             requestingPhone = false;
-            requestingPhone = false;
+            sendEvent("phone_requested", json("status", "cancelled"));
             return;
           }
           if (error != null) {
@@ -1443,7 +1462,9 @@ public final class MiniAppController extends ViewController<Void> implements Men
   }
 
   private void requestWriteAccess () {
-      return;
+    if (requestingWriteAccess) return;
+    if (!isFocused() || popup != null) {
+      sendEvent("write_access_requested", json("status", "cancelled"));
       return;
     }
     requestingWriteAccess = true;
