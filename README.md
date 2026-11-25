@@ -38,7 +38,9 @@ Compared to the release this fork is based on:
   popup while one is already open, a duplicated phone-number or write-access prompt, an invoice page that fails
   to load — is answered with the matching close or failure event rather than dropped, because the SDK releases
   its one-shot request slot only inside the reply handler and a silent refusal would make every later call of
-  that kind throw until the page is reloaded.
+  that kind throw until the page is reloaded. `web_app_data_send` is the one call with no slot to hand an answer
+  back to: it is one-way, so the two refusals it can hit — no keyboard button to return through, and data already
+  sent — say so in a toast instead of leaving a button that does nothing.
 * **Device APIs.** Clipboard read, geolocation (check, request, open system settings), accelerometer,
   gyroscope and orientation lock, nine haptic sensations mapped onto the effect an Android release actually
   has, a QR scanner carrying the label a page asked for, home-screen install state, camera / microphone
@@ -61,7 +63,8 @@ signed-in test account.
 Each step is gated by offline regression harnesses rather than by a device: suites that replay each ported flow
 against a mutated copy of the sources, plus auditors for the incoming and outgoing event contracts, the reachable
 producers of each event, the thread each bridge site runs on, the reply every one-shot request slot is given before
-a page can throw, the system navigation-bar tint, and the Mini App copy contract in `values/` and `values-es/`.
+a page can throw, the refusal a one-way send has no slot to answer, the system navigation-bar tint, and the Mini App
+copy contract in `values/` and `values-es/`.
 Every gate has been seen failing on a planted defect before its result was trusted.
 
 To build the current beta:
@@ -69,7 +72,7 @@ To build the current beta:
 ```shell
 git clone --recursive https://github.com/webr0m/Telegram-X -b feature/official-flows tgx
 cd tgx
-./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.305"
+./gradlew :app:assembleLatestDebug -Pabi=arm64 "-PbetaVersionSuffix=-beta.308"
 ```
 
 The beta installs as a **separate application** (`org.example.tgx`, debug-signed) and does not replace or touch
