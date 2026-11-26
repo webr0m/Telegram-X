@@ -287,6 +287,7 @@ public abstract class MapController<V extends View, T> extends ViewController<Ma
     directionButton.setId(R.id.btn_direction);
     directionButton.setOnClickListener(this);
     directionButton.init(R.drawable.baseline_directions_24, 56f, 4f, ColorId.circleButtonRegular, ColorId.circleButtonRegularIcon);
+    directionButton.setContentDescription(Lang.getString(R.string.Directions));
     int padding = Screen.dp(4f);
     FrameLayoutFix.LayoutParams params;
     params = FrameLayoutFix.newParams(Screen.dp(56f) + padding * 2, Screen.dp(56f) + padding * 2, Gravity.RIGHT | Gravity.BOTTOM);
@@ -300,6 +301,7 @@ public abstract class MapController<V extends View, T> extends ViewController<Ma
     myLocationButton.setId(R.id.btn_gps);
     myLocationButton.setOnClickListener(this);
     myLocationButton.init(R.drawable.baseline_gps_fixed_24, 56f, 4f, ColorId.filling, ColorId.icon);
+    myLocationButton.setContentDescription(Lang.getString(R.string.AccessibilityMyLocation));
     params = FrameLayoutFix.newParams(Screen.dp(56f) + padding * 2, Screen.dp(56f) + padding * 2, Gravity.RIGHT | Gravity.BOTTOM);
     params.rightMargin = Screen.dp(16f) - padding;
     params.bottomMargin = params.rightMargin + bottomMargin;
@@ -314,6 +316,7 @@ public abstract class MapController<V extends View, T> extends ViewController<Ma
     tileButton.setId(R.id.btn_layer);
     tileButton.setOnClickListener(this);
     tileButton.init(R.drawable.baseline_layers_24, 36f, 4f, ColorId.filling, ColorId.icon);
+    tileButton.setContentDescription(Lang.getString(R.string.AccessibilityMapLayers));
     params = FrameLayoutFix.newParams(Screen.dp(36f) + padding * 2, Screen.dp(36f) + padding * 2, Gravity.RIGHT | Gravity.TOP);
     params.rightMargin = Screen.dp(10f) - padding;
     params.topMargin = HeaderView.getTopOffset() + params.rightMargin;
@@ -326,6 +329,7 @@ public abstract class MapController<V extends View, T> extends ViewController<Ma
     backCircle.setEnabled(false);
     backCircle.setAlpha(0f);
     backCircle.init(0, 36f, 4f, ColorId.filling, ColorId.icon);
+    backCircle.setContentDescription(Lang.getString(R.string.AccessibilityBack));
     params = FrameLayoutFix.newParams(Screen.dp(36f) + padding * 2, Screen.dp(36f) + padding * 2, Gravity.LEFT | Gravity.TOP);
     params.leftMargin = Screen.dp(10f) - padding;
     params.topMargin = HeaderView.getTopOffset() + params.leftMargin;
