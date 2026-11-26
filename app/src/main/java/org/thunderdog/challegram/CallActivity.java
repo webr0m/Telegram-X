@@ -18,6 +18,7 @@ import android.app.KeyguardManager;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.WindowManager;
 
@@ -105,6 +106,12 @@ public class CallActivity extends BaseActivity {
     controller.setArguments(new CallController.Arguments(call));
     navigation.setController(controller);
     controller.showWithoutTransition();
+  }
+
+  @Override
+  public void onPictureInPictureModeChanged (boolean isInPictureInPictureMode, Configuration newConfig) {
+    super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
+    // Keep the call alive while in PiP; the CallController handles its own rendering.
   }
 
   public void openApp (boolean openChat) {

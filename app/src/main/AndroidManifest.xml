@@ -355,6 +355,7 @@
       android:excludeFromRecents="true"
       android:launchMode="singleInstance"
       android:showWhenLocked="true"
+      android:supportsPictureInPicture="true"
       android:taskAffinity="${applicationId}.call"
       android:turnScreenOn="true"
       android:windowSoftInputMode="stateHidden|adjustPan"
