@@ -58,6 +58,7 @@ public class WallpaperView extends View implements ThemeChangeListener, ChatStyl
 
   public WallpaperView (Context context, MessagesManager manager, Tdlib tdlib) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     this.manager = manager;
     this.tdlib = tdlib;
     this.receiver = new DoubleImageReceiver(this, 0);
