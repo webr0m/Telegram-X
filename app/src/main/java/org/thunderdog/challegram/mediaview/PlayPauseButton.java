@@ -43,6 +43,12 @@ class PlayPauseButton extends View implements FactorAnimator.Target {
   @Override
   public void onFactorChangeFinished (int id, float finalFactor, FactorAnimator callee) { }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText(playPauseAnimator.getValue() ? org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.PlayPause) : org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.PlayPlay));
+  }
+
   public void setIsPlaying (boolean isPlaying, boolean animated) {
     playPauseAnimator.setValue(isPlaying, animated);
   }
