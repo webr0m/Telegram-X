@@ -1928,6 +1928,9 @@
   <string name="AccessibilityEdit">Edit</string>
   <string name="AccessibilityMore">More options</string>
   <string name="AccessibilityRecordingStarted">Recording started</string>
+  <string name="AccessibilityCallIncoming">Incoming call</string>
+  <string name="AccessibilityCallConnected">Call connected</string>
+  <string name="AccessibilityCallEnded">Call ended</string>
   <string name="ClearRecentStickers">Clear Recent Stickers</string>
   <string name="ClearRecentEmojiStatuses">Clear Recent Emoji Statuses</string>
   <string name="CropSquare">Square</string>

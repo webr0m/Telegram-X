@@ -894,6 +894,7 @@ public class CallController extends ViewController<CallController.Arguments> imp
   }
 
   private TdApi.CallState previousCallState;
+  private int lastAnnouncedCallState = -1;
 
   private void updateCall (TdApi.Call call) {
     if (isClosed) {
@@ -998,6 +999,17 @@ public class CallController extends ViewController<CallController.Arguments> imp
       call.state.getConstructor() == TdApi.CallStateError.CONSTRUCTOR;
     boolean isIncoming = call.state.getConstructor() == TdApi.CallStatePending.CONSTRUCTOR &&
       !call.isOutgoing;
+    int announcedState = call.state.getConstructor();
+    if (announcedState != lastAnnouncedCallState) {
+      lastAnnouncedCallState = announcedState;
+      if (isIncoming) {
+        stateView.announceForAccessibility(Lang.getString(R.string.AccessibilityCallIncoming));
+      } else if (announcedState == TdApi.CallStateReady.CONSTRUCTOR) {
+        stateView.announceForAccessibility(Lang.getString(R.string.AccessibilityCallConnected));
+      } else if (isEnded) {
+        stateView.announceForAccessibility(Lang.getString(R.string.AccessibilityCallEnded));
+      }
+    }
     setButtonsVisible(isEnded || (!TD.isFinished(call) && !isIncoming), isFocused());
     muteButtonView.setVisibility(isEnded ? View.INVISIBLE : View.VISIBLE);
     speakerButtonView.setVisibility(isEnded ? View.INVISIBLE : View.VISIBLE);
