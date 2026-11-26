@@ -43,6 +43,7 @@ public class BufferingProgressBarWrap extends View implements Destroyable {
 
   public BufferingProgressBarWrap (@NonNull Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     setWillNotDraw(false);
     progressComponent = new ProgressComponent(UI.getContext(getContext()), Screen.dp(18f));
     progressComponent.forceColor(Color.WHITE);
