@@ -33,6 +33,7 @@ public class GifView extends BaseView {
 
   public GifView (Context context) {
     super(context, null);
+    setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     receiver = new GifReceiver(this);
     preview = new ImageReceiver(this, 0);
   }
