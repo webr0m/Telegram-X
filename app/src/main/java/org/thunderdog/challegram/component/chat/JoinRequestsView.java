@@ -65,12 +65,19 @@ public class JoinRequestsView extends BaseView implements Destroyable, ComplexRe
 
   private final Bitmap closeIcon;
   private final ReplaceAnimator<Text> title = new ReplaceAnimator<>(ignored -> invalidate(), AnimatorUtils.DECELERATE_INTERPOLATOR, 180l);
+  private String titleText;
 
   public JoinRequestsView (Context context, Tdlib tdlib) {
     super(context, tdlib);
     setWillNotDraw(false);
     closeIcon = Drawables.toBitmap(Drawables.get(R.drawable.baseline_close_18));
     megaReceiver.attach();
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (titleText != null) info.setText(titleText);
   }
 
   @Override
@@ -114,7 +121,8 @@ public class JoinRequestsView extends BaseView implements Destroyable, ComplexRe
     long[] ids = info.userIds;
 
     this.info = info;
-    title.replace(new Text.Builder(Lang.plural(R.string.xJoinRequests, info.totalCount), Screen.dp(300f), Paints.robotoStyleProvider(16), TextColorSets.Regular.NEUTRAL).allBold().singleLine().build(), animated);
+    titleText = Lang.plural(R.string.xJoinRequests, info.totalCount);
+    title.replace(new Text.Builder(titleText, Screen.dp(300f), Paints.robotoStyleProvider(16), TextColorSets.Regular.NEUTRAL).allBold().singleLine().build(), animated);
     updateTitleMaxWidth();
     setRequestInfo(ids, animated);
 
