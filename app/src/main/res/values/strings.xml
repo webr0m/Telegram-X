@@ -1932,6 +1932,7 @@
   <string name="AccessibilityMyLocation">My location</string>
   <string name="AccessibilityMapLayers">Map layers</string>
   <string name="AccessibilityBack">Back</string>
+  <string name="AccessibilityClose">Close</string>
   <string name="AccessibilityCallIncoming">Incoming call</string>
   <string name="AccessibilityCallConnected">Call connected</string>
   <string name="AccessibilityCallEnded">Call ended</string>
