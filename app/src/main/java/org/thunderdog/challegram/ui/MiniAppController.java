@@ -29,6 +29,7 @@ import android.webkit.ValueCallback;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.FrameLayout;
 
 import androidx.annotation.Nullable;
@@ -888,6 +889,17 @@ public final class MiniAppController extends ViewController<Void> implements Men
           break;
         case "web_app_stop_gyroscope":
           deviceServices.stopSensor(MiniAppSensors.GYROSCOPE);
+          break;
+        case "web_app_share_to_story":
+          // Stories sharing is not available in this build yet.
+          UI.showToast("Stories sharing is not supported yet", Toast.LENGTH_SHORT);
+          break;
+        case "web_app_verify_age":
+          // Age verification flow is not available in this build yet.
+          UI.showToast("Age verification is not supported yet", Toast.LENGTH_SHORT);
+          break;
+        case "resize_frame":
+          // Instant View embed resize; no-op in this client.
           break;
         default:
           break;
