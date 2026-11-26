@@ -157,6 +157,7 @@ public class MediaFilterNameView extends FrameLayoutFix implements FactorAnimato
 
   public void setValue (String value) {
     this.value.setText(value);
+    this.value.setContentDescription("Value: " + value);
   }
 
   public void setValueMaxWidth (float maxWidth) {

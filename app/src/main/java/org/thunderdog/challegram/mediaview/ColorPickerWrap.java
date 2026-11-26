@@ -86,6 +86,7 @@ public class ColorPickerWrap extends FrameLayoutFix implements View.OnClickListe
     for (int colorId : colorIds) {
       CheckCircle circle = (CheckCircle) colorsWrap.getChildAt(i);
       circle.setColorId(colorId == 0 ? ColorId.white : colorId);
+      circle.setContentDescription(name + ", " + (i + 1));
       boolean isChecked = colorId == selectedColor;
       circle.setChecked(isChecked, false);
       if (isChecked) {

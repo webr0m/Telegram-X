@@ -98,6 +98,7 @@ public class TopBarView extends FrameLayoutFix {
     topDismissButton.setScaleType(ImageView.ScaleType.CENTER);
     topDismissButton.setColorFilter(Theme.iconColor());
     topDismissButton.setImageResource(R.drawable.baseline_close_18);
+    topDismissButton.setContentDescription(Lang.getString(R.string.AccessibilityClose));
     topDismissButton.setLayoutParams(FrameLayoutFix.newParams(Screen.dp(40f), ViewGroup.LayoutParams.MATCH_PARENT, Lang.gravity() | Gravity.TOP));
     topDismissButton.setBackgroundResource(R.drawable.bg_btn_header);
     Views.setClickable(topDismissButton);
@@ -136,6 +137,7 @@ public class TopBarView extends FrameLayoutFix {
     actionsList.removeAllViews();
     if (items.length > 1) {
       View offsetView = new View(getContext());
+      offsetView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       offsetView.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, .75f));
       actionsList.addView(offsetView);
     }
@@ -161,6 +163,7 @@ public class TopBarView extends FrameLayoutFix {
     }
     if (items.length > 1) {
       View offsetView = new View(getContext());
+      offsetView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       offsetView.setLayoutParams(new LinearLayout.LayoutParams(0, ViewGroup.LayoutParams.MATCH_PARENT, .75f));
       actionsList.addView(offsetView);
     }
