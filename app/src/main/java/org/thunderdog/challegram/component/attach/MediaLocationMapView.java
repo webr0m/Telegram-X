@@ -172,6 +172,7 @@ public class MediaLocationMapView extends FrameLayoutFix implements OnMapReadyCa
     };
     themeProvider.addThemeInvalidateListener(myLocationButton);
     myLocationButton.init(R.drawable.baseline_gps_fixed_24, 40f, 4f, ColorId.circleButtonOverlay, ColorId.circleButtonOverlayIcon);
+    myLocationButton.setContentDescription(org.thunderdog.challegram.core.Lang.getString(R.string.AccessibilityMyLocation));
     myLocationButton.setId(R.id.btn_gps);
     myLocationButton.setAlpha(0f);
     myLocationButton.setOnClickListener(this);
