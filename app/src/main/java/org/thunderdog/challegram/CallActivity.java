@@ -111,7 +111,10 @@ public class CallActivity extends BaseActivity {
   @Override
   public void onPictureInPictureModeChanged (boolean isInPictureInPictureMode, Configuration newConfig) {
     super.onPictureInPictureModeChanged(isInPictureInPictureMode, newConfig);
-    // Keep the call alive while in PiP; the CallController handles its own rendering.
+    ViewController<?> c = navigation != null ? navigation.getCurrentStackItem() : null;
+    if (c instanceof CallController) {
+      ((CallController) c).setPictureInPictureMode(isInPictureInPictureMode);
+    }
   }
 
   public void openApp (boolean openChat) {

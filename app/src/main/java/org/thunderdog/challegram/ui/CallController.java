@@ -274,6 +274,7 @@ public class CallController extends ViewController<CallController.Arguments> imp
 
   private TextView emojiViewSmall, emojiViewBig, emojiViewHint;
   private CallControlsLayout callControlsLayout;
+  private boolean inPictureInPictureMode;
 
   private FrameLayoutFix buttonWrap;
   private ButtonView muteButtonView, speakerButtonView;
@@ -1212,6 +1213,13 @@ public class CallController extends ViewController<CallController.Arguments> imp
     tdlib.cache().subscribeToCallUpdates(call.id, this);
     tdlib.context().calls().acknowledgeCurrentCall(call.id);
     updateCallState();
+  }
+
+  public void setPictureInPictureMode (boolean inPictureInPictureMode) {
+    this.inPictureInPictureMode = inPictureInPictureMode;
+    if (callControlsLayout != null) {
+      callControlsLayout.setVisibility(inPictureInPictureMode ? View.GONE : View.VISIBLE);
+    }
   }
 
   @Override
