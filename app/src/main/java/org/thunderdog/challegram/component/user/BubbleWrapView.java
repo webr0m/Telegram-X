@@ -51,6 +51,7 @@ public class BubbleWrapView extends View {
 
   public BubbleWrapView (Context context, @NonNull Tdlib tdlib) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     bubbles = new ArrayList<>(10);
     paint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG | Paint.FILTER_BITMAP_FLAG);
     paint.setStyle(Paint.Style.FILL);
