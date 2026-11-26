@@ -200,6 +200,13 @@ public class ReplyBarView extends FrameLayoutFix implements View.OnClickListener
   private ImageView newButton (@IdRes int idRes, @DrawableRes int iconRes, ViewController<?> themeProvider) {
     ImageView btn = new ImageView(getContext());
     btn.setId(idRes);
+    if (idRes == R.id.btn_close) {
+      btn.setContentDescription(Lang.getString(R.string.AccessibilityClose));
+    } else if (idRes == R.id.btn_replace) {
+      btn.setContentDescription("Replace");
+    } else if (idRes == R.id.btn_edit) {
+      btn.setContentDescription(Lang.getString(R.string.AccessibilityEdit));
+    }
     btn.setImageResource(iconRes);
     btn.setColorFilter(Theme.iconColor());
     themeProvider.addThemeFilterListener(btn, ColorId.icon);

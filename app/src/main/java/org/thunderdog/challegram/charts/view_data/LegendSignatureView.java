@@ -81,9 +81,11 @@ public class LegendSignatureView extends FrameLayout {
         hourTime.setTypeface(Fonts.getRobotoMedium());
 
         chevron = new ImageView(context);
+        chevron.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         chevron.setImageResource(R.drawable.round_keyboard_arrow_right_18);
 
         progressView = new RadialProgressView(context);
+        progressView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         progressView.setSize(Screen.dp(12));
         progressView.setStrokeWidth(Screen.dp(0.5f));
         progressView.setVisibility(View.GONE);
