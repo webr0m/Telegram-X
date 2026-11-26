@@ -59,6 +59,7 @@ public class AvatarView extends View implements Destroyable, TdlibCache.UserData
     super(context);
     this.receiver = new ImageReceiver(this, 1);
     this.receiver.setRadius(0);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   public void setNeedOverlay () {
