@@ -140,6 +140,7 @@ public class CallControlsLayout extends FrameLayoutFix implements View.OnClickLi
 
     closeButton = new CircleButton(context);
     closeButton.setId(R.id.btn_closeCall);
+    closeButton.setContentDescription(Lang.getString(R.string.HangUp));
     closeButton.init(R.drawable.baseline_close_36, CALL_BUTTON_SIZE, CALL_BUTTON_PADDING, ColorId.circleButtonOverlay, ColorId.circleButtonOverlayIcon);
     closeButton.setLayoutParams(params);
     closeButton.setIsHidden(true, false);
