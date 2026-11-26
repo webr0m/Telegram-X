@@ -166,6 +166,14 @@ public class TogglerView extends View implements FactorAnimator.Target, TooltipO
   }
 
   @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.Switch");
+    info.setCheckable(true);
+    info.setChecked(isEnabled.getValue());
+  }
+
+  @Override
   public void onFactorChanged (int id, float factor, float fraction, FactorAnimator callee) {
     switch (id) {
       case ANIMATOR_DISABLE:
