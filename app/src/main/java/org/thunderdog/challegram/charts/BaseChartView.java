@@ -218,6 +218,7 @@ public abstract class BaseChartView<T extends ChartData, L extends LineViewData>
 
     public BaseChartView(Context context) {
         super(context);
+        setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         init();
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
     }
