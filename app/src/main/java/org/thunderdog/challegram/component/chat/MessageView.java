@@ -480,6 +480,14 @@ public class MessageView extends SparseDrawableView implements Destroyable, Draw
       }
       // endregion
     }
+    if (msg != null && info.getContentDescription() == null) {
+      String sender = msg.tdlib().senderName(msg.getMessage(), true, true);
+      CharSequence preview = ContentPreview.getChatListPreview(msg.tdlib(), msg.getChatId(), msg.getMessage(), true)
+        .buildText(false);
+      if (!StringUtils.isEmpty(sender) && !StringUtils.isEmpty(preview)) {
+        info.setContentDescription(sender + ": " + preview);
+      }
+    }
   }
 
   @Override public boolean performAccessibilityAction (int action, Bundle arguments) {
