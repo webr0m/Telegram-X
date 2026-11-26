@@ -395,6 +395,7 @@ public class EmojiLayout extends FrameLayoutFix implements ViewPager.OnPageChang
       setCircleVisible(hasRightButton(), false, 0, 0);
     }
     circleButton.setOnClickListener(this);
+    circleButton.setContentDescription(Lang.getString(position == 0 ? R.string.Delete : R.string.Search));
     circleButton.setLayoutParams(params);
     updateCircleStyles();
 
