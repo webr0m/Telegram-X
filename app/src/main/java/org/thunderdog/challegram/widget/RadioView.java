@@ -65,6 +65,14 @@ public class RadioView extends View implements FactorAnimator.Target {
     invalidate();
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.RadioButton");
+    info.setCheckable(true);
+    info.setChecked(checkAnimator.getValue());
+  }
+
   public boolean isChecked () {
     return checkAnimator.getValue();
   }
