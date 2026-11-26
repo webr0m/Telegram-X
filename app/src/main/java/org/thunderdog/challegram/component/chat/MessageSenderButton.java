@@ -309,10 +309,19 @@ public class MessageSenderButton extends FrameLayout implements ReplaceAnimator.
       avatarView = new AvatarView(context);
       avatarView.setId(R.id.btn_camera);
       avatarView.setLayoutParams(FrameLayoutFix.newParams(Screen.dp(24), Screen.dp(24), Gravity.CENTER));
+      avatarView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       addView(avatarView);
 
       setLayoutParams(FrameLayoutFix.newParams(Screen.dp(ATTACH_BUTTONS_WIDTH), LayoutParams.MATCH_PARENT, Gravity.RIGHT | Gravity.BOTTOM));
       setWillNotDraw(false);
+    }
+
+    @Override
+    public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+      super.onInitializeAccessibilityNodeInfo(info);
+      info.setText(sendModeFactor > .5f
+        ? org.thunderdog.challegram.core.Lang.getString(R.string.Send)
+        : org.thunderdog.challegram.core.Lang.getString(R.string.SendAsOption));
     }
 
     public void setDrawMode (Tdlib tdlib, TdApi.MessageSender sender, int mode) {
