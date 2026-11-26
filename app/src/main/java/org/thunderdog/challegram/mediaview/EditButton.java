@@ -57,6 +57,7 @@ public class EditButton extends View implements FactorAnimator.Target {
     super(context);
     avatarReceiver = new AvatarReceiver(this);
     setBackgroundResource(R.drawable.bg_btn_header_light);
+    setContentDescription(org.thunderdog.challegram.core.Lang.getString(R.string.AccessibilityEdit));
   }
 
   @Override
