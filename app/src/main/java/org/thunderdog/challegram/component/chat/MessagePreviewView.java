@@ -435,6 +435,22 @@ public class MessagePreviewView extends BaseView implements AttachDelegate, Dest
     return receiver;
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    StringBuilder cd = new StringBuilder();
+    String title = getTitle();
+    if (!StringUtils.isEmpty(title)) {
+      cd.append(title);
+    }
+    TdApi.FormattedText content = getContentText();
+    if (content != null && !StringUtils.isEmpty(content.text)) {
+      if (cd.length() > 0) cd.append(": ");
+      cd.append(content.text);
+    }
+    info.setText(cd.length() > 0 ? cd.toString() : null);
+  }
+
   private void buildText (boolean isLayout) {
     int textWidth = calculateTextWidth();
     if (this.lastTextWidth != textWidth || !isLayout) {

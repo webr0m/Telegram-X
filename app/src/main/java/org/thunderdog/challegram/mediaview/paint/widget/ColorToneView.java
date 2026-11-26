@@ -47,6 +47,20 @@ public class ColorToneView extends View implements ClickHelper.Delegate {
     super(context);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (saturation >= 0f && value >= 0f) {
+      info.setText(org.thunderdog.challegram.core.Lang.getString(
+        org.thunderdog.challegram.R.string.AccessibilityColorTone,
+        Math.round(saturation * 100f),
+        Math.round(value * 100f)
+      ));
+    } else {
+      info.setText("Color tone");
+    }
+  }
+
   public void setPreview (ColorPreviewView preview) {
     this.preview = preview;
   }
