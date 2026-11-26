@@ -48,6 +48,14 @@ public class SilentButton extends View {
     silentWidth = Screen.dp(1.5f);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.Switch");
+    info.setCheckable(true);
+    info.setChecked(isSilent);
+  }
+
   public boolean setVisible (boolean visible) {
     boolean isVisible = getVisibility() == VISIBLE;
     if (isVisible != visible) {
