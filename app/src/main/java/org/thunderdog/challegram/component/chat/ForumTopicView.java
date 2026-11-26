@@ -157,6 +157,13 @@ public final class ForumTopicView extends View {
     if (selectionMode) {
       info.setClassName(CheckBox.class.getName());
     }
+    StringBuilder sb = new StringBuilder();
+    if (!titleLine.isEmpty()) sb.append(titleLine);
+    if (!previewLine.isEmpty()) {
+      if (sb.length() > 0) sb.append(": ");
+      sb.append(previewLine);
+    }
+    if (sb.length() > 0) info.setText(sb.toString());
   }
 
   @Override protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
