@@ -69,6 +69,12 @@ public class MediaSmallView extends SparseDrawableView implements Destroyable, F
     this.gifReceiver = new GifReceiver(this);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText("Media");
+  }
+
   public void setListener (FileProgressComponent.SimpleListener listener) {
     this.listener = listener;
   }
