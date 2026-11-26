@@ -464,6 +464,7 @@ public class PasswordController extends ViewController<PasswordController.Args> 
     addThemeInvalidateListener(nextButton);
     nextButton.setId(R.id.btn_done);
     nextButton.init(getDoneIcon(), 56f, 4f, ColorId.circleButtonRegular, ColorId.circleButtonRegularIcon);
+    nextButton.setContentDescription(Lang.getString(R.string.Done));
     nextButton.setOnClickListener(this);
     nextButton.setLayoutParams(params);
     nextButton.setAlpha(0f);
