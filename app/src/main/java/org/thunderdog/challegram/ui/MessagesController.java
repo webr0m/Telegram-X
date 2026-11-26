@@ -1270,6 +1270,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     lp.rightMargin = Screen.dp(2f);
 
     recordButton = new VoiceVideoButtonView(context);
+    recordButton.setContentDescription(Lang.getString(R.string.AccessibilityRecordVoice));
     recordButton.setPadding(0, 0, Screen.dp(2f), 0);
     recordButton.setHasTouchControls(true);
     addThemeInvalidateListener(recordButton);
@@ -1302,6 +1303,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     sendButton.setOnClickListener(this);
     addThemeInvalidateListener(sendButton);
     sendButton.setId(R.id.msg_send);
+    sendButton.setContentDescription(Lang.getString(R.string.Send));
     sendButton.setVisibility(View.INVISIBLE);
     sendButton.setAlpha(0f);
     sendButton.setLayoutParams(params);

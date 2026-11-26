@@ -1918,6 +1918,7 @@
   <string name="CallRingtoneUserHint">You can set custom ringtone for specific users on their profile page.</string>
   <string name="CustomNotifications">Custom notifications</string>
   <string name="Send">Send</string>
+  <string name="AccessibilityRecordVoice">Record voice message</string>
   <string name="ClearRecentStickers">Clear Recent Stickers</string>
   <string name="ClearRecentEmojiStatuses">Clear Recent Emoji Statuses</string>
   <string name="CropSquare">Square</string>
