@@ -167,6 +167,7 @@ public final class ForumTopicsController
       ColorId.circleButtonRegularIcon
     );
     createButton.setFocusable(true);
+    createButton.setContentDescription(Lang.getString(R.string.ForumCreateTopic));
     createButton.setOnClickListener(
       v -> {
         if (topicUi.canCreate() && !topicUi.isBusy()) {
