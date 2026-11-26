@@ -1799,6 +1799,7 @@ public class MediaCellView extends ViewGroup implements
   public class CellImageView extends View {
     public CellImageView (Context context) {
       super(context);
+      setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
     public void onDraw (Canvas c) {
