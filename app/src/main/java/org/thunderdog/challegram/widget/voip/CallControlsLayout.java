@@ -283,6 +283,19 @@ public class CallControlsLayout extends FrameLayoutFix implements View.OnClickLi
     setPosition(acceptFactor, SLIDE_MODE_ACCEPT - 1, animated);
     setTransform(declineFactor, SLIDE_MODE_DECLINE - 1, animated);
     setPosition(declineFactor, SLIDE_MODE_DECLINE - 1, animated);
+
+    switch (call.state.getConstructor()) {
+      case TdApi.CallStatePending.CONSTRUCTOR:
+        acceptButton.setContentDescription(call.isOutgoing ? Lang.getString(R.string.Cancel) : Lang.getString(R.string.AnswerCall));
+        break;
+      case TdApi.CallStateDiscarded.CONSTRUCTOR:
+      case TdApi.CallStateError.CONSTRUCTOR:
+        acceptButton.setContentDescription(Lang.getString(R.string.CallAgain));
+        break;
+      default:
+        acceptButton.setContentDescription(Lang.getString(R.string.HangUp));
+        break;
+    }
   }
 
   @Override
