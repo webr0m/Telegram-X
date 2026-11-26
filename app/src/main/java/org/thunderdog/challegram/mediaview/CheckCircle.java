@@ -48,6 +48,14 @@ public class CheckCircle extends View implements FactorAnimator.Target {
 
   private boolean isChecked;
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.CheckBox");
+    info.setCheckable(true);
+    info.setChecked(isChecked);
+  }
+
   public void setChecked (boolean isChecked, boolean animated) {
     if (this.isChecked != isChecked) {
       this.isChecked = isChecked;
