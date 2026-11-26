@@ -47,6 +47,7 @@ public class SeparatorView extends View {
     paint.setStyle(Paint.Style.FILL);
 
     height = Math.max(Screen.dp(.5f), 1);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   public void setColorId (@ColorId int colorId) {

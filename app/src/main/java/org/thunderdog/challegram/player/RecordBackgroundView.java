@@ -28,6 +28,7 @@ public class RecordBackgroundView extends View {
 
   public RecordBackgroundView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   private float factor = -1f;
