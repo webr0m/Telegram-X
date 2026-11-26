@@ -48,6 +48,12 @@ public class PinButtonView extends View {
     setBackgroundResource(has ? R.drawable.bg_btn_pin : R.drawable.transparent);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText(getNumber());
+  }
+
   public void setNumber (int number) {
     this.number = number;
   }
