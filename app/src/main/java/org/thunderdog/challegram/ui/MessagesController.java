@@ -1010,6 +1010,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     });
     addThemeInvalidateListener(mentionButton);
     mentionButton.init(R.drawable.baseline_alternate_email_24, 48f, 4f, ColorId.circleButtonChat, ColorId.circleButtonChatIcon);
+    mentionButton.setContentDescription(Lang.getString(R.string.Mentions));
     mentionButton.setLayoutParams(fparams);
     mentionButtonWrap.addView(mentionButton);
 
@@ -1049,6 +1050,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     });
     addThemeInvalidateListener(scrollToBottomButton);
     scrollToBottomButton.init(R.drawable.baseline_arrow_downward_24, 48f, 4f, ColorId.circleButtonChat, ColorId.circleButtonChatIcon);
+    scrollToBottomButton.setContentDescription(Lang.getString(R.string.AccessibilityScrollToBottom));
     scrollToBottomButton.setLayoutParams(fparams);
     scrollToBottomButtonWrap.addView(scrollToBottomButton);
 
@@ -1079,6 +1081,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     reactionsButton.setOnClickListener(this);
     addThemeInvalidateListener(reactionsButton);
     reactionsButton.init(R.drawable.baseline_favorite_20, 48f, 4f, ColorId.circleButtonChat, ColorId.circleButtonChatIcon);
+    reactionsButton.setContentDescription(Lang.getString(R.string.Reactions));
     reactionsButton.setLayoutParams(fparams);
     reactionsButton.setOnClickListener(this);
     reactionsButton.setOnLongClickListener(v -> {
