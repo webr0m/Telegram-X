@@ -285,6 +285,12 @@ public class DrawerItemView extends BaseView implements FactorAnimator.Target, A
     TGLegacyManager.instance().removeEmojiListener(this);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (text != null) info.setText(text);
+  }
+
   public boolean toggle (boolean animated) {
     boolean isChecked = !isChecked();
     setChecked(isChecked, animated);
