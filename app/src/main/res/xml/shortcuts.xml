@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+  <shortcut
+    android:shortcutId="new_chat"
+    android:enabled="true"
+    android:icon="@mipmap/app_launcher_round"
+    android:shortcutShortLabel="@string/NewChat"
+    android:shortcutLongLabel="@string/NewChat">
+    <intent
+      android:action="org.thunderdog.challegram.ACTION_SHORTCUT_NEW_CHAT"
+      android:targetPackage="${applicationId}"
+      android:targetClass="org.thunderdog.challegram.MainActivity" />
+  </shortcut>
+  <shortcut
+    android:shortcutId="search"
+    android:enabled="true"
+    android:icon="@mipmap/app_launcher_round"
+    android:shortcutShortLabel="@string/Search"
+    android:shortcutLongLabel="@string/Search">
+    <intent
+      android:action="org.thunderdog.challegram.ACTION_SHORTCUT_SEARCH"
+      android:targetPackage="${applicationId}"
+      android:targetClass="org.thunderdog.challegram.MainActivity" />
+  </shortcut>
+</shortcuts>

@@ -437,6 +437,10 @@
 
         <data android:scheme="tg" />
       </intent-filter>
+
+      <meta-data
+        android:name="android.app.shortcuts"
+        android:resource="@xml/shortcuts" />
     </activity>
 
     <provider
