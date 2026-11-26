@@ -130,6 +130,18 @@ public class DetachedChatHeaderView extends SparseDrawableView implements Destro
   }
 
   @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    StringBuilder sb = new StringBuilder();
+    if (title != null) sb.append(title.getText());
+    if (subtitle != null) {
+      if (sb.length() > 0) sb.append(": ");
+      sb.append(subtitle.getText());
+    }
+    if (sb.length() > 0) info.setText(sb.toString());
+  }
+
+  @Override
   protected void onDraw (Canvas canvas) {
     if (avatarPlaceholderDrawable != null) {
       int cx = avatar.centerX();
