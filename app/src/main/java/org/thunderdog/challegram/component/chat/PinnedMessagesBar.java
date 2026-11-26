@@ -78,6 +78,18 @@ public class PinnedMessagesBar extends ViewGroup implements Destroyable, Message
     }
 
     @Override
+    public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+      super.onInitializeAccessibilityNodeInfo(info);
+      if (isExpanded.getValue()) {
+        info.setText("Collapse");
+      } else if (canExpand.getValue()) {
+        info.setText("Expand");
+      } else {
+        info.setText(org.thunderdog.challegram.core.Lang.getString(R.string.ShowPinnedList));
+      }
+    }
+
+    @Override
     protected void onDraw (Canvas c) {
       DrawAlgorithms.drawCollapse(c, getPaddingLeft() + (getMeasuredWidth() - getPaddingLeft() - getPaddingRight()) / 2f, getMeasuredHeight() / 2f, Theme.iconColor(), isExpanded.getFloatValue(), 1f - canExpand.getFloatValue());
     }
