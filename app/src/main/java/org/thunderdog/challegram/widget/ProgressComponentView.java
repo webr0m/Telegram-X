@@ -38,6 +38,7 @@ public class ProgressComponentView extends View implements FactorAnimator.Target
 
   public ProgressComponentView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   public ProgressComponent getProgress () {

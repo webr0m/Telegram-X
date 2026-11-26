@@ -37,6 +37,7 @@ public class SpinnerView extends ImageView implements Runnable {
 
   public SpinnerView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     setScaleType(ScaleType.CENTER_INSIDE);
   }
 
