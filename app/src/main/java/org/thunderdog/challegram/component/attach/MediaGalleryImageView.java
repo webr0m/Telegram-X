@@ -66,6 +66,7 @@ public class MediaGalleryImageView extends BaseView implements Destroyable, Fact
 
   public MediaGalleryImageView (Context context) {
     super(context, null);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
     helper = new ClickHelper(this);
 
