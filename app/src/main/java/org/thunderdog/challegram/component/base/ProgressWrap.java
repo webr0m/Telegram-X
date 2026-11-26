@@ -62,11 +62,13 @@ public class ProgressWrap extends FrameLayoutFix {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       progressBar = new ProgressBar(getContext());
       progressBar.setIndeterminate(true);
+      progressBar.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       progressBar.setLayoutParams(params);
       addView(progressBar);
     } else {
       SpinnerView spinnerView = new SpinnerView(getContext());
       spinnerView.setImageResource(R.drawable.spinner_48_inner);
+      spinnerView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       spinnerView.setLayoutParams(params);
 
       addView(spinnerView);
@@ -91,6 +93,7 @@ public class ProgressWrap extends FrameLayoutFix {
 
   public void setMessage (String message) {
     textView.setText(message);
+    setContentDescription(message);
   }
 
   public @Nullable ProgressBar getProgress () {

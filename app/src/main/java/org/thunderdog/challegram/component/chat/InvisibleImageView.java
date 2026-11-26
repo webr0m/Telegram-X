@@ -26,6 +26,7 @@ import org.thunderdog.challegram.tool.Screen;
 public class InvisibleImageView extends ImageView implements TooltipOverlayView.LocationProvider {
   public InvisibleImageView (Context context) {
     super(context);
+    setContentDescription(org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.AccessibilityCommands));
   }
 
   @Override

@@ -56,8 +56,17 @@ public class CounterBadgeView extends View {
     setPivotY(getPaddingTop() + (getMeasuredHeight() - getPaddingTop() - getPaddingBottom()));
   }
 
+  private int a11yCount;
+
   public void setCounter (int count, boolean isMuted, boolean animated) {
+    a11yCount = count;
     counter.setCount(count, isMuted, animated);
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText(a11yCount > 0 ? String.valueOf(a11yCount) : null);
   }
 
   // Drawing
