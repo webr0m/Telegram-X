@@ -29,6 +29,7 @@ public class DoubleImageView extends BaseView {
 
   public DoubleImageView (Context context) {
     super(context, null);
+    setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
     preview = new DoubleImageReceiver(this, 0);
     receiver = new ImageReceiver(this, 0);
