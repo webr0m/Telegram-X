@@ -51,6 +51,12 @@ public class EmojiView extends View implements ClickHelper.Delegate {
   }
 
   @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (emoji != null) info.setText(emoji);
+  }
+
+  @Override
   protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
     //noinspection SuspiciousNameCombination
     super.onMeasure(widthMeasureSpec, widthMeasureSpec);
