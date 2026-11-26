@@ -118,6 +118,14 @@ public class MediaBottomBar extends FrameLayoutFix implements GestureDetector.On
     setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, barHeight, Gravity.BOTTOM));
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (items != null && index >= 0 && index < items.length && items[index] != null) {
+      info.setText(items[index].name);
+    }
+  }
+
   public void setBottomInset (int inset) {
     Views.setPaddingBottom(this, inset);
     Views.setLayoutHeight(this, barHeight + inset);

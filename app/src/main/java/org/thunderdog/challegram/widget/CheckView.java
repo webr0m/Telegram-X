@@ -59,6 +59,13 @@ public class CheckView extends View {
   private boolean isChecked;
   private float checkFactor;
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setCheckable(true);
+    info.setChecked(isChecked);
+  }
+
   private boolean isCheckable;
   private float checkableFactor;
 
