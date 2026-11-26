@@ -1029,6 +1029,7 @@ public class TooltipOverlayView extends ViewGroup {
 
   public TooltipOverlayView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     paint.setStyle(Paint.Style.FILL);
     setWillNotDraw(true);
   }
