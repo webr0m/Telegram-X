@@ -1458,6 +1458,9 @@ public class RecordAudioVideoController implements
 
   private void startRecordingImpl (int mode) {
     this.currentRecording = mode;
+    if (targetController != null) {
+      targetController.getValue().announceForAccessibility(Lang.getString(R.string.AccessibilityRecordingStarted));
+    }
     switch (mode) {
       case RECORD_MODE_AUDIO:
         if (tdlib != null) {
