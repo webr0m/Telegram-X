@@ -275,6 +275,12 @@ public class MediaCellView extends ViewGroup implements
 
   private boolean subsamplingModeEnabled, subsamplingImageLoaded;
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText("Media");
+  }
+
   private static void recycle (SubsamplingScaleImageView imageView) {
     imageView.recycle();
     imageView.setMaxScale(Float.MAX_VALUE);
