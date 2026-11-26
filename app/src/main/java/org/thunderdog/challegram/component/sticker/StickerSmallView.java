@@ -73,6 +73,7 @@ public class StickerSmallView extends View implements FactorAnimator.Target, Sti
 
   public StickerSmallView (Context context, int padding) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     this.imageReceiver = new ImageReceiver(this, 0);
     this.gifReceiver = new GifReceiver(this);
     this.animator = new FactorAnimator(0, this, OVERSHOOT_INTERPOLATOR, 230l);
