@@ -55,6 +55,14 @@ public class CheckBoxView extends View {
     rect = new RectF();
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.CheckBox");
+    info.setCheckable(true);
+    info.setChecked(isChecked.getValue());
+  }
+
   public void setChecked (boolean checked, final boolean animated) {
     isChecked.setValue(checked, animated);
   }
