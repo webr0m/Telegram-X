@@ -185,6 +185,7 @@ public class OverlayButtonWrap extends FrameLayoutFix implements View.OnClickLis
     CircleButton circleButton;
     circleButton = new CircleButton(getContext());
     circleButton.init(resource, 40f, 4f, background, colorId);
+    circleButton.setContentDescription(Lang.getString(stringRes));
     button = circleButton;
     /* else {
       AvatarView avatarView = new AvatarView(getContext());
