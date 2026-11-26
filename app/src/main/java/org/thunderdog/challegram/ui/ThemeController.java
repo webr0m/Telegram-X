@@ -397,6 +397,7 @@ public class ThemeController extends ViewPagerController<ThemeController.Args> i
     int size = Screen.dp(52f) + Screen.dp(12f * 2f);
     btn.setLayoutParams(FrameLayoutFix.newParams(size, size, Settings.instance().getMinimizedThemeLocation()));
     btn.init(R.drawable.baseline_palette_24, 52f, 12f, ColorId.circleButtonTheme, ColorId.circleButtonThemeIcon);
+    btn.setContentDescription(Lang.getString(R.string.Themes));
     btn.setOnClickListener(v -> {
       context().closeThumbnail(ThemeController.this);
       context().navigation().navigateTo(ThemeController.this);
