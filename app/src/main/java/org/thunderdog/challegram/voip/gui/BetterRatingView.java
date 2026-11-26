@@ -71,6 +71,12 @@ public class BetterRatingView extends View {
     return true;
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText(selectedRating + " of " + numStars);
+  }
+
   public int getRating(){
     return selectedRating;
   }
