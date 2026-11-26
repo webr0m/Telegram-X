@@ -36,6 +36,7 @@ public class MediaGalleryCameraView extends FrameLayoutFix implements Destroyabl
   public MediaGalleryCameraView (Context context) {
     super(context);
     setId(R.id.btn_camera);
+    setContentDescription(org.thunderdog.challegram.core.Lang.getString(R.string.AccessibilityCamera));
     setLayoutParams(new RecyclerView.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
     setBackgroundColor(0xff000000);
 
@@ -45,12 +46,14 @@ public class MediaGalleryCameraView extends FrameLayoutFix implements Destroyabl
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       textureView = new TextureView(context);
+      textureView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       textureView.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
       textureView.setSurfaceTextureListener(this);
       addView(textureView);
     }
 
     ImageView imageView = new ImageView(context);
+    imageView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     imageView.setScaleType(ImageView.ScaleType.CENTER);
     imageView.setImageResource(R.drawable.baseline_camera_alt_24);
     imageView.setColorFilter(0xffffffff);

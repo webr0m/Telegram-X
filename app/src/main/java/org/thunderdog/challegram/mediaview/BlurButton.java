@@ -41,6 +41,13 @@ public class BlurButton extends NoScrollTextView implements FactorAnimator.Targe
 
   private boolean isChecked;
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setCheckable(true);
+    info.setChecked(isChecked);
+  }
+
   public void setIsChecked (boolean isChecked, boolean animated) {
     if (this.isChecked != isChecked) {
       this.isChecked = isChecked;
