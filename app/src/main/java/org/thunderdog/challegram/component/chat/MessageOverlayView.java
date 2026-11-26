@@ -29,6 +29,7 @@ public class MessageOverlayView extends View {
 
   public MessageOverlayView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
       setOutlineProvider(new android.view.ViewOutlineProvider() {
         @Override
