@@ -394,7 +394,20 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
         }
       }
       this.chat = chat;
-      setContentDescription(chat != null ? chat.getTitleText() : null);
+      StringBuilder cd = new StringBuilder();
+      if (chat != null) {
+        String title = chat.getTitleText();
+        if (title != null) cd.append(title);
+        int unread = chat.getUnreadCount();
+        if (unread > 0) {
+          if (cd.length() > 0) cd.append(", ");
+          cd.append(unread).append(" unread");
+        } else if (unread == Tdlib.CHAT_MARKED_AS_UNREAD) {
+          if (cd.length() > 0) cd.append(", ");
+          cd.append("unread");
+        }
+      }
+      setContentDescription(cd.length() > 0 ? cd.toString() : null);
       // region @MadeByLLM("gpt-6-astra", id = "forum-topics", ref = "PR #1095")
       forumTopics.setChat(chat);
       requestLayout();
