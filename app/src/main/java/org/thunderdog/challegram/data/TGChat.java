@@ -1204,6 +1204,10 @@ public class TGChat implements TdlibStatusManager.HelperTarget, ContentPreview.R
     return trimmedTitle;
   }
 
+  public String getTitleText () {
+    return title;
+  }
+
   public boolean setTime () {
     String time;
     if (isArchive()) {

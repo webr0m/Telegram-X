@@ -394,6 +394,7 @@ public class ChatView extends BaseView implements TdlibSettingsManager.Preferenc
         }
       }
       this.chat = chat;
+      setContentDescription(chat != null ? chat.getTitleText() : null);
       // region @MadeByLLM("gpt-6-astra", id = "forum-topics", ref = "PR #1095")
       forumTopics.setChat(chat);
       requestLayout();
