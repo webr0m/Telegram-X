@@ -60,6 +60,15 @@ public class CustomResultView extends SparseDrawableView implements Destroyable,
     RippleSupport.setTransparentSelector(this);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    boolean selected = (flags & FLAG_SELECTED) != 0;
+    info.setText(selected && selectionIndex >= 0 ? "Inline result, " + (selectionIndex + 1) : "Inline result");
+    info.setCheckable(true);
+    info.setChecked(selected);
+  }
+
   public ComplexReceiver getTextMediaReceiver () {
     return textMediaReceiver;
   }

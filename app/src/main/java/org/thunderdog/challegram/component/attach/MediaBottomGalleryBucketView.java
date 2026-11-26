@@ -57,6 +57,7 @@ public class MediaBottomGalleryBucketView extends FrameLayoutFix implements Dest
     params.leftMargin = paddingLeft + imageSize + Screen.dp(17f);
     params.rightMargin = paddingLeft;
     textView = new NoScrollTextView(context);
+    textView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     textView.setTextColor(Theme.textAccentColor());
     textView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16f);
     textView.setTypeface(Fonts.getRobotoRegular());
@@ -80,6 +81,7 @@ public class MediaBottomGalleryBucketView extends FrameLayoutFix implements Dest
     if (this.bucket == null || this.bucket.getId() != bucket.getId()) {
       this.bucket = bucket;
       textView.setText(bucket.getName());
+      setContentDescription(bucket.getName());
       receiver.requestFile(bucket.getPreviewImage());
     }
   }

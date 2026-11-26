@@ -74,6 +74,12 @@ public class PasscodeView extends View {
     this.orientation = UI.getOrientation();
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText(text);
+  }
+
   public void setCallback (Callback callback) {
     this.callback = callback;
   }

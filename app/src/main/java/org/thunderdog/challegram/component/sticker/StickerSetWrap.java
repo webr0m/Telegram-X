@@ -93,6 +93,7 @@ public class StickerSetWrap extends FrameLayoutFix implements StickersListContro
   private static class LickView extends View {
     public LickView (Context context) {
       super(context);
+      setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, HeaderView.getTopOffset()));
     }
 
@@ -131,6 +132,7 @@ public class StickerSetWrap extends FrameLayoutFix implements StickersListContro
     bottomWrap = new FrameLayoutFix(context);
     bottomWrap.setLayoutParams(FrameLayoutFix.newParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(56f) + Screen.dp(7f), Gravity.BOTTOM));
     ShadowView shadowView = new ShadowView(context);
+    shadowView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     shadowView.setSimpleTopShadow(true);
     bottomWrap.addView(shadowView);
     themeListener.addThemeInvalidateListener(shadowView);
@@ -186,6 +188,7 @@ public class StickerSetWrap extends FrameLayoutFix implements StickersListContro
     stickersController.attachHeaderViewWithoutNavigation(headerView);
 
     topShadow = new ShadowView(context);
+    topShadow.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     topShadow.setSimpleTopShadow(true);
     themeListener.addThemeInvalidateListener(topShadow);
 
