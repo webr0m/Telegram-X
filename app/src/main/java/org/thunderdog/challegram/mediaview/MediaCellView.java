@@ -176,6 +176,7 @@ public class MediaCellView extends ViewGroup implements
       }
     };
     this.subsamplingImageView.setPanLimit(SubsamplingScaleImageView.PAN_LIMIT_INSIDE);
+    this.subsamplingImageView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     this.subsamplingImageView.setMinimumScaleType(SubsamplingScaleImageView.SCALE_TYPE_CENTER_INSIDE);
     this.subsamplingImageView.setOrientation(SubsamplingScaleImageView.ORIENTATION_USE_EXIF);
     this.subsamplingImageView.setMaxScale(Float.MAX_VALUE);
