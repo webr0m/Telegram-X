@@ -1212,6 +1212,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
     mediaButton = new CameraAccessImageView(context, this);
     mediaButton.setId(R.id.msg_attach);
+    mediaButton.setContentDescription(Lang.getString(R.string.AccessibilityAttach));
     mediaButton.setScaleType(ImageView.ScaleType.CENTER);
     mediaButton.setImageResource(R.drawable.deproko_baseline_attach_26);
     mediaButton.setColorFilter(Theme.iconColor());
@@ -1223,6 +1224,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
     lp = new LinearLayout.LayoutParams(Screen.dp(ATTACH_BUTTONS_WIDTH), Screen.dp(49f));
     cameraButton = new CameraAccessImageView(context, this);
     cameraButton.setId(R.id.btn_camera);
+    cameraButton.setContentDescription(Lang.getString(R.string.AccessibilityCamera));
     cameraButton.setScaleType(ImageView.ScaleType.CENTER);
     cameraButton.setImageResource(R.drawable.deproko_baseline_camera_26);
     cameraButton.setColorFilter(Theme.iconColor());
@@ -1234,6 +1236,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
       lp = new LinearLayout.LayoutParams(Screen.dp(ATTACH_BUTTONS_WIDTH), Screen.dp(49f));
       scheduleButton = new CameraAccessImageView(context, this);
       scheduleButton.setId(R.id.btn_viewScheduled);
+      scheduleButton.setContentDescription(Lang.getString(R.string.AccessibilitySchedule));
       scheduleButton.setScaleType(ImageView.ScaleType.CENTER);
       scheduleButton.setImageResource(R.drawable.baseline_date_range_24);
       scheduleButton.setColorFilter(Theme.iconColor());
@@ -1246,6 +1249,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
     commandButton = new InvisibleImageView(context);
     commandButton.setId(R.id.msg_command);
+    commandButton.setContentDescription(Lang.getString(R.string.AccessibilityCommands));
     commandButton.setColorFilter(Theme.iconColor());
     addThemeFilterListener(commandButton, ColorId.icon);
     commandButton.setScaleType(ImageView.ScaleType.CENTER);
@@ -1260,6 +1264,7 @@ public class MessagesController extends ViewController<MessagesController.Argume
 
       silentButton = new SilentButton(context);
       silentButton.setId(R.id.btn_silent);
+      silentButton.setContentDescription(Lang.getString(R.string.AccessibilitySilent));
       silentButton.setOnClickListener(this);
       silentButton.setLayoutParams(lp);
       addThemeInvalidateListener(silentButton);

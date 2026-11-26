@@ -1919,6 +1919,11 @@
   <string name="CustomNotifications">Custom notifications</string>
   <string name="Send">Send</string>
   <string name="AccessibilityRecordVoice">Record voice message</string>
+  <string name="AccessibilityAttach">Attach file</string>
+  <string name="AccessibilityCamera">Camera</string>
+  <string name="AccessibilitySchedule">Schedule message</string>
+  <string name="AccessibilityCommands">Commands</string>
+  <string name="AccessibilitySilent">Send silently</string>
   <string name="ClearRecentStickers">Clear Recent Stickers</string>
   <string name="ClearRecentEmojiStatuses">Clear Recent Emoji Statuses</string>
   <string name="CropSquare">Square</string>
