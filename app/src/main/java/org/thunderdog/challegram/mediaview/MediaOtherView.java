@@ -33,6 +33,7 @@ public class MediaOtherView extends FrameLayoutFix implements Destroyable {
 
   public MediaOtherView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     this.receiver = new ImageReceiver(this, 0);
     setWillNotDraw(false);
 
