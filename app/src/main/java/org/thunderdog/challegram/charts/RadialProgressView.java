@@ -33,6 +33,7 @@ public class RadialProgressView extends View {
 
   public RadialProgressView(Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
     size = Screen.dp(40);
 
