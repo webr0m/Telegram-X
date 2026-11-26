@@ -276,6 +276,12 @@ public class ChatBottomBarView extends BaseView {
   }
 
   @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (state != null && state.text != null) info.setText(state.text);
+  }
+
+  @Override
   protected void onDraw (Canvas c) {
     if (state != null) {
       RectF rectF = buildRectF();
