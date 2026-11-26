@@ -236,6 +236,18 @@ public class SettingView extends FrameLayoutFix implements FactorAnimator.Target
     }
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    StringBuilder sb = new StringBuilder();
+    if (itemName != null) sb.append(itemName);
+    if (itemData != null) {
+      if (sb.length() > 0) sb.append(": ");
+      sb.append(itemData);
+    }
+    if (sb.length() > 0) info.setText(sb.toString());
+  }
+
   public ImageReceiver getReceiver () {
     if (receiver == null) {
       receiver = new ImageReceiver(this, 0);
