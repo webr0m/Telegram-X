@@ -194,6 +194,35 @@ public class MediaLocationPlaceView extends FrameLayoutFix implements AttachDele
 
     Views.setClickable(this);
     RippleSupport.setSimpleWhiteBackground(this, themeProvider);
+
+    titleView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    addressView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    timerView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    checkView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+  }
+
+  private void updateAccessibilityDescription () {
+    if (titleView == null || addressView == null) {
+      return;
+    }
+    StringBuilder cd = new StringBuilder();
+    CharSequence title = titleView.getText();
+    if (!TextUtils.isEmpty(title)) {
+      cd.append(title);
+    }
+    CharSequence address = addressView.getText();
+    if (!TextUtils.isEmpty(address)) {
+      if (cd.length() > 0) cd.append(", ");
+      cd.append(address);
+    }
+    setContentDescription(cd.length() > 0 ? cd.toString() : null);
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setCheckable(true);
+    info.setChecked(checkView != null && checkView.isChecked());
   }
 
   // Adapter
@@ -225,6 +254,7 @@ public class MediaLocationPlaceView extends FrameLayoutFix implements AttachDele
     timerView.setLivePeriod(livePeriod, expiresAt);
     titleView.setText(title);
     addressView.setText(subtitle);
+    updateAccessibilityDescription();
     boolean needInvalidate = false;
     if (this.accentColor != accentColor) {
       this.accentColor = accentColor;
@@ -264,6 +294,7 @@ public class MediaLocationPlaceView extends FrameLayoutFix implements AttachDele
       receiver.requestFile(location.getIconImage());
       titleView.setText(location.getTitle());
       addressView.setText(location.getAddress());
+      updateAccessibilityDescription();
     }
     checkView.forceSetChecked(isChecked);
   }
@@ -290,6 +321,7 @@ public class MediaLocationPlaceView extends FrameLayoutFix implements AttachDele
 
   public void updateSubtitle (CharSequence newSubtitle) {
     addressView.setText(newSubtitle);
+    updateAccessibilityDescription();
   }
 
   private void clearLiveLocation () {
@@ -311,6 +343,7 @@ public class MediaLocationPlaceView extends FrameLayoutFix implements AttachDele
     timerView.setLivePeriod(livePeriod, expiresAt);
     titleView.setText(title);
     addressView.setText(subtitle);
+    updateAccessibilityDescription();
     receiver.requestFile(null);
     checkView.forceSetChecked(false);
     receiver.invalidate();
