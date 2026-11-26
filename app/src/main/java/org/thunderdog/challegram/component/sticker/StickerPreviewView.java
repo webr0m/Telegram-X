@@ -107,6 +107,7 @@ public class StickerPreviewView extends FrameLayoutFix implements FactorAnimator
 
   public StickerPreviewView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     this.paint = new TextPaint(Paint.ANTI_ALIAS_FLAG | Paint.DITHER_FLAG);
     this.paint.setTextSize(Screen.dp(30f));
     this.paint.setTypeface(Fonts.getRobotoMedium());
