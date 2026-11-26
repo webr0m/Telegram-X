@@ -1925,6 +1925,8 @@
   <string name="AccessibilityCommands">Commands</string>
   <string name="AccessibilitySilent">Send silently</string>
   <string name="AccessibilityMessageSent">Message sent</string>
+  <string name="AccessibilityEdit">Edit</string>
+  <string name="AccessibilityMore">More options</string>
   <string name="ClearRecentStickers">Clear Recent Stickers</string>
   <string name="ClearRecentEmojiStatuses">Clear Recent Emoji Statuses</string>
   <string name="CropSquare">Square</string>

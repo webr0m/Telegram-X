@@ -435,6 +435,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
       if (mode == Mode.SECRET || mode == Mode.USER) {
         callButton = header.addButton(realMenu, R.id.menu_btn_call, R.drawable.baseline_phone_24, buttonColorId, this, Screen.dp(48f));
+        callButton.setContentDescription(Lang.getString(R.string.Call));
         callButton.setAlpha(userFull != null && (userFull.canBeCalled || userFull.hasPrivateCalls) ? 1f : 0f);
       }
 
@@ -447,13 +448,16 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       }
       if (id == R.id.menu_profile || id == R.id.menu_profile_bot) {
         HeaderButton button = header.addButton(realMenu, R.id.menu_btn_manage, R.drawable.baseline_edit_24, buttonColorId, this, Screen.dp(49f));
+        button.setContentDescription(Lang.getString(R.string.AccessibilityEdit));
         button.setVisibility(canManageChat() ? View.VISIBLE : View.GONE);
       }
       if (id == R.id.menu_profile) {
         HeaderButton button = header.addButton(realMenu, R.id.menu_btn_addContact, R.drawable.baseline_person_add_24, buttonColorId, this, Screen.dp(49f));
+        button.setContentDescription(Lang.getString(R.string.AddContact));
         button.setVisibility(canAddAnyKindOfMembers() ? View.VISIBLE : View.GONE);
       }
       HeaderButton moreButton = header.addMoreButton(realMenu, this, buttonColorId);
+      moreButton.setContentDescription(Lang.getString(R.string.AccessibilityMore));
       if (id == R.id.menu_profile_manage) {
         moreButton.setVisibility(hasMoreItems() ? View.VISIBLE : View.INVISIBLE);
       }
@@ -465,6 +469,7 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       transformedMenu.setTranslationY(HeaderView.getSize(false));
       if (Config.USE_SECRET_SEARCH || mode != Mode.SECRET) {
         HeaderButton button = header.addSearchButton(transformedMenu, this, ColorId.icon).setThemeColorId(ColorId.icon);
+        button.setContentDescription(Lang.getString(R.string.Search));
         List<SharedBaseController<?>> list = getControllers();
         button.setVisibility(!list.isEmpty() && list.get(0).canSearch() ? View.VISIBLE : View.INVISIBLE);
       }
