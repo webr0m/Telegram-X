@@ -121,6 +121,24 @@ public class VoiceVideoButtonView extends View implements FactorAnimator.Target,
   }
 
   @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    float searchFactor = inSearchMode.getFloatValue();
+    float videoFactor = inVideoMode.getFloatValue();
+    String desc;
+    if (sendFactor > 0.5f) {
+      desc = org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.Send);
+    } else if (searchFactor > 0.5f) {
+      desc = org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.Search);
+    } else if (videoFactor > 0.5f) {
+      desc = org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.AccessibilityRecordVoice).replace("voice", "video");
+    } else {
+      desc = org.thunderdog.challegram.core.Lang.getString(org.thunderdog.challegram.R.string.AccessibilityRecordVoice);
+    }
+    info.setText(desc);
+  }
+
+  @Override
   protected void onDraw (Canvas c) {
     final int viewWidth = getMeasuredWidth();
     final int viewHeight = getMeasuredHeight();
