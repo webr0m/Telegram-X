@@ -2222,10 +2222,12 @@ public class MessagesController extends ViewController<MessagesController.Argume
           showBottomHint(Strings.buildMarkdown(this, Lang.getString(R.string.MessageContainsPremiumFeatures), null), false);
         } else if (isEditingMessage()) {
           saveMessage(true);
+          sendButton.announceForAccessibility(Lang.getString(R.string.AccessibilityMessageSent));
         } else if (areScheduled) {
           tdlib.ui().showScheduleOptions(this, getChatId(), false, (modifiedSendOptions, disableMarkdown) -> send(modifiedSendOptions), null, null);
         } else {
           send(null);
+          sendButton.announceForAccessibility(Lang.getString(R.string.AccessibilityMessageSent));
         }
       }
     } else if (viewId == R.id.btn_scroll) {
