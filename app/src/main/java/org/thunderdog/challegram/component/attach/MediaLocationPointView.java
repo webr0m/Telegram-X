@@ -49,6 +49,7 @@ public class MediaLocationPointView extends View implements FactorAnimator.Targe
 
   public MediaLocationPointView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     locationIcon = Drawables.get(getResources(), R.drawable.baseline_location_on_24);
     sendIcon = Drawables.get(getResources(), R.drawable.deproko_baseline_send_24);
     progressComponent.setAlpha(1f);
