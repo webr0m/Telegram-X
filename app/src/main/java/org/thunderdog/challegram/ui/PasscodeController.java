@@ -252,6 +252,7 @@ public class PasscodeController extends ViewController<PasscodeController.Args> 
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && mode != Passcode.MODE_BIOMETRICS && needUnlockWithBiometrics()) {
         swirlView = new SwirlView(context);
         swirlView.setOnClickListener(v -> checkBiometricsNeeded());
+        swirlView.setContentDescription(Lang.getString(R.string.passcode_biometrics));
         swirlView.setColorFilter(ColorUtils.alphaColor(Theme.getSubtitleAlpha(), Theme.getColor(ColorId.passcodeIcon)));
         addThemeFilterListener(swirlView, ColorId.passcodeIcon).setIsSubtitle(true);
         swirlView.setLayoutParams(FrameLayoutFix.newParams(Screen.dp(36f), Screen.dp(36f), Gravity.BOTTOM | Gravity.CENTER_HORIZONTAL, 0, 0, 0, Screen.dp(18f)));
@@ -781,6 +782,7 @@ public class PasscodeController extends ViewController<PasscodeController.Args> 
     if (biometricsView == null) {
       biometricsView = new SwirlView(context);
       biometricsView.setOnClickListener(v -> checkBiometricsNeeded());
+      biometricsView.setContentDescription(Lang.getString(R.string.passcode_biometrics));
       biometricsView.setColorFilter(ColorUtils.alphaColor(Theme.getSubtitleAlpha(), Theme.getColor(ColorId.passcodeIcon)));
       addThemeFilterListener(biometricsView, ColorId.passcodeIcon).setIsSubtitle(true);
 

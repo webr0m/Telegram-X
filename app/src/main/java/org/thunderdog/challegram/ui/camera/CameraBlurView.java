@@ -29,6 +29,7 @@ import me.vkryl.core.ColorUtils;
 public class CameraBlurView extends View implements FactorAnimator.Target {
   public CameraBlurView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     setLayoutParams(FrameLayoutFix.newParams(Screen.dp(100f), Screen.dp(100f)));
   }
 

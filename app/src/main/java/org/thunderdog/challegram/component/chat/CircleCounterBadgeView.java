@@ -76,11 +76,16 @@ public class CircleCounterBadgeView extends FrameLayout implements FactorAnimato
     circleButton.init(icon, size, padding, backgroundColorId, iconColorId);
   }
 
+  public void setButtonContentDescription (CharSequence contentDescription) {
+    circleButton.setContentDescription(contentDescription);
+  }
+
   public void setInProgress (boolean inProgress) {
     circleButton.setInProgress(inProgress);
   }
 
   public void setEnabled (boolean enabled, boolean animated) {
+    circleButton.setEnabled(enabled);
     animatorEnabled.setValue(enabled, animated);
   }
 

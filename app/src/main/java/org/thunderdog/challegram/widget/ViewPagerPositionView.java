@@ -26,6 +26,7 @@ import me.vkryl.core.ColorUtils;
 public class ViewPagerPositionView extends View {
   public ViewPagerPositionView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   private int itemCount;

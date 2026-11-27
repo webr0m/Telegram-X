@@ -34,6 +34,7 @@ public class WebsiteEmptyImageView extends View implements Destroyable {
 
   public WebsiteEmptyImageView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     prepare();
   }
 

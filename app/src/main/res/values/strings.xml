@@ -1937,6 +1937,8 @@
   <string name="AccessibilityCallConnected">Call connected</string>
   <string name="AccessibilityCallEnded">Call ended</string>
   <string name="AccessibilityColorTone">Color tone, saturation %1$d%%, brightness %2$d%%</string>
+  <string name="AccessibilityNextSearchResult">Next search result</string>
+  <string name="AccessibilityPreviousSearchResult">Previous search result</string>
   <string name="ClearRecentStickers">Clear Recent Stickers</string>
   <string name="ClearRecentEmojiStatuses">Clear Recent Emoji Statuses</string>
   <string name="CropSquare">Square</string>

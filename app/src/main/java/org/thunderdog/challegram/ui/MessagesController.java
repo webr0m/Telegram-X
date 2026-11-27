@@ -1115,12 +1115,14 @@ public class MessagesController extends ViewController<MessagesController.Argume
     setReactionButtonFactor(0f);
 
     goToNextFoundMessageButtonBadge = new CircleCounterBadgeView(this, R.id.btn_search_next, this, null);
+    goToNextFoundMessageButtonBadge.setButtonContentDescription(Lang.getString(R.string.AccessibilityNextSearchResult));
     goToNextFoundMessageButtonBadge.init(R.drawable.baseline_keyboard_arrow_up_24, 48f, 4f, ColorId.circleButtonChat, ColorId.circleButtonChatIcon);
     goToNextFoundMessageButtonBadge.setTranslationX(CircleCounterBadgeView.BUTTON_WRAPPER_WIDTH);
     goToNextFoundMessageButtonBadge.setTranslationY(Screen.dp(16 - 74));
     goToNextFoundMessageButtonBadge.setEnabled(false, false);
 
     goToPrevFoundMessageButtonBadge = new CircleCounterBadgeView(this, R.id.btn_search_prev, this, null);
+    goToPrevFoundMessageButtonBadge.setButtonContentDescription(Lang.getString(R.string.AccessibilityPreviousSearchResult));
     goToPrevFoundMessageButtonBadge.init(R.drawable.baseline_keyboard_arrow_down_24, 48f, 4f, ColorId.circleButtonChat, ColorId.circleButtonChatIcon);
     goToPrevFoundMessageButtonBadge.setTranslationX(CircleCounterBadgeView.BUTTON_WRAPPER_WIDTH);
     goToPrevFoundMessageButtonBadge.setEnabled(false, false);
