@@ -67,6 +67,14 @@ public class WallpaperParametersView extends View implements ClickHelper.Delegat
     setWillNotDraw(false);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText("Blur");
+    info.setCheckable(true);
+    info.setChecked(isBlurEnabled.getValue());
+  }
+
   public void initWith (TdApi.Background background, @Nullable WallpaperParametersListener listener) {
     this.isBlurEnabled.setValue(((TdApi.BackgroundTypeWallpaper) background.type).isBlurred, false);
     this.isInitialBlur = this.isBlurEnabled.getValue();

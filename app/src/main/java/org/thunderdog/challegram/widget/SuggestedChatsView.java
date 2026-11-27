@@ -88,6 +88,7 @@ public final class SuggestedChatsView extends View implements TGAvatars.Callback
       } else {
         text.set(getTextMaxWidth(), in, null);
       }
+      setContentDescription(in);
     }
   }
 
