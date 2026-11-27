@@ -109,6 +109,7 @@ public class ChatFolderIconSelector {
         if (iconResource != 0) {
           imageView.setImageDrawable(Drawables.get(imageView.getResources(), iconResource));
           String iconName = item.getStringValue();
+          imageView.setContentDescription(!StringUtils.isEmpty(iconName) ? iconName : "Folder icon");
           boolean isSelected = !isDefault && isSelectedIcon(iconName);
           int iconColorId = isSelected ? ColorId.iconActive : ColorId.icon;
           imageView.setColorFilter(Theme.getColor(iconColorId));
