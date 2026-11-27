@@ -1,35 +1,37 @@
 ﻿# Telegram X - Estado y continuación
 
 ## Estado actual
-- Rama: eature/official-flows
-- HEAD: $head
-- Último release publicado: eta.391
-- URL release: https://github.com/webr0m/Telegram-X/releases/tag/beta.391
+- Rama: feature/official-flows
+- Código de beta.392: 9733f3336f8241074a5b7a5f2103030cdfc45f45; el commit de documentación va después sin mover el tag.
+- Último release publicado: beta.392 (prerelease, arm64-v8a y x64); ver sección «Lote publicado beta.392».
+- URL release: https://github.com/webr0m/Telegram-X/releases/tag/beta.392
 - Fecha de trabajo: 2026-11-27
-- Cambios pendientes locales no relacionados: submódulos pp/jni/tgvoip/... y pp/thirdparty/androidx-media/..., más gradle/wrapper/gradle-wrapper.jar. No tocarlos.
+- Cambios pendientes locales no relacionados: submódulos app/jni/tgvoip/... y app/thirdparty/androidx-media/..., más gradle/wrapper/gradle-wrapper.jar. No tocarlos.
 
 ## Objetivo original
 Implementar integraciones faltantes de Telegram X frente a Telegram oficial, subirlas a GitHub y generar releases. Luego se eligió Accesibilidad/TalkBack como integración grande y se avanzó en lotes pequeños, compilando, commiteando, pusheando y publicando release por cada lote.
+
+Regla de continuación: no crear commits, pushes, tags ni releases sin autorización explícita del owner para ese lote. Un OK para un lote anterior no arrastra al siguiente.
 
 ## Integraciones grandes completadas
 1. Mini Apps:
    - web_app_share_to_story
    - web_app_verify_age
-   - esize_frame
+   - Resize_frame
    - Commit: d6235939
-   - Release: eta.309
+   - Release: beta.309
 2. App shortcuts estáticos:
-   - pp/src/main/res/xml/shortcuts.xml
+   - app/src/main/res/xml/shortcuts.xml
    - manifest meta-data
    - Commit: 7889e1b9
-   - Release: eta.310
+   - Release: beta.310
 3. PiP de llamadas:
    - CallActivity, CallController
    - Commits: 9978c468, 15c1d4bb
-   - Releases: eta.311, eta.312
+   - Releases: beta.311, beta.312
 
 ## Accesibilidad/TalkBack completada
-Se realizaron 79 commits con prefijo eat(a11y). Patrón usado por lote:
+Se realizaron 80 commits con prefijo feat(a11y). El lote beta.392 está commiteado, pusheado y publicado con ambos ABI. Patrón usado por lote:
 1. Editar una o pocas vistas.
 2. Compilar:
    ``powershell
@@ -38,7 +40,7 @@ Se realizaron 79 commits con prefijo eat(a11y). Patrón usado por lote:
    cd D:\Descargas\tgx
    .\gradlew :app:assembleLatestDebug '-Pabi=arm64' '-PbetaVersionSuffix=-beta.NNN' --offline
    ``
-3. Commit y push:
+3. Commit y push (sólo con autorización explícita del owner para beta.NNN):
    ``powershell
    git add <archivos>
    git commit -m "feat(a11y): ..."
@@ -50,7 +52,7 @@ Se realizaron 79 commits con prefijo eat(a11y). Patrón usado por lote:
    ``
 
 APK esperado:
-- pp/build/outputs/apk/latest/debug/TGX-Example-0.29.2.1834-beta.NNN-arm64-v8a-debug.apk
+- app/build/outputs/apk/latest/debug/TGX-Example-0.29.2.1834-beta.NNN-arm64-v8a-debug.apk
 
 Patrones de accesibilidad usados:
 - Describir vistas custom con onInitializeAccessibilityNodeInfo y info.setText(...).
@@ -61,17 +63,17 @@ Patrones de accesibilidad usados:
 - Para vistas con texto propio (TextView), normalmente no hace falta tocarlas.
 
 Archivos principales tocados:
-- pp/src/main/java/org/thunderdog/challegram/component/chat/...
-- pp/src/main/java/org/thunderdog/challegram/component/attach/...
-- pp/src/main/java/org/thunderdog/challegram/component/user/...
-- pp/src/main/java/org/thunderdog/challegram/component/base/...
-- pp/src/main/java/org/thunderdog/challegram/component/sticker/...
-- pp/src/main/java/org/thunderdog/challegram/component/inline/...
-- pp/src/main/java/org/thunderdog/challegram/component/passcode/...
-- pp/src/main/java/org/thunderdog/challegram/mediaview/...
-- pp/src/main/java/org/thunderdog/challegram/widget/...
-- pp/src/main/java/org/thunderdog/challegram/charts/...
-- pp/src/main/res/values/strings.xml
+- app/src/main/java/org/thunderdog/challegram/component/chat/...
+- app/src/main/java/org/thunderdog/challegram/component/attach/...
+- app/src/main/java/org/thunderdog/challegram/component/user/...
+- app/src/main/java/org/thunderdog/challegram/component/base/...
+- app/src/main/java/org/thunderdog/challegram/component/sticker/...
+- app/src/main/java/org/thunderdog/challegram/component/inline/...
+- app/src/main/java/org/thunderdog/challegram/component/passcode/...
+- app/src/main/java/org/thunderdog/challegram/mediaview/...
+- app/src/main/java/org/thunderdog/challegram/widget/...
+- app/src/main/java/org/thunderdog/challegram/charts/...
+- app/src/main/res/values/strings.xml
 
 ## Commits de accesibilidad
 - 12f90430 feat(a11y): add content descriptions to send and record buttons
@@ -153,9 +155,10 @@ Archivos principales tocados:
 - 8991a792 feat(a11y): mark gear view decorative
 - e401129a feat(a11y): mark force touch view decorative
 - a4f87f9e feat(a11y): label link preview toggle
+- 9733f333 feat(a11y): label search, camera and biometrics controls
 
 ## Candidatos restantes del escaneo amplio
-Quedan 113 archivos custom con extends View/ViewGroup/... sin marcadores de accesibilidad. Los 30 más pequeños/probables candidatos:
+El escaneo amplio anterior encontró 113 archivos custom con extends View/ViewGroup/... sin marcadores de accesibilidad. El lote beta.392 cubre cuatro de esos candidatos (ViewPagerPositionView, CameraBlurView, WebsiteEmptyImageView y CircleCounterBadgeView); la lista siguiente conserva los 26 restantes de la shortlist anterior y debe reejecutarse antes de darla por una medición actual:
 - app\src\main\java\org\thunderdog\challegram\widget\NoScrollTextView.java (35 lines)
 - app\src\main\java\org\thunderdog\challegram\ui\SingleViewAdapter.java (40 lines)
 - app\src\main\java\org\thunderdog\challegram\widget\AnimatedView.java (43 lines)
@@ -169,7 +172,6 @@ Quedan 113 archivos custom con extends View/ViewGroup/... sin marcadores de acce
 - app\src\main\java\org\thunderdog\challegram\data\BaseComponent.java (63 lines)
 - app\src\main\java\org\thunderdog\challegram\v\MaxHeightScrollView.java (66 lines)
 - app\src\main\java\org\thunderdog\challegram\data\PageBlockSimple.java (67 lines)
-- app\src\main\java\org\thunderdog\challegram\widget\ViewPagerPositionView.java (70 lines)
 - app\src\main\java\org\thunderdog\challegram\navigation\ContentRelativeLayout.java (75 lines)
 - app\src\main\java\org\thunderdog\challegram\texture\CustomTextureView.java (83 lines)
 - app\src\main\java\org\thunderdog\challegram\component\chat\AttachLinearLayout.java (84 lines)
@@ -179,10 +181,7 @@ Quedan 113 archivos custom con extends View/ViewGroup/... sin marcadores de acce
 - app\src\main\java\org\thunderdog\challegram\component\chat\MessagesLayout.java (87 lines)
 - app\src\main\java\org\thunderdog\challegram\data\PageBlockFile.java (92 lines)
 - app\src\main\java\org\thunderdog\challegram\ui\camera\CameraTextureView.java (92 lines)
-- app\src\main\java\org\thunderdog\challegram\ui\camera\CameraBlurView.java (98 lines)
 - app\src\main\java\org\thunderdog\challegram\widget\KeyboardFrameLayoutContent.java (100 lines)
-- app\src\main\java\org\thunderdog\challegram\component\chat\CircleCounterBadgeView.java (101 lines)
-- app\src\main\java\org\thunderdog\challegram\widget\WebsiteEmptyImageView.java (104 lines)
 - app\src\main\java\org\thunderdog\challegram\widget\EmbeddableStickerView.java (109 lines)
 - app\src\main\java\org\thunderdog\challegram\widget\SwirlView.java (117 lines)
 - app\src\main\java\org\thunderdog\challegram\widget\GiftHeaderView.java (123 lines)
@@ -198,19 +197,32 @@ Notas sobre candidatos:
 - No se han implementado integraciones grandes adicionales después de PiP; solo accesibilidad.
 
 ## Recomendación para continuar
-1. Seguir con decorativos de alto valor:
-   - LiveLocationView (ya cubierto en beta.386)
-   - PaletteView (ya cubierto)
-   - CameraFadeView (ya cubierto)
-   - FillingSpace (ya cubierto)
-   - RippleRevealView (ya cubierto)
-2. Revisar candidatos interactivos pequeños:
-   - HeaderButton (necesita mapear icono a etiqueta)
-   - CameraControlButton
-   - ChatFolderIconSelector (ya cubierto)
-   - SliderView (ya cubierto)
-3. Si se quiere otra integración grande, definir cuál (notificaciones, widgets, CarPlay/Android Auto, etc.) antes de implementar.
-4. Mantener el patrón de un lote pequeño por release para no perder trazabilidad.
+
+1. Siguiente lote recomendado: `CameraControlButton`.
+   - Añadir etiquetas localizadas para cambiar de cámara y para flash off/on/auto.
+   - Actualizar la etiqueta al cambiar icono y durante el giro de cámara.
+   - Etiquetar también el contenedor clicable de `RecordAudioVideoController` y marcar su hijo visual como no importante.
+   - No inferir acciones sólo por icono: en `HeaderButton` un mismo dibujo puede representar acciones distintas.
+2. `HeaderButton` requiere un lote aparte y mayor: mapeo ID → recurso en `HeaderView.genButton`, casos directos, subclases con estado y exclusión de controles de vista previa sin acción.
+3. Mantener `RelativeSessionLayout` bloqueado hasta definir una acción compatible con el SDK actual.
+4. Si se quiere otra integración grande, definir cuál (notificaciones, widgets, CarPlay/Android Auto, etc.) antes de implementar.
+5. Mantener el patrón de un lote pequeño por release para no perder trazabilidad.
+
+## Lote publicado beta.392 (2026-11-27)
+
+- `CircleCounterBadgeView` ahora delega la descripción al `CircleButton` real y propaga `setEnabled`; la galería etiqueta su cámara y la búsqueda del chat etiqueta resultado anterior/siguiente con recursos localizados.
+- Los dos accesos de desbloqueo biométrico de `PasscodeController` usan la etiqueta existente `passcode_biometrics`.
+- `ViewPagerPositionView`, `CameraBlurView` y `WebsiteEmptyImageView` quedan marcados como decorativos.
+- Verificación estática: 11 invariantes de accesibilidad en verde.
+- Commit de producto: `9733f3336f8241074a5b7a5f2103030cdfc45f45`; empujado a `origin/feature/official-flows`.
+- Release: <https://github.com/webr0m/Telegram-X/releases/tag/beta.392> (prerelease); tag y target apuntan al commit de producto, y la documentación va en un commit posterior sin mover el tag.
+- Build arm64: `:app:assembleLatestDebug -Pabi=arm64 -PbetaVersionSuffix=-beta.392 --offline`, `BUILD SUCCESSFUL in 1m 6s`.
+- APK arm64: `TGX-Example-0.29.2.1834-beta.392-arm64-v8a-debug.apk`; versión `0.29.2.1834-beta.392-arm64-v8a-debug`; tamaño `99.730.151` bytes; SHA-256 `d782c3928090a0bfe443047ceddd90e988313bb202bc896630135d9fc4d7f3a3`.
+- Build x64: el mismo comando con `-Pabi=x86_64`, `BUILD SUCCESSFUL in 1m 8s`.
+- APK x64: `TGX-Example-0.29.2.1834-beta.392-x64-debug.apk`; versión `0.29.2.1834-beta.392-x64-debug`; tamaño `106.883.274` bytes; SHA-256 `a8cee6ca2069bc3d3d42f6e575f82919564c5242f7700cabdeb5ffba074f327b`.
+- Ambos APK: paquete `org.example.tgx`, `versionCode=1834000`, target SDK 37, firma V2 válida y certificado debug `6e9530ff0d13b296292dad593eb82770c5bc25147a05e6bb32a7afca36adf15f`; tamaños y digestos remotos cotejados.
+- Dispositivo: no hay uno utilizable (`adb` muestra un transporte `offline`), por lo que la prueba en pantalla queda pendiente.
+- Los submódulos y `gradle-wrapper.jar` siguen sin tocarse.
 
 ## Comandos de referencia
 Compilar:
@@ -221,7 +233,7 @@ cd D:\Descargas\tgx
 .\gradlew :app:assembleLatestDebug '-Pabi=arm64' '-PbetaVersionSuffix=-beta.NNN' --offline
 ``
 
-Publicar:
+Publicar (sólo con autorización explícita del owner para beta.NNN):
 ``powershell
 git add <archivos>
 git commit -m "feat(a11y): ..."
