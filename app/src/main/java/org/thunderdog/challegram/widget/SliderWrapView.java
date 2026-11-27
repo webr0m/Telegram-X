@@ -60,6 +60,7 @@ public class SliderWrapView extends LinearLayout implements SliderView.Listener,
       setScaleType(ScaleType.CENTER);
       setImageResource(R.drawable.baseline_brightness_5_24);
       setColorFilter(Theme.iconColor());
+      setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
     private Bitmap cutOffBitmap;

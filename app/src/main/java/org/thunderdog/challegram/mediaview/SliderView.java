@@ -41,6 +41,14 @@ public class SliderView extends View implements FactorAnimator.Target {
 
   public SliderView (Context context) {
     super(context);
+    setFocusable(true);
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.SeekBar");
+    info.setText("Slider, " + Math.round((value + 1f) * 50f) + "%");
   }
 
   public void setAnchorMode (int anchorMode) {
