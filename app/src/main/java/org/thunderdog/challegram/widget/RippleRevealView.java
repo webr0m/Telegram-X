@@ -30,6 +30,7 @@ public class RippleRevealView extends View {
 
   public RippleRevealView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   public void setRevealFactor (float factor) {

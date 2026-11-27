@@ -22,6 +22,7 @@ import me.vkryl.core.ColorUtils;
 public class CameraFadeView extends View {
   public CameraFadeView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     setBackgroundColor(ColorUtils.color((int) (255f * .7f), 0));
   }
 

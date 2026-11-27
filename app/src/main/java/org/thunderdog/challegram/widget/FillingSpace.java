@@ -15,6 +15,7 @@ import me.vkryl.core.lambda.Destroyable;
 public class FillingSpace extends View implements Destroyable {
   public FillingSpace (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     setVisibility(View.GONE);
   }
 

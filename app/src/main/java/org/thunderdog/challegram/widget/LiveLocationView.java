@@ -34,6 +34,7 @@ public class LiveLocationView extends View implements Destroyable {
 
   public LiveLocationView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     liveLocationBmp = Drawables.get(getResources(), R.drawable.baseline_location_on_48);
     setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, Screen.dp(132f)));
   }
