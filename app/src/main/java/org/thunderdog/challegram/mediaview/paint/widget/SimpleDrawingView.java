@@ -25,6 +25,7 @@ public class SimpleDrawingView extends View implements PaintState.SimpleDrawingC
 
   public SimpleDrawingView (Context context) {
     super(context);
+    setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
   }
 
   public void setPaintState (PaintState state) {

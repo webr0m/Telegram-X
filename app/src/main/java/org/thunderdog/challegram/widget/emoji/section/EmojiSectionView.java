@@ -27,6 +27,12 @@ public class EmojiSectionView extends View {
     super(context);
   }
 
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setText(section != null ? "Emoji section" : null);
+  }
+
   private EmojiSection section;
 
   public void setSection (EmojiSection section) {
