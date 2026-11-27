@@ -65,6 +65,14 @@ public class ColorPaletteView extends View implements ClickHelper.Delegate {
       this.hsv[1] = this.hsv[2] = 1f;
     }
     this.helper = new ClickHelper(this);
+    setFocusable(true);
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    info.setClassName("android.widget.SeekBar");
+    info.setText("Color palette, " + Math.round(value * 100f) + "%");
   }
 
   private boolean hadTemporaryChanges;
