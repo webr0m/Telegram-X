@@ -137,6 +137,7 @@ public class ForceTouchView extends FrameLayoutFix implements
 
   public ForceTouchView (Context context) {
     super(context);
+    setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
 
     this.themeListenerList = new ThemeListenerList();
 
