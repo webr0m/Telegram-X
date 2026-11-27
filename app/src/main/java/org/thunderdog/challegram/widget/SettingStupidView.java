@@ -55,6 +55,7 @@ public class SettingStupidView extends RelativeLayout implements RtlCheckListene
     params.addRule(Lang.alignParent());
 
     titleView = new NoScrollTextView(context);
+    titleView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     titleView.setId(R.id.text_stupid);
     titleView.setTextColor(Theme.getColor(titleColorId = ColorId.text));
     titleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 16f);
@@ -68,6 +69,7 @@ public class SettingStupidView extends RelativeLayout implements RtlCheckListene
     params.topMargin = Screen.dp(2f);
 
     subtitleView = new NoScrollTextView(context);
+    subtitleView.setImportantForAccessibility(android.view.View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     subtitleView.setTextColor(Theme.getColor(subtitleColorId = ColorId.textLight));
     subtitleView.setTextSize(TypedValue.COMPLEX_UNIT_DIP, 13f);
     subtitleView.setTypeface(Fonts.getRobotoRegular());
@@ -76,6 +78,22 @@ public class SettingStupidView extends RelativeLayout implements RtlCheckListene
 
     Views.setClickable(this);
     RippleSupport.setSimpleWhiteBackground(this);
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (android.view.accessibility.AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    StringBuilder cd = new StringBuilder();
+    CharSequence title = titleView.getText();
+    if (!android.text.TextUtils.isEmpty(title)) {
+      cd.append(title);
+    }
+    CharSequence subtitle = subtitleView.getText();
+    if (!android.text.TextUtils.isEmpty(subtitle)) {
+      if (cd.length() > 0) cd.append(": ");
+      cd.append(subtitle);
+    }
+    info.setText(cd.length() > 0 ? cd.toString() : null);
   }
 
   @Override
