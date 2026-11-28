@@ -2,10 +2,12 @@
 
 ## Estado actual
 - Rama: feature/official-flows
-- Código de beta.392: 9733f3336f8241074a5b7a5f2103030cdfc45f45; el commit de documentación va después sin mover el tag.
-- Último release publicado: beta.392 (prerelease, arm64-v8a y x64); ver sección «Lote publicado beta.392».
-- URL release: https://github.com/webr0m/Telegram-X/releases/tag/beta.392
-- Fecha de trabajo: 2026-11-27
+- Código de beta.394: db6decdebd514e4779e722a38d5a04471a930d33; el commit de documentación va después sin mover el tag.
+- Último release publicado: beta.394 (prerelease, arm64-v8a y x64); ver sección «Lote publicado beta.394».
+- URL release: https://github.com/webr0m/Telegram-X/releases/tag/beta.394
+- Canal de actualizaciones: GitHub Releases de `webr0m/Telegram-X`, incluyendo prereleases; la configuración queda en `local.properties` y `BuildConfig`.
+- Trabajo local posterior: ninguno; los ocho lotes de accesibilidad `CameraControlButton`, `HeaderButton`, `RelativeSessionLayout`, `MenuMoreWrap`, `GiftHeaderView`, `MiniAppController`, `ShareController` y `ToggleHeaderView2` están incluidos en beta.394.
+- Fecha de trabajo: 2026-11-28
 - Cambios pendientes locales no relacionados: submódulos app/jni/tgvoip/... y app/thirdparty/androidx-media/..., más gradle/wrapper/gradle-wrapper.jar. No tocarlos.
 
 ## Objetivo original
@@ -31,7 +33,7 @@ Regla de continuación: no crear commits, pushes, tags ni releases sin autorizac
    - Releases: beta.311, beta.312
 
 ## Accesibilidad/TalkBack completada
-Se realizaron 80 commits con prefijo feat(a11y). El lote beta.392 está commiteado, pusheado y publicado con ambos ABI. Patrón usado por lote:
+Se realizaron 81 commits con prefijo feat(a11y). beta.392, beta.393 y beta.394 están commiteados, pusheados y publicados con ambos ABI; beta.393 añadió el actualizador automático desde GitHub Releases. Patrón usado por lote:
 1. Editar una o pocas vistas.
 2. Compilar:
    ``powershell
@@ -189,24 +191,26 @@ El escaneo amplio anterior encontró 113 archivos custom con extends View/ViewGr
 Notas sobre candidatos:
 - Muchos son bases (SparseDrawableView, AnimatedView, NoScrollTextView) o contenedores; no conviene marcarlos globalmente.
 - Algunos son puramente visuales y pueden marcarse decorativos.
-- RelativeSessionLayout no recibió acción accesible personalizada porque AccessibilityAction no compila con el compileSdk actual.
+- RelativeSessionLayout ya no está bloqueado: expone «Terminate session» con una acción AndroidX compatible y el diálogo de confirmación existente.
+- Las filas ricas de `MenuMoreWrap` ya exponen una etiqueta consolidada y el estado de sus checkboxes; su clase base sólo gestiona tamaño y animación y no conviene modificarla globalmente.
+- `GiftHeaderView` ya expone su cabecera y descripción en un único nodo accesible, reutilizando el `FormattedText` que pinta y sin anunciar el markdown crudo.
+- `MiniAppController` ya oculta de accesibilidad sólo el `MiniAppViewport` host duplicado; conserva el handle «Expand», el `WebView`, sus descendientes y las cuatro vías de expansión.
+- `ShareController` ya etiqueta el envío y sincroniza el icono de emoji/formato con la acción accesible real: abrir emoji, abrir formato, cerrar emoji o mostrar el teclado.
+- `ToggleHeaderView2` ya consolida título y subtítulo dibujados con `Canvas`; cubre el filtro global de chats y la cabecera de traducción.
+- `HeaderView` restaura la importancia de accesibilidad exacta del menú de vista previa al promoverlo, evitando que sus acciones desaparezcan de TalkBack.
 
 ## Bloqueos / decisiones
 - No tocar submódulos ni gradle-wrapper.jar.
-- RelativeSessionLayout: pendiente una estrategia compatible para exponer "Remove".
 - No se han implementado integraciones grandes adicionales después de PiP; solo accesibilidad.
 
 ## Recomendación para continuar
 
-1. Siguiente lote recomendado: `CameraControlButton`.
-   - Añadir etiquetas localizadas para cambiar de cámara y para flash off/on/auto.
-   - Actualizar la etiqueta al cambiar icono y durante el giro de cámara.
-   - Etiquetar también el contenedor clicable de `RecordAudioVideoController` y marcar su hijo visual como no importante.
-   - No inferir acciones sólo por icono: en `HeaderButton` un mismo dibujo puede representar acciones distintas.
-2. `HeaderButton` requiere un lote aparte y mayor: mapeo ID → recurso en `HeaderView.genButton`, casos directos, subclases con estado y exclusión de controles de vista previa sin acción.
-3. Mantener `RelativeSessionLayout` bloqueado hasta definir una acción compatible con el SDK actual.
-4. Si se quiere otra integración grande, definir cuál (notificaciones, widgets, CarPlay/Android Auto, etc.) antes de implementar.
-5. Mantener el patrón de un lote pequeño por release para no perder trazabilidad.
+1. Verificar en dispositivo los ocho lotes publicados en beta.394 (`CameraControlButton`, `HeaderButton`, `RelativeSessionLayout`, `MenuMoreWrap`, `GiftHeaderView`, `MiniAppController`, `ShareController` y `ToggleHeaderView2`) cuando haya un transporte ADB utilizable.
+2. `CameraControlButton` quedó publicado en beta.394: etiquetas de cámara y flash, actualización durante el giro y wrapper accesible único para vídeo circular. Falta probarlo en dispositivo.
+3. `HeaderButton`, `RelativeSessionLayout`, `MenuMoreWrap`, `GiftHeaderView`, `MiniAppController`, `ShareController` y `ToggleHeaderView2` también están publicados en beta.394; los ocho lotes requieren prueba en dispositivo.
+4. Comprobar la primera actualización automática real desde beta.393 a beta.394 cuando haya un transporte ADB utilizable.
+5. Si se quiere otra integración grande, definir cuál (notificaciones, widgets, CarPlay/Android Auto, etc.) antes de implementar.
+6. Para continuar con accesibilidad, reevaluar la shortlist de candidatos contra el árbol vivo antes de elegir el siguiente lote.
 
 ## Lote publicado beta.392 (2026-11-27)
 
@@ -223,6 +227,123 @@ Notas sobre candidatos:
 - Ambos APK: paquete `org.example.tgx`, `versionCode=1834000`, target SDK 37, firma V2 válida y certificado debug `6e9530ff0d13b296292dad593eb82770c5bc25147a05e6bb32a7afca36adf15f`; tamaños y digestos remotos cotejados.
 - Dispositivo: no hay uno utilizable (`adb` muestra un transporte `offline`), por lo que la prueba en pantalla queda pendiente.
 - Los submódulos y `gradle-wrapper.jar` siguen sin tocarse.
+
+## Lote publicado beta.393 (2026-11-27)
+
+- `GitHubUpdateClient` consulta `https://api.github.com/repos/webr0m/Telegram-X/releases?per_page=20`, incluye prereleases y elige el APK más reciente compatible con ABI y sabor SDK.
+- La descarga se hace en streaming al directorio privado `externalFilesDir/updates`, con progreso, cancelación, límite de 512 MB, verificación de tamaño y SHA-256, y renombrado atómico desde `.part`.
+- Antes de abrir el instalador se validan paquete, `versionName` y coincidencia de firma con la app instalada; `FileProvider` expone sólo el directorio `updates/`.
+- `AppUpdater` conserva los modos prompt/always/sólo Wi-Fi/never, limita las consultas automáticas a una cada 15 minutos y permite forzar la comprobación manual.
+- Los enlaces de actualización y beta subscription apuntan a `https://github.com/webr0m/Telegram-X/releases`; el canal anterior de Telegram/Play sólo se usa si no hay configuración GitHub.
+- Commit de producto: `a62efe16bc9aea5ea13194723f451704b172627b`, empujado a `origin/feature/official-flows`.
+- Release: <https://github.com/webr0m/Telegram-X/releases/tag/beta.393> (prerelease); el tag anotado apunta al commit de producto.
+- Build arm64: `:app:assembleLatestDebug -Pabi=arm64 -PbetaVersionSuffix=-beta.393 --offline`; `BUILD SUCCESSFUL` (`D:/Descargas/tgx update/build-beta-393-arm64.log`).
+- APK arm64: `TGX-Example-0.29.2.1834-beta.393-arm64-v8a-debug.apk`; 99.762.967 bytes; SHA-256 `f4bcfc75d7a23938eac935ab675c544729ff835407cdd30776bd45b697fd19a3`.
+- Build x64: el mismo comando con `-Pabi=x86_64`; `BUILD SUCCESSFUL` (`D:/Descargas/tgx update/build-beta-393-x64.log`).
+- APK x64: `TGX-Example-0.29.2.1834-beta.393-x64-debug.apk`; 106.916.090 bytes; SHA-256 `ef2da77c4f8cd253adb44e52f9c9473cbe8acdcef6fe660b92ebc911cdfcede0`.
+- Ambos APK: paquete `org.example.tgx`, `versionCode=1834000`, `minSdk=33`, `targetSdk=37`, firma V2 válida y certificado debug `6e9530ff0d13b296292dad593eb82770c5bc25147a05e6bb32a7afca36adf15f`; tamaños y digestos remotos cotejados, assets `uploaded`.
+- Compilación de producto: cinco sabores disponibles (latest, lollipop, marshmallow, nop y qrs), `BUILD SUCCESSFUL in 47s` (`D:/Descargas/tgx update/build-github-updater-final.log`).
+- Dispositivo: la prueba funcional del actualizador sigue pendiente porque el único transporte ADB estaba `offline`.
+- Migración: quien tenga beta.392 debe instalar beta.393 manualmente una vez, porque beta.392 no contiene el nuevo actualizador. La primera actualización automática real podrá comprobarse desde beta.393 hacia una release posterior.
+- Las próximas betas deben seguir firmándose con el mismo certificado; si cambia la clave, el actualizador rechazará el APK.
+
+## Lote publicado beta.394 (2026-11-28)
+
+- Reúne los ocho lotes de accesibilidad `CameraControlButton`, `HeaderButton`, `RelativeSessionLayout`, `MenuMoreWrap`, `GiftHeaderView`, `MiniAppController`, `ShareController` y `ToggleHeaderView2`.
+- `ToggleHeaderView2` dibuja título y subtítulo con `Canvas` y ahora publica ambos en un único `contentDescription`, actualizado sólo cuando cambia el texto y con `TYPE_WINDOW_CONTENT_CHANGED`. Cubre el filtro global de chats y los estados de la cabecera de traducción.
+- La revisión previa detectó y corrigió una regresión de `HeaderView`: el menú promocionado conservaba la ocultación de la vista previa. Ahora guarda la importancia exacta de cada nodo y la restaura al promoverlo.
+- Auditoría final conjunta: 25/25 invariantes en verde. Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 42s`, registro en `D:/Descargas/tgx update/build-toggle-header-a11y-final.log`.
+- Commit de producto: `db6decdebd514e4779e722a38d5a04471a930d33`; empujado a `origin/feature/official-flows`. El tag anotado `beta.394` apunta a ese commit y la documentación va en un commit posterior sin moverlo.
+- Release: <https://github.com/webr0m/Telegram-X/releases/tag/beta.394> (prerelease).
+- Build arm64: `:app:assembleLatestDebug -Pabi=arm64 -PbetaVersionSuffix=-beta.394 --offline`; `BUILD SUCCESSFUL in 1m 44s`, registro en `D:/Descargas/tgx update/build-beta-394-arm64.log`.
+- APK arm64: `TGX-Example-0.29.2.1834-beta.394-arm64-v8a-debug.apk`; 99.790.379 bytes; SHA-256 `b3beb3ef71b82c731bfddf8c544e1f819cd9997c038dd17c7d761f0018e878eb`.
+- Build x64: el mismo comando con `-Pabi=x86_64`; `BUILD SUCCESSFUL in 1m 5s`, registro en `D:/Descargas/tgx update/build-beta-394-x64.log`.
+- APK x64: `TGX-Example-0.29.2.1834-beta.394-x64-debug.apk`; 106.943.502 bytes; SHA-256 `f139f8e1b7be62f2adae1d5c5847bb6b47a701901959f44da00de42acd42a0f2`.
+- Ambos APK: paquete `org.example.tgx`, `versionCode=1834000`, minSdk 33, target SDK 37, ABI correcto, firma V2 válida y certificado debug `6e9530ff0d13b296292dad593eb82770c5bc25147a05e6bb32a7afca36adf15f`; tamaños y digestos remotos cotejados, assets `uploaded`.
+- Dispositivo: TalkBack sigue sin probarse porque ADB sólo muestra `127.0.0.1:5037 offline`. También sigue pendiente comprobar una actualización automática real desde beta.393.
+- Los submódulos y `gradle-wrapper.jar` conservan sus cambios previos ajenos y no entraron en el commit.
+
+## Lote local CameraControlButton (2026-11-27, publicado en beta.394)
+
+- `CameraControlButton` asocia sus cinco iconos a recursos localizados: cambiar a cámara trasera/delantera y flash off/on/automático.
+- La descripción se actualiza tanto en `setIconRes` como en `changeIcon`; el giro de cámara la cambia al sustituir el icono y emite `TYPE_WINDOW_CONTENT_CHANGED`.
+- `RecordAudioVideoController` etiqueta el wrapper clicable del botón de vídeo circular, actualiza su descripción al cambiar de cámara y marca el `CameraControlButton` hijo como `IMPORTANT_FOR_ACCESSIBILITY_NO` para evitar un nodo duplicado.
+- Recursos añadidos en `app/src/main/res/values/strings.xml`: `AccessibilitySwitchToRearCamera`, `AccessibilitySwitchToFrontCamera`, `AccessibilityFlashOff`, `AccessibilityFlashOn` y `AccessibilityFlashAuto`.
+- Verificación estática: 19 invariantes en verde (unicidad XML, mapeo icono → recurso, actualización de descripción, anuncio de cambios y wrapper accesible único).
+- Compilación final: `:app:compileLatestDebugJavaWithJavac`, `:app:compileLollipopDebugJavaWithJavac`, `:app:compileMarshmallowDebugJavaWithJavac`, `:app:compileNopDebugJavaWithJavac` y `:app:compileQrsDebugJavaWithJavac`; `BUILD SUCCESSFUL in 50s` (`D:/Descargas/tgx update/build-camera-control-a11y.log`).
+- El primer intento usó un `switch` sobre IDs de `R.drawable`, que no son constantes en esta configuración; se sustituyó por comparaciones directas antes de la compilación final.
+- `git diff --check` limpio. Dispositivo no probado: `adb devices -l` sigue mostrando sólo `127.0.0.1:5037 offline`.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
+
+## Lote local HeaderButton (2026-11-28, publicado en beta.394)
+
+- `HeaderButton` añade `setContentDescriptionRes` para etiquetas localizadas con argumentos, anuncio de `TYPE_WINDOW_CONTENT_CHANGED` sólo cuando cambia la descripción, estado accesible checked/checkable y un gate de `performClick` que exige vista visible, habilitada y alfa mayor que cero.
+- `HeaderView` etiqueta sus helpers estables (Done, Reply, Edit, Copy, View, Retry, Delete, Share, More y Search); `BackHeaderButton`, `LockHeaderButton`, `StopwatchHeaderButton` y `ClearButton` derivan la etiqueta de su acción o estado real.
+- Los IDs ambiguos se corrigen en cada pantalla según el clic: seleccionar archivos, elegir un bot inline, abrir galería, procesar solicitudes de ingreso, bloquear usuario, eliminar historial de llamadas, abrir un juego externo, copiar enlace, editar foto, PiP y acciones de mensajes.
+- Los estados dinámicos actualizan icono y etiqueta juntos: PIN/fijado, mute/silenciado, bloqueo de app, temporizador de auto-borrado con valor, traducción/detener traducción y toggle de cadenas sin traducir con estado checked.
+- Los menús de vista previa de `HeaderView` quedan fuera del árbol accesible; los menús real/transformado de `ProfileController` alternan su accesibilidad, los botones de multimedia deshabilitados dejan de ser nodos y las decoraciones de vista previa de carpetas no son clicables ni accesibles.
+- `EmojiStatusSelectorEmojiPage` sincroniza el factor de `ClearButton` para que sólo sea accionable al completar su aparición; `ClearButton` sincroniza `enabled` con ese factor.
+- Se añadieron 16 recursos `Accessibility*` en `app/src/main/res/values/strings.xml`.
+- Verificación estática: 30/30 invariantes en verde (API y eventos, helpers, subclases, estados dinámicos, duplicados, decorativos y unicidad de recursos).
+- Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 29s`.
+- `git diff --check` limpio. TalkBack no probado en dispositivo: ADB sigue sin un transporte utilizable.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
+
+## Lote local RelativeSessionLayout (2026-11-28, publicado en beta.394)
+
+- `RelativeSessionLayout` publica la acción personalizada «Terminate session» mediante `AccessibilityNodeInfoCompat.AccessibilityActionCompat`, resolviendo el bloqueo del `AccessibilityAction` de plataforma.
+- `SettingsSessionsController` instala o retira la acción al vincular cada fila y comparte `canRemoveSession` con el callback de swipe. Sólo otras sesiones habilitadas, sin terminación global o individual en curso, exponen la acción; la sesión actual no la expone.
+- La acción abre `killSession`, el mismo diálogo de confirmación que el swipe, en vez de terminar directamente la sesión. Publicación y despacho exigen API 21+, listener, vista visible, habilitada y alfa mayor que cero; el cambio de listener emite `TYPE_WINDOW_CONTENT_CHANGED`.
+- Verificación estática: 15/15 invariantes en verde (API compatible, etiqueta localizada, gates, predicado compartido, reciclaje, confirmación y ausencia de destrucción directa).
+- Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 29s`, 459 tareas accionables (16 ejecutadas, 443 actualizadas).
+- `git diff --check` limpio. TalkBack no probado en dispositivo: ADB sólo muestra `127.0.0.1:5037 offline`.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
+
+## Lote local MenuMoreWrap (2026-11-28, publicado en beta.394)
+
+- `MenuMoreWrap.addItem(Tdlib, MenuItem, OnClickListener)` consolida título y subtítulo de las filas ricas en un único `contentDescription` del `FrameLayoutFix` clicable. Los `NoScrollTextView` hijos quedan fuera del árbol accesible para evitar que TalkBack repita el texto; cubre las selecciones de remitente de mensajes y adjuntos.
+- Las filas con checkbox publican `checkable` y `checked` en `onInitializeAccessibilityNodeInfo`; al alternar el valor actualizan `TYPE_WINDOW_CONTENT_CHANGED` antes de ejecutar el listener existente. También aplica a «Hide media» en el visor multimedia.
+- El overload simple basado en `TextView` conserva su semántica nativa y `MenuMoreWrapAbstract` no se modifica porque sólo controla dimensiones y animación del popup.
+- Verificación estática: 14/14 invariantes en verde (etiqueta consolidada, hijos ocultos, estado del checkbox, anuncio de cambio y preservación de listeners/IDs).
+- La primera compilación falló en los cinco sabores porque el override anónimo se declaró `protected`; se corrigió a `public`, la firma requerida por `View`.
+- Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 30s`, 459 tareas accionables (16 ejecutadas, 443 actualizadas).
+- `git diff --check` limpio. TalkBack no probado en dispositivo: ADB sólo muestra `127.0.0.1:5037 offline`.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
+
+## Lote local GiftHeaderView (2026-11-28, publicado en beta.394)
+
+- `GiftHeaderView` dibujaba la cabecera y la descripción con `Canvas`, sin hijos ni `contentDescription`: ambos textos eran invisibles para TalkBack. Ahora publica un único nodo con cabecera y descripción separadas por salto de línea.
+- `buildContent` crea una sola vez el header localizado y el `TdApi.FormattedText` procesado, y los comparte entre los `TextWrapper` que dibujan y la descripción accesible. Se usa `description.text`, no el markdown crudo, para no anunciar asteriscos.
+- La descripción se actualiza al medir y al cambiar los recursos; `TextUtils.equals` evita anuncios repetidos y `TYPE_WINDOW_CONTENT_CHANGED` sólo se envía cuando cambia el texto real. La vista sigue sin ser clicable y no añade hijos, listeners ni recursos.
+- `GiftCodeController` conserva los pares `GiftLink/GiftLinkDesc` y `GiftLinkActivated/GiftLinkActivatedDesc`; `SettingHolder` no necesita cambios.
+- Verificación estática: 14/14 invariantes en verde (texto compartido con pintura, descripción procesada, nodo único, comparación de cambios, recursos activados/no activados y ausencia de acciones).
+- La primera compilación falló por un import incorrecto de `TdApi`; se corrigió a `org.drinkless.tdlib.TdApi`, el paquete usado por el proyecto.
+- Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 23s`, 459 tareas accionables (16 ejecutadas, 443 actualizadas), registro en `D:/Descargas/tgx update/build-gift-header-a11y.log`.
+- `git diff --check` limpio. TalkBack no probado en dispositivo: ADB sólo muestra `127.0.0.1:5037 offline`.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
+
+## Lote local MiniAppController (2026-11-28, publicado en beta.394)
+
+- El `MiniAppViewport` host era clicable para expandir, pero no tenía descripción accesible; el handle sí expone «Expand» y ejecuta la misma acción. El host queda con `IMPORTANT_FOR_ACCESSIBILITY_NO`, eliminando el nodo duplicado sin usar `NO_HIDE_DESCENDANTS`.
+- La exclusión sólo afecta la semántica del host: conserva su listener táctil, el handle etiquetado, el arrastre vertical, el `WebView` y todos sus descendientes. `MiniAppViewport` no se modifica.
+- Siguen disponibles las cuatro vías de expansión: toque en el host, clic accesible del handle, arrastre hacia arriba del handle y evento `web_app_expand` del bridge. El gesto hacia abajo para minimizar también se conserva.
+- Verificación estática: 12/12 invariantes en verde (host único excluido, descendientes preservados, handle localizado, listeners, cuatro expansiones, `WebView` accesible y recursos en inglés/español).
+- Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 1m 29s`, registro en `D:/Descargas/tgx update/build-miniapp-host-a11y.log`.
+- `git diff --check` limpio. TalkBack no probado en dispositivo: ADB sólo muestra `127.0.0.1:5037 offline`.
+- Prueba pendiente: abrir una Mini App compacta, confirmar un único nodo «Expand», expandir con TalkBack, navegar el contenido del `WebView` y comprobar que el arrastre táctil de minimizar/expandir sigue funcionando.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
+
+## Lote local ShareController (2026-11-28, publicado en beta.394)
+
+- El botón de envío `btn_done` era un `CustomImageView` clicable sin descripción accesible; ahora usa el recurso existente `R.string.Send`, sin cambiar el envío ni la programación de mensajes.
+- `btn_emoji` cambiaba entre iconos de emoji, formato, cierre y teclado sin etiqueta. `setEmojiButtonIcon` actualiza icono y descripción juntos en los seis puntos de cambio: «Open emoji keyboard», «Open text formatting», «Close emoji keyboard» o «Show keyboard», según `emojiShown`, `emojiState` y el icono objetivo.
+- `TextUtils.equals` evita reasignaciones repetidas y `TYPE_WINDOW_CONTENT_CHANGED` sólo se anuncia cuando cambia la acción real. `processEmojiClick`, el panel existente y `sendMenu.attachToView(okButton)` se conservan.
+- Se añadieron cuatro recursos `Accessibility*` en inglés en `app/src/main/res/values/strings.xml`; el resto de idiomas usa el fallback en inglés hasta traducirlos.
+- Verificación estática: 13/13 invariantes en verde (envío etiquetado, seis cambios centralizados, mapeo de estados, comparación de descripciones, evento de cambio y conservación de acciones).
+- Compilación final de `latest`, `lollipop`, `marshmallow`, `nop` y `qrs`: `BUILD SUCCESSFUL in 1m 19s`, registro en `D:/Descargas/tgx update/build-share-controller-a11y.log`.
+- `git diff --check` limpio. TalkBack no probado en dispositivo: ADB sólo muestra `127.0.0.1:5037 offline`.
+- Prueba pendiente: recorrer los cuatro estados del botón de emoji/formato con TalkBack, confirmar que cada etiqueta activa la acción esperada y verificar el envío y la programación desde el menú existente.
+- Este lote quedó incluido en el commit de producto `db6decde` y en el prerelease beta.394.
 
 ## Comandos de referencia
 Compilar:
