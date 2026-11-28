@@ -29,7 +29,11 @@ app.id=org.example.tgx
 app.name=TGX Example
 
 ## Link to the app's website. If unavailable, link to the market page could be used.
-app.download_url=https://telegram.org/dlx
+app.download_url=https://github.com/webr0m/Telegram-X/releases
+
+## Automatic APK updates, including GitHub prereleases.
+app.github_releases_url=https://github.com/webr0m/Telegram-X/releases
+app.github_api_url=https://api.github.com/repos/webr0m/Telegram-X/releases?per_page=20
 
 ## Obtain credentials to access Telegram API:
 # https://core.telegram.org/api/obtaining_api_id

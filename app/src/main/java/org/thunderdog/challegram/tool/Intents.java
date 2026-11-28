@@ -363,6 +363,26 @@ public class Intents {
     }
   }
 
+  private static boolean isAppSpecificFile (Context context, File file) {
+    File path = file.getAbsoluteFile();
+    File[] roots = {
+      context.getFilesDir(),
+      context.getCacheDir(),
+      context.getExternalFilesDir(null),
+      context.getExternalCacheDir()
+    };
+    for (File root : roots) {
+      if (root != null) {
+        String rootPath = root.getAbsolutePath();
+        String filePath = path.getAbsolutePath();
+        if (filePath.equals(rootPath) || filePath.startsWith(rootPath + File.separator)) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public static boolean openFile (final BaseActivity context, File file, @Nullable String mimeType) {
     return openFile(context, file, mimeType, false);
   }
@@ -375,7 +395,7 @@ public class Intents {
       }
     }
     final String mimeType = mimeTypeRaw;
-    if (context.permissions().requestReadExternalStorage(file, granted -> {
+    if (!isAppSpecificFile(context, file) && context.permissions().requestReadExternalStorage(file, granted -> {
       if (granted) {
         openFile(context, file, mimeType, isRetry);
       }

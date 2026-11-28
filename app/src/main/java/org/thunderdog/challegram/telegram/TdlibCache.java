@@ -54,7 +54,6 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import me.vkryl.android.AppInstallationUtil;
-import me.vkryl.core.StringUtils;
 import me.vkryl.core.collection.LongSparseIntArray;
 import me.vkryl.core.collection.LongSparseLongArray;
 import me.vkryl.core.lambda.CancellableRunnable;
@@ -275,11 +274,7 @@ public class TdlibCache implements LiveLocationManager.OutputDelegate, CleanupSt
   }
 
   private @NonNull AppInstallationUtil.DownloadUrl toDownloadUrl (@Nullable TdApi.HttpUrl url) {
-    final String httpUrl = url != null ? url.url : null;
-    if (!StringUtils.isEmpty(httpUrl) && tdlib.hasUrgentInAppUpdate()) {
-      return new AppInstallationUtil.DownloadUrl(httpUrl);
-    }
-    return AppUpdater.getDownloadUrl(httpUrl);
+    return AppUpdater.getDownloadUrl(url != null ? url.url : null);
   }
 
   public void getDownloadUrl (@Nullable final RunnableData<AppInstallationUtil.DownloadUrl> callback) {

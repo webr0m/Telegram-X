@@ -1273,6 +1273,7 @@ public abstract class BaseActivity extends FragmentActivity implements View.OnTo
 
   @Override
   public void onDestroy () {
+    if (appUpdater != null) appUpdater.destroy();
     if (miniAppTabs != null) miniAppTabs.destroy();
     try {
       super.onDestroy();

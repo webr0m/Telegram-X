@@ -15,6 +15,7 @@ package org.thunderdog.challegram.util;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentSender;
+import android.widget.Toast;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -36,6 +37,7 @@ import org.thunderdog.challegram.BaseActivity;
 import org.thunderdog.challegram.BuildConfig;
 import org.thunderdog.challegram.Log;
 import org.thunderdog.challegram.R;
+import org.thunderdog.challegram.U;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.navigation.ViewController;
@@ -43,6 +45,7 @@ import org.thunderdog.challegram.telegram.ConnectionListener;
 import org.thunderdog.challegram.telegram.FileUpdateListener;
 import org.thunderdog.challegram.telegram.Tdlib;
 import org.thunderdog.challegram.telegram.TdlibContext;
+import org.thunderdog.challegram.telegram.TdlibManager;
 import org.thunderdog.challegram.tool.Intents;
 import org.thunderdog.challegram.tool.Strings;
 import org.thunderdog.challegram.tool.UI;
@@ -87,21 +90,32 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
   @IntDef({
     FlowType.NONE,
     FlowType.TELEGRAM_CHANNEL,
-    FlowType.GOOGLE_PLAY
+    FlowType.GOOGLE_PLAY,
+    FlowType.GITHUB
   })
   public @interface FlowType {
     int
       NONE = 0,
       TELEGRAM_CHANNEL = 1,
-      GOOGLE_PLAY = 2;
+      GOOGLE_PLAY = 2,
+      GITHUB = 3;
   }
+
+  private static final long GITHUB_CHECK_INTERVAL_MS = 15 * 60 * 1000L;
+  private static long lastGitHubCheckTimeMs;
 
   private final BaseActivity context;
   private final ReferenceList<Listener> listeners;
 
   private final AppUpdateManager googlePlayUpdateManager;
+  private final GitHubUpdateClient githubUpdateClient;
   private AppUpdateInfo googlePlayUpdateInfo;
   private boolean googlePlayFlowError;
+  private boolean destroyed;
+  @Nullable
+  private GitHubUpdateClient.Release githubRelease;
+  @Nullable
+  private File githubApkFile;
 
   private boolean updateOffered;
 
@@ -130,6 +144,7 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
       }
     }
     this.googlePlayUpdateManager = appUpdateManager;
+    this.githubUpdateClient = new GitHubUpdateClient(context);
   }
 
   @State
@@ -169,8 +184,21 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
   }
 
   public void checkForUpdates () {
+    checkForUpdates(false);
+  }
+
+  public void checkForUpdates (boolean force) {
+    if (destroyed) {
+      return;
+    }
     if (state == State.NONE) {
-      if (preferTelegramChannelFlow()) {
+      if (hasGitHubUpdates()) {
+        long now = System.currentTimeMillis();
+        if (force || now - lastGitHubCheckTimeMs >= GITHUB_CHECK_INTERVAL_MS) {
+          lastGitHubCheckTimeMs = now;
+          checkForGitHubUpdates();
+        }
+      } else if (preferTelegramChannelFlow()) {
         checkForTelegramChannelUpdates();
       } else {
         checkForGooglePlayUpdates();
@@ -178,6 +206,10 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
     } else if (state == State.AVAILABLE) {
       offerUpdate();
     }
+  }
+
+  private static boolean hasGitHubUpdates () {
+    return !StringUtils.isEmpty(BuildConfig.GITHUB_API_URL) && !StringUtils.isEmpty(BuildConfig.GITHUB_RELEASES_URL);
   }
 
   private boolean preferTelegramChannelFlow () {
@@ -199,6 +231,9 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
   }
 
   public static AppInstallationUtil.DownloadUrl getDownloadUrl (@Nullable String serverSuggestedDownloadUrl) {
+    if (!StringUtils.isEmpty(BuildConfig.GITHUB_RELEASES_URL)) {
+      return new AppInstallationUtil.DownloadUrl(BuildConfig.GITHUB_RELEASES_URL);
+    }
     @AppInstallationUtil.InstallerId int installerId = AppInstallationUtil.getInstallerId(AppContext.get());
     AppInstallationUtil.PublicMarketUrls publicMarketUrls = publicMarketUrls();
     return publicMarketUrls.toDownloadUrl(installerId, serverSuggestedDownloadUrl);
@@ -209,7 +244,7 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
       final int oldState = this.state;
       this.state = state;
       for (Listener listener : listeners) {
-        listener.onAppUpdateStateChanged(state, oldState, flowType == FlowType.TELEGRAM_CHANNEL);
+        listener.onAppUpdateStateChanged(state, oldState, flowType == FlowType.TELEGRAM_CHANNEL || flowType == FlowType.GITHUB);
       }
     }
   }
@@ -321,6 +356,65 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
     }
   }
 
+  private void checkForGitHubUpdates () {
+    setState(State.CHECKING);
+    String preferredAbi = U.getPreferredAbiFlavor();
+    if (preferredAbi == null) {
+      onUpdateUnavailable();
+      return;
+    }
+    githubRelease = null;
+    githubApkFile = null;
+    githubUpdateClient.findRelease(BuildConfig.VERSION_NAME, preferredAbi, githubUpdateListener());
+  }
+
+  private GitHubUpdateClient.Listener githubUpdateListener () {
+    return new GitHubUpdateClient.Listener() {
+      @Override
+      public void onRelease (@Nullable GitHubUpdateClient.Release release, @Nullable Throwable error) {
+        if (destroyed) {
+          return;
+        }
+        if (error != null) {
+          Log.w("Unable to check GitHub updates", error);
+          onUpdateUnavailable();
+        } else if (release == null) {
+          onUpdateUnavailable();
+        } else {
+          githubRelease = release;
+          onUpdateAvailable(FlowType.GITHUB, 0, release.asset.size, release.tagName, release.commit, false);
+        }
+      }
+
+      @Override
+      public void onProgress (long bytesDownloaded, long totalBytes) {
+        if (!destroyed && state == State.DOWNLOADING) {
+          onUpdateDownloadProgress(bytesDownloaded, totalBytes);
+        }
+      }
+
+      @Override
+      public void onDownloaded (File file, GitHubUpdateClient.Release release) {
+        if (destroyed) {
+          return;
+        }
+        githubApkFile = file;
+        githubRelease = release;
+        onUpdateAvailable(FlowType.GITHUB, release.asset.size, release.asset.size, release.tagName, release.commit, true);
+      }
+
+      @Override
+      public void onDownloadFailed (Throwable error) {
+        if (destroyed) {
+          return;
+        }
+        Log.w("Unable to download GitHub update", error);
+        githubApkFile = null;
+        onUpdateDownloadCanceled();
+      }
+    };
+  }
+
   private void checkForTelegramChannelUpdates () {
     setState(State.CHECKING);
     Tdlib tdlib = context.hasTdlib() ? context.currentTdlib() : null;
@@ -410,6 +504,54 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
     return false;
   }
 
+  private boolean offerGitHubUpdate () {
+    GitHubUpdateClient.Release release = githubRelease;
+    if (release == null) {
+      return false;
+    }
+    switch (Settings.instance().getAutoUpdateMode()) {
+      case Settings.AUTO_UPDATE_MODE_PROMPT: {
+        ViewController<?> c = context.navigation().getCurrentStackItem();
+        if (c != null && c.isFocused()) {
+          final long bytesToDownload = totalBytesToDownload() - bytesDownloaded();
+          ViewController.Options.Builder b = new ViewController.Options.Builder()
+            .info(Lang.getMarkdownString(c,
+              R.string.AppUpdateAvailableVersionPrompt,
+              (target, argStart, argEnd, argIndex, needFakeBold) -> argIndex != 1 ? Lang.boldCreator().onCreateSpan(target, argStart, argEnd, argIndex, needFakeBold) : null,
+              Strings.buildSize(bytesToDownload), release.tagName
+            ))
+            .item(new ViewController.OptionItem(R.id.btn_update, Lang.getString(R.string.DownloadUpdate), ViewController.OptionColor.BLUE, R.drawable.baseline_system_update_24))
+            .item(new ViewController.OptionItem(R.id.btn_sourceCode, Lang.getString(R.string.UpdateSourceChanges), ViewController.OptionColor.NORMAL, R.drawable.baseline_code_24))
+            .cancelItem();
+          c.showOptions(b.build(), (optionItemView, id) -> {
+            if (id == R.id.btn_update) {
+              downloadUpdate();
+            } else if (id == R.id.btn_sourceCode) {
+              UI.openUrl(release.htmlUrl);
+            }
+            return true;
+          });
+          return true;
+        }
+        break;
+      }
+      case Settings.AUTO_UPDATE_MODE_ALWAYS: {
+        downloadUpdate();
+        break;
+      }
+      case Settings.AUTO_UPDATE_MODE_WIFI_ONLY: {
+        if (TdlibManager.instance().watchDog().isWifi()) {
+          downloadUpdate();
+        }
+        break;
+      }
+      case Settings.AUTO_UPDATE_MODE_NEVER: {
+        break;
+      }
+    }
+    return false;
+  }
+
   @Override
   public void onConnectionTypeChanged (TdApi.NetworkType type) {
     if (type instanceof TdApi.NetworkTypeWiFi) {
@@ -444,6 +586,7 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
     this.totalBytesToDownload = totalBytesToDownload;
     this.displayVersion = displayVersion;
     this.commit = commit;
+    updateOffered = false;
     if (readyToInstall) {
       setState(State.READY_TO_INSTALL);
     } else {
@@ -466,6 +609,10 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
           updateOffered = offerTelegramChannelUpdate();
           break;
         }
+        case FlowType.GITHUB: {
+          updateOffered = offerGitHubUpdate();
+          break;
+        }
       }
     }
   }
@@ -485,6 +632,13 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
       case FlowType.TELEGRAM_CHANNEL: {
         // TODO add tdlib reference & show progress
         telegramChannelTdlib.files().downloadFile(telegramChannelFile.document.document);
+        break;
+      }
+      case FlowType.GITHUB: {
+        if (githubRelease != null) {
+          onUpdateDownloading();
+          githubUpdateClient.download(githubRelease, githubUpdateListener());
+        }
         break;
       }
     }
@@ -511,6 +665,12 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
         UI.openFile(new TdlibContext(context, telegramChannelTdlib), telegramChannelFile.document.fileName, new File(telegramChannelFile.document.document.local.path), telegramChannelFile.document.mimeType, 0);
         break;
       }
+      case FlowType.GITHUB: {
+        if (githubApkFile != null && !Intents.openFile(context, githubApkFile, "application/vnd.android.package-archive")) {
+          UI.showToast(R.string.Error, Toast.LENGTH_SHORT);
+        }
+        break;
+      }
       case FlowType.GOOGLE_PLAY: {
         googlePlayUpdateManager.completeUpdate();
         setState(State.INSTALLING);
@@ -528,10 +688,26 @@ public class AppUpdater implements InstallStateUpdatedListener, FileUpdateListen
   private void onUpdateDownloadCanceled () {
     if (state != State.DOWNLOADING && state != State.READY_TO_INSTALL)
       return;
+    updateOffered = false;
     setState(State.AVAILABLE);
   }
 
   private void onUpdateUnavailable () {
+    flowType = FlowType.NONE;
+    githubRelease = null;
+    githubApkFile = null;
+    bytesDownloaded = 0;
+    totalBytesToDownload = 0;
+    displayVersion = null;
+    commit = null;
+    updateOffered = false;
     setState(State.NONE);
+  }
+
+  public void destroy () {
+    destroyed = true;
+    githubUpdateClient.cancel();
+    githubRelease = null;
+    githubApkFile = null;
   }
 }

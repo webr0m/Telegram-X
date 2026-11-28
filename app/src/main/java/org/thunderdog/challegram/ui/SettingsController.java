@@ -787,7 +787,10 @@ public class SettingsController extends ViewController<Void> implements
     AppInstallationUtil.DownloadUrl downloadUrl = AppUpdater.getDownloadUrl(null);
     @DrawableRes int downloadIconRes;
     @StringRes int downloadStringRes = R.string.CheckForUpdates;
-    if (tdlib.hasUrgentInAppUpdate() && tdlib.isProduction()) {
+    if (!StringUtils.isEmpty(BuildConfig.GITHUB_RELEASES_URL)) {
+      downloadUrl = new AppInstallationUtil.DownloadUrl(BuildConfig.GITHUB_RELEASES_URL);
+      downloadIconRes = tdlib.hasUrgentInAppUpdate() && tdlib.isProduction() ? R.drawable.baseline_warning_24 : R.drawable.baseline_update_24;
+    } else if (tdlib.hasUrgentInAppUpdate() && tdlib.isProduction()) {
       downloadIconRes = R.drawable.baseline_warning_24;
       downloadUrl = new AppInstallationUtil.DownloadUrl(downloadUrl.installerId, tdlib.tMeUrl(BuildConfig.TELEGRAM_UPDATES_CHANNEL));
     } else {

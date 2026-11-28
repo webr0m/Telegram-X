@@ -375,7 +375,7 @@ public class MainController extends ViewPagerController<Void> implements Menu, M
 
     context().appUpdater().addListener(this);
     if (context().appUpdater().state() == AppUpdater.State.READY_TO_INSTALL) {
-      onAppUpdateAvailable(context().appUpdater().flowType() == AppUpdater.FlowType.TELEGRAM_CHANNEL, true);
+      onAppUpdateAvailable(context().appUpdater().flowType() == AppUpdater.FlowType.TELEGRAM_CHANNEL || context().appUpdater().flowType() == AppUpdater.FlowType.GITHUB, true);
     }
   }
 

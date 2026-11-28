@@ -9345,7 +9345,10 @@ public class TdlibUi extends Handler {
   }
 
   public void subscribeToBeta (TdlibDelegate context) {
-    openUrl(context, Lang.getStringSecure(R.string.url_betaSubscription), null);
+    String url = !StringUtils.isEmpty(BuildConfig.GITHUB_RELEASES_URL)
+      ? BuildConfig.GITHUB_RELEASES_URL
+      : Lang.getStringSecure(R.string.url_betaSubscription);
+    openUrl(context, url, null);
   }
 
   public static CharSequence getTdlibVersionSignature () {

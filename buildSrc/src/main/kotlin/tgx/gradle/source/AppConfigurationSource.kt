@@ -131,6 +131,10 @@ abstract class AppConfigurationSource : ValueSource<ApplicationConfig, AppConfig
         },
       appDownloadUrl =
         getOrDefault(properties, "app.download_url", defaults),
+      githubApiUrl =
+        getOrDefault(properties, "app.github_api_url", defaults),
+      githubReleasesUrl =
+        getOrDefault(properties, "app.github_releases_url", defaults),
       googlePlayUrl =
         properties.getProperty("app.google_download_url", null),
       galaxyStoreUrl =

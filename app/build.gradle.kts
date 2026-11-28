@@ -451,6 +451,8 @@ android {
     buildConfigString("SAFETYNET_API_KEY", config.safetyNetToken)
 
     buildConfigString("DOWNLOAD_URL", config.appDownloadUrl)
+    buildConfigString("GITHUB_API_URL", config.githubApiUrl)
+    buildConfigString("GITHUB_RELEASES_URL", config.githubReleasesUrl)
     buildConfigString("GOOGLE_PLAY_URL", config.googlePlayUrl)
     buildConfigString("GALAXY_STORE_URL", config.galaxyStoreUrl)
     buildConfigString("HUAWEI_APPGALLERY_URL", config.huaweiAppGalleryUrl)

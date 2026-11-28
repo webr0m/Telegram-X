@@ -1245,7 +1245,7 @@ public class SettingsThemeController extends RecyclerViewController<SettingsThem
     } else if (viewId == R.id.btn_checkUpdates) {
       switch (context().appUpdater().state()) {
         case AppUpdater.State.NONE: {
-          context().appUpdater().checkForUpdates();
+          context().appUpdater().checkForUpdates(true);
           break;
         }
         case AppUpdater.State.CHECKING:
