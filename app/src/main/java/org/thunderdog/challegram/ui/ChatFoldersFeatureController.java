@@ -310,9 +310,13 @@ public class ChatFoldersFeatureController extends SinglePageBottomSheetViewContr
       headerView.addView(buildPagerHeaderView(chatFolders), LayoutHelper.createFrame(LayoutHelper.WRAP_CONTENT, LayoutHelper.MATCH_PARENT, Gravity.CENTER_HORIZONTAL));
 
       BackHeaderButton backButton = new BackHeaderButton(context);
+      backButton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      backButton.setClickable(false);
       headerView.addView(backButton, FrameLayoutFix.newParams(Screen.dp(56f), LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.LEFT));
 
       HeaderButton searchButton = new HeaderButton(context);
+      searchButton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      searchButton.setClickable(false);
       searchButton.setImageResource(R.drawable.baseline_search_24);
       searchButton.setThemeColorId(getHeaderIconColorId());
       headerView.addView(searchButton, FrameLayoutFix.newParams(Screen.dp(56f), LayoutHelper.MATCH_PARENT, Gravity.TOP | Gravity.RIGHT));

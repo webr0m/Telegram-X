@@ -24,6 +24,7 @@ import org.thunderdog.challegram.component.attach.MediaBottomBaseController;
 import org.thunderdog.challegram.component.attach.MediaLayout;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.navigation.BackHeaderButton;
+import org.thunderdog.challegram.navigation.HeaderButton;
 import org.thunderdog.challegram.navigation.HeaderView;
 import org.thunderdog.challegram.navigation.Menu;
 import org.thunderdog.challegram.support.ViewSupport;
@@ -156,7 +157,8 @@ public class JoinRequestsController extends MediaBottomBaseController<Void> impl
   @Override
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_search) {
-      header.addMoreButton(menu, this);
+      HeaderButton moreButton = header.addMoreButton(menu, this);
+      moreButton.setContentDescriptionRes(R.string.AccessibilityProcessAllJoinRequests);
       header.addSearchButton(menu, this);
     } else if (id == R.id.menu_clear) {
       header.addClearButton(menu, this);

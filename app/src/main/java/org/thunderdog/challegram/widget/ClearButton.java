@@ -22,6 +22,7 @@ import android.view.MotionEvent;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 
+import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.navigation.HeaderButton;
 import org.thunderdog.challegram.theme.ColorId;
@@ -54,6 +55,8 @@ public class ClearButton extends HeaderButton {
     paint.setStrokeWidth(Screen.dp(2f));
 
     setLayoutParams(new LinearLayout.LayoutParams(totalWidth, ViewGroup.LayoutParams.MATCH_PARENT));
+    setContentDescriptionRes(R.string.AccessibilityClearSearch);
+    setEnabled(false);
   }
 
   private int colorId;
@@ -65,6 +68,11 @@ public class ClearButton extends HeaderButton {
   @Override
   public boolean onTouchEvent (MotionEvent event) {
     return factor == 1f && super.onTouchEvent(event);
+  }
+
+  @Override
+  public boolean performClick () {
+    return factor == 1f && super.performClick();
   }
 
   private int totalHeight;
@@ -136,6 +144,7 @@ public class ClearButton extends HeaderButton {
   public void setFactor (float factor) {
     if (this.factor != factor) {
       this.factor = factor;
+      setEnabled(factor == 1f);
       if (factor >= 0f) {
         invalidate();
       }

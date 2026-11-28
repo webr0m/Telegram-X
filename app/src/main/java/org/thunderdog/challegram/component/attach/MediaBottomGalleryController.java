@@ -52,6 +52,7 @@ import org.thunderdog.challegram.mediaview.MediaViewDelegate;
 import org.thunderdog.challegram.mediaview.MediaViewThumbLocation;
 import org.thunderdog.challegram.mediaview.data.MediaItem;
 import org.thunderdog.challegram.mediaview.data.MediaStack;
+import org.thunderdog.challegram.navigation.HeaderButton;
 import org.thunderdog.challegram.navigation.HeaderView;
 import org.thunderdog.challegram.navigation.Menu;
 import org.thunderdog.challegram.navigation.MenuMoreWrap;
@@ -106,9 +107,11 @@ public class MediaBottomGalleryController extends MediaBottomBaseController<Medi
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_more) {
       if (mediaLayout.getMode() != MediaLayout.MODE_AVATAR_PICKER) {
-        header.addSearchButton(menu, this);
+        HeaderButton searchButton = header.addSearchButton(menu, this);
+        searchButton.setContentDescriptionRes(R.string.AccessibilitySelectInlineBot);
       }
-      header.addMoreButton(menu, this);
+      HeaderButton moreButton = header.addMoreButton(menu, this);
+      moreButton.setContentDescriptionRes(R.string.Gallery);
     } else if (id == R.id.menu_clear) {
       header.addClearButton(menu, this);
     }

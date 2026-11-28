@@ -55,11 +55,13 @@ public class LockHeaderButton extends HeaderButton implements View.OnClickListen
     setOnClickListener(this);
     setOnLongClickListener(this);
     setLayoutParams(new LinearLayout.LayoutParams(Screen.dp(49f), ViewGroup.LayoutParams.MATCH_PARENT));
+    updateContentDescription();
   }
 
   @Override
   protected void onMeasure (int widthMeasureSpec, int heightMeasureSpec) {
     super.onMeasure(widthMeasureSpec, heightMeasureSpec);
+    updateContentDescription();
     animator.setValue(!isVisuallyLocked(), false);
   }
 
@@ -84,6 +86,7 @@ public class LockHeaderButton extends HeaderButton implements View.OnClickListen
       return;
     }
     final boolean open = !Passcode.instance().toggleLock();
+    updateContentDescription();
     animator.setValue(open, true);
     UI.getContext(getContext()).checkPasscode(true);
   }
@@ -104,9 +107,18 @@ public class LockHeaderButton extends HeaderButton implements View.OnClickListen
   public void update () {
     final int visibility = Passcode.instance().isEnabled() ? View.VISIBLE : View.GONE;
     final boolean open = !isVisuallyLocked();
+    updateContentDescription();
     animator.setValue(open, false);
     if (visibility != getVisibility()) {
       setVisibility(visibility);
+    }
+  }
+
+  private void updateContentDescription () {
+    if (Passcode.instance().getAutolockMode() == Passcode.AUTOLOCK_MODE_INSTANT) {
+      setContentDescriptionRes(R.string.AutoLockInstantWarn);
+    } else {
+      setContentDescriptionRes(isVisuallyLocked() ? R.string.AccessibilityUnlockApp : R.string.AccessibilityLockApp);
     }
   }
 

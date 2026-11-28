@@ -325,6 +325,7 @@ public final class MiniAppController extends ViewController<Void> implements Men
     root.setOrientation(LinearLayout.VERTICAL);
     MiniAppViewport host = viewport = new MiniAppViewport(context, root);
     viewport.setCompact(mode instanceof TdApi.WebAppOpenModeCompact);
+    host.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     host.setOnClickListener(v -> viewport.setCompact(false));
     fullscreen = new MiniAppFullscreen(context(), host, root, this::sendFullscreenState, this::requestClose);
     initialFullscreen = mode instanceof TdApi.WebAppOpenModeFullScreen;

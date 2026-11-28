@@ -1646,6 +1646,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     }
 
     HeaderButton pipButton = header.genButton(R.id.menu_btn_pictureInPicture, R.drawable.deproko_baseline_outinline_24, ColorId.white, null, Screen.dp(49f), header);
+    pipButton.setContentDescriptionRes(R.string.AccessibilityPictureInPicture);
     pipButton.setBackgroundResource(R.drawable.bg_btn_header_light);
     pipButton.setVisibility(canGoPip() ? View.VISIBLE : View.GONE);
     menu.addView(pipButton);
@@ -1655,6 +1656,7 @@ public class MediaViewController extends ViewController<MediaViewController.Args
     shareButton.setVisibility(canShare() ? View.VISIBLE : View.GONE);
 
     HeaderButton editButton = header.addEditButton(menu, null, ColorId.white);
+    editButton.setContentDescriptionRes(R.string.AccessibilityEditPhoto);
     editButton.setImageResource(R.drawable.baseline_brush_24);
     editButton.setBackgroundResource(R.drawable.bg_btn_header_light);
     editButton.setVisibility(canEdit() ? View.VISIBLE : View.GONE);

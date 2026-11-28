@@ -18,11 +18,16 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.graphics.drawable.Drawable;
+import android.text.TextUtils;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.annotation.DrawableRes;
+import androidx.annotation.StringRes;
 
+import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
 import org.thunderdog.challegram.tool.Drawables;
@@ -49,6 +54,10 @@ public class HeaderButton extends View {
   protected float colorFactor = -1f;
 
   private OnTouchDownListener touchDownListener;
+  private @StringRes int contentDescriptionRes;
+  private String contentDescriptionValue;
+  private boolean hasAccessibilityState;
+  private boolean accessibilityChecked;
 
   public HeaderButton (Context context) {
     super(context);
@@ -57,6 +66,43 @@ public class HeaderButton extends View {
 
   public void setTouchDownListener (OnTouchDownListener listener) {
     this.touchDownListener = listener;
+  }
+
+  public HeaderButton setContentDescriptionRes (@StringRes int stringRes) {
+    return setContentDescriptionRes(stringRes, null);
+  }
+
+  public HeaderButton setContentDescriptionRes (@StringRes int stringRes, String value) {
+    if (contentDescriptionRes != stringRes || !TextUtils.equals(contentDescriptionValue, value)) {
+      contentDescriptionRes = stringRes;
+      contentDescriptionValue = value;
+      setContentDescription(stringRes != 0 ? value != null ? Lang.getString(stringRes, value) : Lang.getString(stringRes) : null);
+      sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+    }
+    return this;
+  }
+
+  public HeaderButton setAccessibilityChecked (boolean checked) {
+    if (!hasAccessibilityState || accessibilityChecked != checked) {
+      hasAccessibilityState = true;
+      accessibilityChecked = checked;
+      sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+    }
+    return this;
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (hasAccessibilityState) {
+      info.setCheckable(true);
+      info.setChecked(accessibilityChecked);
+    }
+  }
+
+  @Override
+  public boolean performClick () {
+    return isEnabled() && getVisibility() == View.VISIBLE && getAlpha() > 0f && super.performClick();
   }
 
   public HeaderButton setThemeColorId (@ColorId int colorId) {

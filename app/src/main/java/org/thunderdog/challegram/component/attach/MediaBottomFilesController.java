@@ -50,6 +50,7 @@ import org.thunderdog.challegram.data.InlineResultCommon;
 import org.thunderdog.challegram.data.TD;
 import org.thunderdog.challegram.loader.ImageFile;
 import org.thunderdog.challegram.loader.ImageGalleryFile;
+import org.thunderdog.challegram.navigation.HeaderButton;
 import org.thunderdog.challegram.navigation.HeaderView;
 import org.thunderdog.challegram.navigation.Menu;
 import org.thunderdog.challegram.player.TGPlayerController;
@@ -101,7 +102,8 @@ public class MediaBottomFilesController extends MediaBottomBaseController<Void> 
   @Override
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_more) {
-      header.addMoreButton(menu, this);
+      HeaderButton button = header.addMoreButton(menu, this);
+      button.setContentDescriptionRes(R.string.AccessibilitySelectFiles);
     }
   }
 

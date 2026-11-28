@@ -238,7 +238,9 @@ public class LanguageController extends RecyclerViewController<LanguageControlle
     if (id == R.id.menu_clear) {
       header.addClearButton(menu, getSearchHeaderIconColorId(), getBackButtonResource());
     } else if (id == R.id.menu_editLangPack) {
-      header.addButton(menu, R.id.menu_btn_toggle, R.drawable.baseline_check_box_outline_blank_24, ColorId.headerIcon, this, Screen.dp(49f));
+      header.addButton(menu, R.id.menu_btn_toggle, R.drawable.baseline_check_box_outline_blank_24, ColorId.headerIcon, this, Screen.dp(49f))
+        .setContentDescriptionRes(R.string.AccessibilityShowUntranslatedStrings)
+        .setAccessibilityChecked(onlyUntranslated);
       header.addSearchButton(menu, this);
     } else {
       super.fillMenuItems(id, header, menu);
@@ -318,7 +320,11 @@ public class LanguageController extends RecyclerViewController<LanguageControlle
 
   private void updateButton () {
     if (headerView != null) {
-      headerView.updateButton(getMenuId(), R.id.menu_btn_toggle, View.VISIBLE, onlyUntranslated ? R.drawable.baseline_indeterminate_check_box_24 : R.drawable.baseline_check_box_outline_blank_24);
+      headerView.updateButton(getMenuId(), R.id.menu_btn_toggle, button -> {
+        button.setVisibility(View.VISIBLE);
+        button.setImageResource(onlyUntranslated ? R.drawable.baseline_indeterminate_check_box_24 : R.drawable.baseline_check_box_outline_blank_24);
+        button.setAccessibilityChecked(onlyUntranslated);
+      });
     }
   }
 

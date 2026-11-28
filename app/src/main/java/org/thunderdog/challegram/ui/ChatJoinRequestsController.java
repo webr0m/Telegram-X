@@ -19,6 +19,7 @@ import android.widget.LinearLayout;
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.component.popups.JoinRequestsComponent;
 import org.thunderdog.challegram.core.Lang;
+import org.thunderdog.challegram.navigation.HeaderButton;
 import org.thunderdog.challegram.navigation.HeaderView;
 import org.thunderdog.challegram.navigation.Menu;
 import org.thunderdog.challegram.navigation.ViewController;
@@ -104,7 +105,8 @@ public class ChatJoinRequestsController extends RecyclerViewController<ChatJoinR
   @Override
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_search) {
-      header.addMoreButton(menu, this);
+      HeaderButton moreButton = header.addMoreButton(menu, this);
+      moreButton.setContentDescriptionRes(R.string.AccessibilityProcessAllJoinRequests);
       if (getArgumentsStrict().inviteLink == null || getArgumentsStrict().inviteLink.isEmpty()) {
         header.addSearchButton(menu, this);
       }

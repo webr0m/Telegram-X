@@ -78,7 +78,7 @@ public class GameController extends WebkitController<GameController.Args> implem
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_game) {
       header.addForwardButton(menu, this);
-      header.addMoreButton(menu, this);
+      header.addMoreButton(menu, this).setContentDescriptionRes(R.string.OpenInExternalApp);
     }
   }
 

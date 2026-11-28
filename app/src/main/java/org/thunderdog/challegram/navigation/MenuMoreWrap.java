@@ -25,6 +25,8 @@ import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.view.animation.Interpolator;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
@@ -277,6 +279,15 @@ public class MenuMoreWrap extends MenuMoreWrapAbstract implements Animated {
           canvas.restore();
         }
       }
+
+      @Override
+      public void onInitializeAccessibilityNodeInfo (AccessibilityNodeInfo info) {
+        super.onInitializeAccessibilityNodeInfo(info);
+        if (menuItem.isCheckbox) {
+          info.setCheckable(true);
+          info.setChecked(menuItem.isCheckboxSelected);
+        }
+      }
     };
 
     frameLayout.setLayoutParams(lp);
@@ -285,6 +296,7 @@ public class MenuMoreWrap extends MenuMoreWrapAbstract implements Animated {
       menuItem.isCheckboxSelectedAnimated = new BoolAnimator(frameLayout, AnimatorUtils.DECELERATE_INTERPOLATOR, 165l, menuItem.isCheckboxSelected);
       frameLayout.setOnClickListener(v -> {
         menuItem.isCheckboxSelected = menuItem.isCheckboxSelectedAnimated.toggleValue(true);
+        v.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
         listener.onClick(v);
       });
     } else {
@@ -349,6 +361,22 @@ public class MenuMoreWrap extends MenuMoreWrapAbstract implements Animated {
 
     if (themeListeners != null) {
       themeListeners.addThemeInvalidateListener(frameLayout);
+    }
+
+    StringBuilder description = new StringBuilder();
+    if (!TextUtils.isEmpty(menuItem.title)) {
+      description.append(menuItem.title);
+    }
+    if (!TextUtils.isEmpty(menuItem.subtitle)) {
+      if (description.length() > 0) {
+        description.append(", ");
+      }
+      description.append(menuItem.subtitle);
+    }
+    frameLayout.setContentDescription(description.length() > 0 ? description.toString() : null);
+    titleTextItem.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+    if (subtitleTextItem != null) {
+      subtitleTextItem.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
     }
 
     frameLayout.addView(titleTextItem);

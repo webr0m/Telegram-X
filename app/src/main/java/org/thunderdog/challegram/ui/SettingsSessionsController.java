@@ -28,6 +28,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.R;
+import org.thunderdog.challegram.component.RelativeSessionLayout;
 import org.thunderdog.challegram.component.base.SettingView;
 import org.thunderdog.challegram.component.user.RemoveHelper;
 import org.thunderdog.challegram.core.Lang;
@@ -153,6 +154,10 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
 
     adapter.setItems(items, false);
     executeScheduledAnimation();
+  }
+
+  private boolean canRemoveSession (ListItem item) {
+    return getArguments() == null && item.getId() == R.id.btn_session && !terminatingAll && (terminatingSessions == null || terminatingSessions.get(item.getLongId()) == null);
   }
 
   private void clearSessionList () {
@@ -341,6 +346,9 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
           callsStateView.setVisibility((session.canAcceptCalls && !session.isPasswordPending) ? View.VISIBLE : View.GONE);
           callsStateView.setPadding(session.canAcceptSecretChats ? 0 : Screen.dp(48f), 0, 0, 0);
         }
+        if (parent instanceof RelativeSessionLayout) {
+          ((RelativeSessionLayout) parent).setAccessibilityRemoveAction(canRemoveSession(item) ? () -> killSession((TdApi.Session) parent.getTag(), false) : null);
+        }
       }
     };
     if (sessions != null) {
@@ -356,7 +364,7 @@ public class SettingsSessionsController extends RecyclerViewController<Void> imp
           }
 
           ListItem item = adapter.getItems().get(position);
-          return item.getId() == R.id.btn_session && !terminatingAll && (terminatingSessions == null || terminatingSessions.get(item.getLongId()) == null);
+          return canRemoveSession(item);
         }
 
         @Override

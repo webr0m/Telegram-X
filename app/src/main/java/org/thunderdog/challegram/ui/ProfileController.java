@@ -478,6 +478,8 @@ public class ProfileController extends ViewController<ProfileController.Args> im
       wrap.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.MATCH_PARENT));
       wrap.addView(realMenu);
       wrap.addView(transformedMenu);
+      setMenuAccessibility(realMenu, true);
+      setMenuAccessibility(transformedMenu, false);
 
       menu.addView(wrap);
 
@@ -2146,6 +2148,13 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     return Math.max(0f, (realDistance - padding)) / (HeaderView.getSize(false) - padding);
   }
 
+  private static void setMenuAccessibility (LinearLayout menu, boolean accessible) {
+    int importance = accessible ? View.IMPORTANT_FOR_ACCESSIBILITY_YES : View.IMPORTANT_FOR_ACCESSIBILITY_NO;
+    for (int i = 0; i < menu.getChildCount(); i++) {
+      menu.getChildAt(i).setImportantForAccessibility(importance);
+    }
+  }
+
   @Override
   protected void applyHeaderMenuTransform (LinearLayout menu, float factor) {
     FrameLayoutFix wrapper = (FrameLayoutFix) menu.getChildAt(0);
@@ -2169,6 +2178,8 @@ public class ProfileController extends ViewController<ProfileController.Args> im
 
     transformedMenu.setTranslationY(headerHeight - headerHeight * factor);
     transformedMenu.setAlpha(accelerateFactor);
+    setMenuAccessibility(realMenu, factor < .5f);
+    setMenuAccessibility(transformedMenu, factor >= .5f);
   }
 
   private void setTopTranslationY (float y) {
@@ -3066,30 +3077,35 @@ public class ProfileController extends ViewController<ProfileController.Args> im
             case 0: {
               shareButton = button;
               button.setId(R.id.menu_btn_forward);
+              button.setContentDescriptionRes(R.string.Share);
               button.setImageResource(R.drawable.baseline_forward_24);
               break;
             }
             case 1: {
               copyButton = button;
               button.setId(R.id.menu_btn_copy);
+              button.setContentDescriptionRes(R.string.Copy);
               button.setImageResource(R.drawable.baseline_content_copy_24);
               break;
             }
             case 2: {
               deleteButton = button;
               button.setId(R.id.menu_btn_delete);
+              button.setContentDescriptionRes(R.string.Delete);
               button.setImageResource(R.drawable.baseline_delete_24);
               break;
             }
             case 3: {
               clearButton = button;
               button.setId(R.id.menu_btn_clear);
+              button.setContentDescriptionRes(R.string.DeleteFromCache);
               button.setImageResource(R.drawable.templarian_baseline_broom_24);
               break;
             }
             case 4: {
               viewButton = button;
               button.setId(R.id.menu_btn_view);
+              button.setContentDescriptionRes(R.string.OpenMessage);
               button.setImageResource(R.drawable.baseline_visibility_24);
               break;
             }
@@ -3128,25 +3144,35 @@ public class ProfileController extends ViewController<ProfileController.Args> im
     float factor = Lang.rtl() ? 1f : -1f;
     if (shareButton != null) {
       shareButton.setAlpha((canShareItems ? 1f : 0f));
+      shareButton.setEnabled(canShareItems);
+      shareButton.setImportantForAccessibility(canShareItems ? View.IMPORTANT_FOR_ACCESSIBILITY_YES : View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       offsetX += canShareItems ? Screen.dp(48f) : 0;
     }
     if (copyButton != null) {
       copyButton.setAlpha(canCopyItems ? 1f : 0f);
+      copyButton.setEnabled(canCopyItems);
+      copyButton.setImportantForAccessibility(canCopyItems ? View.IMPORTANT_FOR_ACCESSIBILITY_YES : View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       copyButton.setTranslationX(offsetX * factor);
       offsetX += canCopyItems ? Screen.dp(48f) : 0;
     }
     if (deleteButton != null) {
       deleteButton.setAlpha(canDeleteItems ? 1f : 0f);
+      deleteButton.setEnabled(canDeleteItems);
+      deleteButton.setImportantForAccessibility(canDeleteItems ? View.IMPORTANT_FOR_ACCESSIBILITY_YES : View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       deleteButton.setTranslationX(offsetX * factor);
       offsetX += canDeleteItems ? Screen.dp(48f) : 0;
     }
     if (clearButton != null) {
       clearButton.setAlpha(canClearItems ? 1f : 0f);
+      clearButton.setEnabled(canClearItems);
+      clearButton.setImportantForAccessibility(canClearItems ? View.IMPORTANT_FOR_ACCESSIBILITY_YES : View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       clearButton.setTranslationX(offsetX * factor);
       offsetX += canClearItems ? Screen.dp(48f) : 0;
     }
     if (viewButton != null) {
       viewButton.setAlpha(canViewItems ? 1f : 0f);
+      viewButton.setEnabled(canViewItems);
+      viewButton.setImportantForAccessibility(canViewItems ? View.IMPORTANT_FOR_ACCESSIBILITY_YES : View.IMPORTANT_FOR_ACCESSIBILITY_NO);
       viewButton.setTranslationX(offsetX * factor);
       offsetX += canViewItems ? Screen.dp(48f) : 0;
     }

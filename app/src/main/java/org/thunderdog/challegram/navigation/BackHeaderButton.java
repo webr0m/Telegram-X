@@ -19,10 +19,12 @@ import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.accessibility.AccessibilityNodeInfo;
 
 import androidx.annotation.Nullable;
 
 import org.thunderdog.challegram.BaseActivity;
+import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.theme.ColorId;
 import org.thunderdog.challegram.theme.Theme;
@@ -115,6 +117,15 @@ public class BackHeaderButton extends HeaderButton implements View.OnClickListen
   public void setButtonFactor (int type) {
     if (type != BackHeaderButton.TYPE_NONE) {
       setFactor(toButtonFactor(type));
+      setContentDescriptionRes(type == TYPE_MENU ? R.string.AccessibilityOpenNavigationMenu : type == TYPE_BACK ? R.string.AccessibilityBack : R.string.AccessibilityClose);
+    }
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (parentHeader != null && (parentHeader.inSelectMode() || parentHeader.inSearchMode())) {
+      info.setContentDescription(Lang.getString(R.string.AccessibilityClose));
     }
   }
 

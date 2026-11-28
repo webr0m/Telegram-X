@@ -107,7 +107,7 @@ public class CallListController extends RecyclerViewController<Void> implements
   @Override
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_btn_more) {
-      header.addMoreButton(menu, this);
+      header.addMoreButton(menu, this).setContentDescriptionRes(R.string.DeleteCallHistory);
     }
   }
 

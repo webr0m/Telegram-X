@@ -545,8 +545,11 @@ public class EmojiStatusSelectorEmojiPage extends BottomSheetViewController.Bott
       clearButton.setOnClickListener(headerView);
 
       searchButton = headerView.genButton(R.id.menu_btn_search, R.drawable.baseline_search_24, controller.getHeaderIconColorId(), controller, Screen.dp(52f), headerView);
+      searchButton.setContentDescriptionRes(R.string.Search);
       emojiButton = headerView.genButton(R.id.menu_btn_emoji, R.drawable.baseline_emoticon_outline_24, controller.getHeaderIconColorId(), controller, Screen.dp(52f), headerView);
+      emojiButton.setContentDescriptionRes(R.string.SelectEmojiStatus);
       keyboardButton = headerView.genButton(R.id.menu_btn_emoji_close, R.drawable.baseline_keyboard_24, controller.getHeaderIconColorId(), controller, Screen.dp(52f), headerView);
+      keyboardButton.setContentDescriptionRes(R.string.AccessibilityCloseEmojiSelector);
 
       addView(clearButton);
       addView(searchButton);
@@ -568,6 +571,7 @@ public class EmojiStatusSelectorEmojiPage extends BottomSheetViewController.Bott
         emojiButton.setVisibility(emojiVisibility > 0f ? VISIBLE : GONE);
         keyboardButton.setVisibility(keyboardVisibility > 0f ? VISIBLE : GONE);
       }
+      clearButton.setFactor(clearVisibility);
       clearButton.setAlpha(clearVisibility);
       searchButton.setAlpha(searchVisibility);
       emojiButton.setAlpha(emojiVisibility);

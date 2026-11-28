@@ -55,6 +55,7 @@ public class StopwatchHeaderButton extends HeaderButton implements FactorAnimato
     setLayoutParams(new ViewGroup.LayoutParams(Screen.dp(WIDTH), ViewGroup.LayoutParams.MATCH_PARENT));
 
     setEnabled(false);
+    updateContentDescription();
   }
 
   private TextPaint getPaint (boolean needFakeBold) {
@@ -81,6 +82,7 @@ public class StopwatchHeaderButton extends HeaderButton implements FactorAnimato
     this.stopwatchFactor = value != null ? 1f : 0f;
     this.value = value != null ? new Letters(value) : null;
     this.valueWidth = value != null ? (int) U.measureText(value, getPaint(this.value.needFakeBold)) : 0;
+    updateContentDescription();
   }
 
   public boolean getIsVisible () {
@@ -115,6 +117,15 @@ public class StopwatchHeaderButton extends HeaderButton implements FactorAnimato
     } else if (!this.value.text.equals(value)) {
       Letters newValue = new Letters(value);
       animateReplace(newValue, (int) U.measureText(value, getPaint(newValue.needFakeBold)));
+    }
+    updateContentDescription();
+  }
+
+  private void updateContentDescription () {
+    if (value != null) {
+      setContentDescriptionRes(R.string.AccessibilityAutoDeleteTimerValue, value.text);
+    } else {
+      setContentDescriptionRes(R.string.AccessibilityAutoDeleteTimer);
     }
   }
 
@@ -205,6 +216,7 @@ public class StopwatchHeaderButton extends HeaderButton implements FactorAnimato
           this.value = nextValue;
           this.valueWidth = nextValueWidth;
           this.nextValue = null;
+          updateContentDescription();
         }
         break;
       }
@@ -218,6 +230,7 @@ public class StopwatchHeaderButton extends HeaderButton implements FactorAnimato
       case STOPWATCH_ANIMATOR: {
         if (finalFactor == 0f) {
           value = null;
+          updateContentDescription();
         }
         break;
       }

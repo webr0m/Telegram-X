@@ -22,6 +22,7 @@ import android.view.Gravity;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityEvent;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -369,6 +370,8 @@ public class RecordAudioVideoController implements
         }
       });
       this.switchCameraButtonWrap.addView(switchCameraButton);
+      this.switchCameraButton.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      this.switchCameraButtonWrap.setContentDescription(switchCameraButton.getContentDescription());
       this.rootLayout.addView(switchCameraButtonWrap);
 
       this.disposableSwitchButton = new RecordDisposableSwitchButton(context);
@@ -783,10 +786,18 @@ public class RecordAudioVideoController implements
     }
   }
 
+  private void setSwitchCameraButtonDescription (boolean isFrontFace) {
+    switchCameraButtonWrap.setContentDescription(Lang.getString(
+      isFrontFace ? R.string.AccessibilitySwitchToRearCamera : R.string.AccessibilitySwitchToFrontCamera
+    ));
+  }
+
   private void resetViews () {
     lastDuration = 0;
     setTranslations(0f, 0f);
-    switchCameraButton.setCameraIconRes(!Settings.instance().startRoundWithRear());
+    boolean isFrontFace = !Settings.instance().startRoundWithRear();
+    switchCameraButton.setCameraIconRes(isFrontFace);
+    setSwitchCameraButtonDescription(isFrontFace);
     progressView.reset();
     durationView.reset();
     lockView.setCollapseFactor(0f);
@@ -807,6 +818,8 @@ public class RecordAudioVideoController implements
   @Override
   public void onCameraSwitched (boolean isForward, boolean toFrontFace) {
     switchCameraButton.spinAround(isForward, toFrontFace);
+    setSwitchCameraButtonDescription(toFrontFace);
+    switchCameraButtonWrap.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
   }
 
   private float translateX, translateY;

@@ -23,10 +23,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewParent;
+import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.DrawableRes;
 
 import org.thunderdog.challegram.R;
+import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.tool.Drawables;
 import org.thunderdog.challegram.tool.Paints;
 import org.thunderdog.challegram.tool.Screen;
@@ -61,12 +63,36 @@ public class CameraControlButton extends View implements FactorAnimator.Target {
   }
 
   private @DrawableRes int res;
+  private int contentDescriptionRes;
 
   public void setIconRes (@DrawableRes int res) {
     cancelIconChange();
     this.res = res;
     this.icon = Drawables.get(getResources(), res);
+    updateContentDescription();
     invalidate();
+  }
+
+  private void updateContentDescription () {
+    int descriptionRes;
+    if (res == R.drawable.baseline_camera_rear_24) {
+      descriptionRes = R.string.AccessibilitySwitchToRearCamera;
+    } else if (res == R.drawable.baseline_camera_front_24) {
+      descriptionRes = R.string.AccessibilitySwitchToFrontCamera;
+    } else if (res == R.drawable.baseline_flash_off_24) {
+      descriptionRes = R.string.AccessibilityFlashOff;
+    } else if (res == R.drawable.baseline_flash_on_24) {
+      descriptionRes = R.string.AccessibilityFlashOn;
+    } else if (res == R.drawable.baseline_flash_auto_24) {
+      descriptionRes = R.string.AccessibilityFlashAuto;
+    } else {
+      descriptionRes = 0;
+    }
+    if (contentDescriptionRes != descriptionRes) {
+      contentDescriptionRes = descriptionRes;
+      setContentDescription(descriptionRes != 0 ? Lang.getString(descriptionRes) : null);
+      sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+    }
   }
 
   public void setCameraIconRes (boolean isFrontFace) {
@@ -93,6 +119,7 @@ public class CameraControlButton extends View implements FactorAnimator.Target {
   public void changeIcon (@DrawableRes int res) {
     if (this.res != res) {
       this.res = res;
+      updateContentDescription();
       if (changeAnimator == null) {
         changeAnimator = new FactorAnimator(ANIMATOR_CHANGE, this, AnimatorUtils.DECELERATE_INTERPOLATOR, 220l);
       } else if (changeAnimator.isAnimating() && changeFactor < 1f) {

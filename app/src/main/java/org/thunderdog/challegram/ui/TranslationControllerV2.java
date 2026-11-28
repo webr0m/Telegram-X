@@ -405,6 +405,9 @@ public class TranslationControllerV2 extends BottomSheetViewController.BottomShe
       headerCell.setTitle(Lang.getString(R.string.TranslationFailed), animated);
       headerCell.setSubtitle(Lang.getString(R.string.TranslateTryAgain), animated);
     }
+    if (translationHeaderButton != null) {
+      translationHeaderButton.setContentDescriptionRes(mTranslationsManager.getCurrentTranslatedLanguage() != null ? R.string.AccessibilityStopTranslation : R.string.AccessibilityTranslate);
+    }
   }
 
   private void setTranslationResult (TdApi.FormattedText translated) {
@@ -449,6 +452,7 @@ public class TranslationControllerV2 extends BottomSheetViewController.BottomShe
     if (headerView == null) return;
 
     translationHeaderButton =  headerView.addButton(menu, R.id.menu_done, getHeaderIconColorId(), this, 0, Screen.dp(60), R.drawable.bg_btn_header);
+    translationHeaderButton.setContentDescriptionRes(R.string.AccessibilityTranslate);
     translationHeaderButton.setCustomDrawable(translationCounterDrawable);
     headerView.getBackButton().setTranslationY(Screen.dp(7.5f));
     translationHeaderButton.setTranslationY(Screen.dp(7.5f));

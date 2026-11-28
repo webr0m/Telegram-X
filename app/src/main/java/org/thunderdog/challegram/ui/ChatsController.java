@@ -1270,7 +1270,8 @@ public class ChatsController extends TelegramViewController<ChatsController.Argu
       }
       header.addSearchButton(menu, this);
     } else if (id == R.id.menu_archive) {
-      header.addButton(menu, R.id.menu_btn_settings, R.drawable.baseline_settings_24, 49f, this, getHeaderIconColorId());
+      header.addButton(menu, R.id.menu_btn_settings, R.drawable.baseline_settings_24, 49f, this, getHeaderIconColorId())
+        .setContentDescriptionRes(R.string.Settings);
       header.addSearchButton(menu, this);
     } else if (id == R.id.menu_search) {
       header.addSearchButton(menu, this);
@@ -1289,11 +1290,13 @@ public class ChatsController extends TelegramViewController<ChatsController.Argu
 
       mode = canPinUnpinSelectedChats();
       header.addButton(menu, R.id.menu_btn_pinUnpin, mode == ACTION_MODE_ALL_ENABLED ? R.drawable.deproko_baseline_pin_undo_24 : R.drawable.deproko_baseline_pin_24, iconColorId, this, Screen.dp(52f))
+        .setContentDescriptionRes(mode == ACTION_MODE_ALL_ENABLED ? R.string.Unpin : R.string.Pin)
         .setVisibility((value = shouldShowPin(mode)) ? View.VISIBLE : View.GONE);
       if (value) totalButtonsCount++;
 
       mode = canMuteUnmuteSelectedChats();
       header.addButton(menu, R.id.menu_btn_muteUnmute, mode == ACTION_MODE_ALL_ENABLED ? R.drawable.baseline_notifications_off_24 : R.drawable.baseline_notifications_24, iconColorId, this, Screen.dp(52f))
+        .setContentDescriptionRes(mode == ACTION_MODE_ALL_ENABLED ? R.string.Unmute : R.string.Mute)
         .setVisibility((value = mode != ACTION_MODE_NONE) ? View.VISIBLE : View.GONE);
       if (value) totalButtonsCount++;
 
@@ -1311,17 +1314,28 @@ public class ChatsController extends TelegramViewController<ChatsController.Argu
     HeaderView headerView = navigation != null ? navigation.getHeaderView() : null;
     if (headerView != null) {
       int totalButtonsCount = 0;
-      boolean value;
-      int mode;
-      mode = canPinUnpinSelectedChats();
-      headerView.updateButton(R.id.menu_chatBulkActions, R.id.menu_btn_pinUnpin, (value = shouldShowPin(mode)) ? View.VISIBLE : View.GONE, mode == ACTION_MODE_ALL_ENABLED ? R.drawable.deproko_baseline_pin_undo_24 : R.drawable.deproko_baseline_pin_24);
-      if (value) totalButtonsCount++;
-      mode = canMuteUnmuteSelectedChats();
-      headerView.updateButton(R.id.menu_chatBulkActions, R.id.menu_btn_muteUnmute, (value = mode != ACTION_MODE_NONE) ? View.VISIBLE : View.GONE, mode == ACTION_MODE_ALL_ENABLED ? R.drawable.baseline_notifications_off_24 : R.drawable.baseline_notifications_24);
-      if (value) totalButtonsCount++;
-      mode = canDeleteSelectedChats();
-      headerView.updateButton(R.id.menu_chatBulkActions, R.id.menu_btn_delete, (value = mode != ACTION_MODE_NONE && mode != ACTION_MODE_MIXED) ? View.VISIBLE : View.GONE, 0);
-      if (value) totalButtonsCount++;
+      int pinMode = canPinUnpinSelectedChats();
+      boolean pinVisible = shouldShowPin(pinMode);
+      headerView.updateButton(R.id.menu_chatBulkActions, R.id.menu_btn_pinUnpin, button -> {
+        button.setVisibility(pinVisible ? View.VISIBLE : View.GONE);
+        button.setImageResource(pinMode == ACTION_MODE_ALL_ENABLED ? R.drawable.deproko_baseline_pin_undo_24 : R.drawable.deproko_baseline_pin_24);
+        button.setContentDescriptionRes(pinMode == ACTION_MODE_ALL_ENABLED ? R.string.Unpin : R.string.Pin);
+      });
+      if (pinVisible) totalButtonsCount++;
+
+      int muteMode = canMuteUnmuteSelectedChats();
+      boolean muteVisible = muteMode != ACTION_MODE_NONE;
+      headerView.updateButton(R.id.menu_chatBulkActions, R.id.menu_btn_muteUnmute, button -> {
+        button.setVisibility(muteVisible ? View.VISIBLE : View.GONE);
+        button.setImageResource(muteMode == ACTION_MODE_ALL_ENABLED ? R.drawable.baseline_notifications_off_24 : R.drawable.baseline_notifications_24);
+        button.setContentDescriptionRes(muteMode == ACTION_MODE_ALL_ENABLED ? R.string.Unmute : R.string.Mute);
+      });
+      if (muteVisible) totalButtonsCount++;
+
+      int deleteMode = canDeleteSelectedChats();
+      boolean deleteVisible = deleteMode != ACTION_MODE_NONE && deleteMode != ACTION_MODE_MIXED;
+      headerView.updateButton(R.id.menu_chatBulkActions, R.id.menu_btn_delete, deleteVisible ? View.VISIBLE : View.GONE, 0);
+      if (deleteVisible) totalButtonsCount++;
     }
   }
 

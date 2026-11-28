@@ -16,17 +16,55 @@ package org.thunderdog.challegram.component;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.os.Build;
+import android.os.Bundle;
+import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.RelativeLayout;
+
+import androidx.annotation.Nullable;
+import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.component.user.RemoveHelper;
+import org.thunderdog.challegram.core.Lang;
 
 public class RelativeSessionLayout extends RelativeLayout implements RemoveHelper.RemoveDelegate {
   private RemoveHelper helper;
+  private Runnable accessibilityRemoveAction;
 
   public RelativeSessionLayout (Context context) {
     super(context);
     helper = new RemoveHelper(this, R.drawable.baseline_remove_circle_24);
+  }
+
+  public void setAccessibilityRemoveAction (@Nullable Runnable action) {
+    if (accessibilityRemoveAction != action) {
+      accessibilityRemoveAction = action;
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+        sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+      }
+    }
+  }
+
+  @Override
+  public void onInitializeAccessibilityNodeInfo (AccessibilityNodeInfo info) {
+    super.onInitializeAccessibilityNodeInfo(info);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP && accessibilityRemoveAction != null && isEnabled() && getVisibility() == View.VISIBLE && getAlpha() > 0f) {
+      AccessibilityNodeInfoCompat.wrap(info).addAction(
+        new AccessibilityNodeInfoCompat.AccessibilityActionCompat(R.id.btn_terminateSession, Lang.getString(R.string.TerminateSession))
+      );
+    }
+  }
+
+  @Override
+  public boolean performAccessibilityAction (int action, Bundle arguments) {
+    if (action == R.id.btn_terminateSession && accessibilityRemoveAction != null && isEnabled() && getVisibility() == View.VISIBLE && getAlpha() > 0f) {
+      accessibilityRemoveAction.run();
+      return true;
+    }
+    return super.performAccessibilityAction(action, arguments);
   }
 
   public void draw (Canvas c) {

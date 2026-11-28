@@ -65,7 +65,9 @@ import org.thunderdog.challegram.widget.PopupLayout;
 import org.thunderdog.challegram.widget.RootFrameLayout;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import me.vkryl.android.AnimatorUtils;
 import me.vkryl.android.ViewUtils;
@@ -95,6 +97,7 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
 
   private LinearLayout menu;
   private LinearLayout menuPreview;
+  private final Map<View, Integer> accessibilityImportance = new HashMap<>();
   // private boolean menuProgressShown;
   // private SpinnerView menuProgress;
 
@@ -501,6 +504,28 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
     }
   }
 
+  private void hideFromAccessibility (ViewGroup view) {
+    accessibilityImportance.put(view, view.getImportantForAccessibility());
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+      view.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS);
+    }
+    for (int i = 0; i < view.getChildCount(); i++) {
+      View child = view.getChildAt(i);
+      accessibilityImportance.put(child, child.getImportantForAccessibility());
+      child.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+      if (child instanceof ViewGroup) {
+        hideFromAccessibility((ViewGroup) child);
+      }
+    }
+  }
+
+  private void restoreFromAccessibility () {
+    for (Map.Entry<View, Integer> entry : accessibilityImportance.entrySet()) {
+      entry.getKey().setImportantForAccessibility(entry.getValue());
+    }
+    accessibilityImportance.clear();
+  }
+
   public void updateButtonColors (ViewController<?> c, int menuId, int colorFilter) {
     if (menu != null && menu.getId() == menuId) {
       updateButtonColors(menu, colorFilter);
@@ -766,42 +791,49 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
   public HeaderButton addDoneButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_done, R.drawable.baseline_check_24, colorId, themeProvider, Screen.dp(56f), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.Done);
     return button;
   }
 
   public HeaderButton addReplyButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_reply, R.drawable.baseline_reply_24, colorId, themeProvider, Screen.dp(52f), ThemeDeprecated.headerSelector(), this).setThemeColorId(colorId), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.Reply);
     return button;
   }
 
   public HeaderButton addEditButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_edit, R.drawable.baseline_edit_24, colorId, themeProvider, Screen.dp(52f), ThemeDeprecated.headerSelector(), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.AccessibilityEdit);
     return button;
   }
 
   public HeaderButton addCopyButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_copy, R.drawable.baseline_content_copy_24, colorId, themeProvider, Screen.dp(50f), ThemeDeprecated.headerSelector(), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.Copy);
     return button;
   }
 
   public HeaderButton addViewButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_view, R.drawable.baseline_visibility_24, colorId, themeProvider, Screen.dp(52f), ThemeDeprecated.headerLightSelector(), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.OpenMessage);
     return button;
   }
 
   public HeaderButton addRetryButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_retry, R.drawable.baseline_repeat_24, colorId, themeProvider, Screen.dp(52f), ThemeDeprecated.headerSelector(), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.Resend);
     return button;
   }
 
   public HeaderButton addDeleteButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_delete, R.drawable.baseline_delete_24, colorId, themeProvider, Screen.dp(52f), ThemeDeprecated.headerSelector(), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.Delete);
     return button;
   }
 
@@ -812,6 +844,7 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
   public HeaderButton addForwardButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
     HeaderButton button;
     menu.addView(button = genButton(R.id.menu_btn_forward, R.drawable.baseline_forward_24, colorId, themeProvider, Screen.dp(52f), ThemeDeprecated.headerSelector(), this), Lang.rtl() ? 0 : -1);
+    button.setContentDescriptionRes(R.string.Share);
     return button;
   }
 
@@ -820,7 +853,9 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
   }
 
   public HeaderButton addMoreButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
-    return addButton(menu, R.id.menu_btn_more, R.drawable.baseline_more_vert_24, 49f, themeProvider, colorId);
+    HeaderButton button = addButton(menu, R.id.menu_btn_more, R.drawable.baseline_more_vert_24, 49f, themeProvider, colorId);
+    button.setContentDescriptionRes(R.string.AccessibilityMore);
+    return button;
   }
 
   public HeaderButton addSearchButton (LinearLayout menu, @NonNull ViewController<?> themeProvider) {
@@ -828,7 +863,9 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
   }
 
   public HeaderButton addSearchButton (LinearLayout menu, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
-    return addButton(menu, R.id.menu_btn_search, R.drawable.baseline_search_24, 49f, themeProvider, colorId);
+    HeaderButton button = addButton(menu, R.id.menu_btn_search, R.drawable.baseline_search_24, 49f, themeProvider, colorId);
+    button.setContentDescriptionRes(R.string.Search);
+    return button;
   }
 
   public HeaderButton addButton (LinearLayout menu, @IdRes int buttonId, @DrawableRes int iconRes, float widthDp, @Nullable ViewController<?> themeProvider, @ColorId int colorId) {
@@ -1355,6 +1392,7 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
         }
         menu.fillMenuItems(previewMenuId, this, menuPreview);
       }
+      hideFromAccessibility(menuPreview);
 
       if (previewIsText) {
         for (int i = 0; i < menuPreview.getChildCount(); i++) {
@@ -1712,6 +1750,7 @@ public class HeaderView extends FrameLayoutFix implements View.OnClickListener, 
       tempView = menu;
       menu = menuPreview;
       menuPreview = (LinearLayout) tempView;
+      restoreFromAccessibility();
 
       removeView(menuPreview);
       menuPreviewUsed = false;

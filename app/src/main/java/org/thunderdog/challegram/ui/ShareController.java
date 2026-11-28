@@ -24,6 +24,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.util.TypedValue;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -31,6 +32,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
+import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.FrameLayout;
@@ -403,11 +405,13 @@ public class ShareController extends TelegramViewController<ShareController.Args
   public void fillMenuItems (int id, HeaderView header, LinearLayout menu) {
     if (id == R.id.menu_search) {
       if (canCopyLink()) {
-        header.addButton(menu, R.id.menu_btn_copy, getHeaderIconColorId(), this, R.drawable.baseline_link_24, Screen.dp(49f), R.drawable.bg_btn_header);
+        header.addButton(menu, R.id.menu_btn_copy, getHeaderIconColorId(), this, R.drawable.baseline_link_24, Screen.dp(49f), R.drawable.bg_btn_header)
+          .setContentDescriptionRes(R.string.CopyLink);
       }
       int exportState = getExportContentState();
       if (exportState != EXPORT_NONE) {
-        header.addButton(menu, R.id.menu_btn_forward, getHeaderIconColorId(), this, R.drawable.baseline_share_24, Screen.dp(49f), R.drawable.bg_btn_header);
+        header.addButton(menu, R.id.menu_btn_forward, getHeaderIconColorId(), this, R.drawable.baseline_share_24, Screen.dp(49f), R.drawable.bg_btn_header)
+          .setContentDescriptionRes(R.string.Share);
       }
       header.addSearchButton(menu, this, getHeaderIconColorId()).setTouchDownListener((v, e) -> {
         resetTopEnsuredState();
@@ -1354,6 +1358,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
     okButton.setId(R.id.btn_done);
     okButton.setScaleType(ImageView.ScaleType.CENTER);
     okButton.setImageResource(R.drawable.deproko_baseline_send_24);
+    okButton.setContentDescription(Lang.getString(R.string.Send));
     okButton.setColorFilter(Theme.chatSendButtonColor());
     addThemeFilterListener(okButton, ColorId.chatSendButton);
     okButton.setVisibility(View.INVISIBLE);
@@ -1370,7 +1375,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
     emojiButton.setScaleType(ImageView.ScaleType.CENTER);
     emojiButton.setId(R.id.btn_emoji);
     emojiButton.setOnClickListener(this);
-    emojiButton.setImageResource(R.drawable.deproko_baseline_insert_emoticon_26);
+    setEmojiButtonIcon(R.drawable.deproko_baseline_insert_emoticon_26);
     emojiButton.setColorFilter(Theme.iconColor());
     addThemeFilterListener(emojiButton, ColorId.icon);
     emojiButton.setLayoutParams(params);
@@ -3057,10 +3062,10 @@ public class ShareController extends TelegramViewController<ShareController.Args
 
       setEmojiShown(true);
       if (emojiState) {
-        emojiButton.setImageResource(R.drawable.baseline_keyboard_24);
+        setEmojiButtonIcon(R.drawable.baseline_keyboard_24);
         keyboardFrameLayout.hideKeyboard(inputView);
       } else {
-        emojiButton.setImageResource(R.drawable.baseline_direction_arrow_down_24);
+        setEmojiButtonIcon(R.drawable.baseline_direction_arrow_down_24);
       }
 
       checkKeyboardVisible();
@@ -3073,7 +3078,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
         keyboardFrameLayout.setVisible(false);
       }
       setEmojiShown(false);
-      emojiButton.setImageResource(getTargetIcon());
+      setEmojiButtonIcon(getTargetIcon());
 
       checkKeyboardVisible();
     }
@@ -3092,7 +3097,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
         }
       }
       setEmojiShown(false);
-      emojiButton.setImageResource(getTargetIcon());
+      setEmojiButtonIcon(getTargetIcon());
       checkKeyboardVisible();
     }
   }
@@ -3756,7 +3761,7 @@ public class ShareController extends TelegramViewController<ShareController.Args
   public void onInputSelectionExistChanged (InputView v, boolean hasSelection) {
     textInputHasSelection = hasSelection;
     if (!emojiShown) {
-     emojiButton.setImageResource(getTargetIcon());
+     setEmojiButtonIcon(getTargetIcon());
     }
   }
 
@@ -3773,6 +3778,23 @@ public class ShareController extends TelegramViewController<ShareController.Args
   private void closeTextFormattingKeyboard () {
     if (textFormattingVisible && emojiShown) {
       closeEmojiKeyboard();
+    }
+  }
+
+  private void setEmojiButtonIcon (@DrawableRes int iconRes) {
+    emojiButton.setImageResource(iconRes);
+
+    @StringRes int descriptionRes;
+    if (emojiShown) {
+      descriptionRes = emojiState ? R.string.AccessibilityShowKeyboard : R.string.AccessibilityCloseEmojiKeyboard;
+    } else {
+      descriptionRes = getTargetIcon() == R.drawable.baseline_format_text_24 ? R.string.AccessibilityOpenTextFormatting : R.string.AccessibilityOpenEmojiKeyboard;
+    }
+
+    CharSequence description = Lang.getString(descriptionRes);
+    if (!TextUtils.equals(emojiButton.getContentDescription(), description)) {
+      emojiButton.setContentDescription(description);
+      emojiButton.sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
     }
   }
 

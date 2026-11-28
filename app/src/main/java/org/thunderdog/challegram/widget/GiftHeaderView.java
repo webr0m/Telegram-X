@@ -18,10 +18,13 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Paint;
 import android.text.TextPaint;
+import android.text.TextUtils;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.StringRes;
 
+import org.drinkless.tdlib.TdApi;
 import org.thunderdog.challegram.R;
 import org.thunderdog.challegram.core.Lang;
 import org.thunderdog.challegram.data.TD;
@@ -68,14 +71,27 @@ public class GiftHeaderView extends View implements GiftParticlesDrawable.Partic
   }
 
   private void buildContent () {
+    String header = Lang.getString(headerRes);
+    TdApi.FormattedText description = TD.toFormattedText(Lang.getMarkdownString(null, descriptionRes), false);
+
     content = new TGMessageGiveawayBase.Content(getMeasuredWidth() - Screen.dp(120));
     content.padding(Screen.dp(10));
     content.add(new TGMessageGiveawayBase.ContentDrawable(R.drawable.baseline_gift_72));
     content.padding(Screen.dp(22));
-    content.add(new TextWrapper(Lang.getString(headerRes), getHeaderStyleProvider(), () -> Theme.getColor(ColorId.text)).setTextFlagEnabled(Text.FLAG_ALIGN_CENTER, true));
+    content.add(new TextWrapper(header, getHeaderStyleProvider(), () -> Theme.getColor(ColorId.text)).setTextFlagEnabled(Text.FLAG_ALIGN_CENTER, true));
     content.padding(Screen.dp(8));
-    content.add(new TextWrapper(null, TD.toFormattedText(Lang.getMarkdownString(null, descriptionRes), false), getTextStyleProvider(), () -> Theme.getColor(ColorId.text), null, null).setTextFlagEnabled(Text.FLAG_ALIGN_CENTER, true));
+    content.add(new TextWrapper(null, description, getTextStyleProvider(), () -> Theme.getColor(ColorId.text), null, null).setTextFlagEnabled(Text.FLAG_ALIGN_CENTER, true));
     contentY = (getMeasuredHeight() - content.getHeight()) / 2;
+
+    setAccessibilityContentDescription(header, description.text);
+  }
+
+  private void setAccessibilityContentDescription (CharSequence header, CharSequence description) {
+    String contentDescription = header + "\n" + description;
+    if (!TextUtils.equals(getContentDescription(), contentDescription)) {
+      setContentDescription(contentDescription);
+      sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+    }
   }
 
   @Override

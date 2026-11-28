@@ -6,6 +6,7 @@ import android.graphics.drawable.Drawable;
 import android.text.TextPaint;
 import android.text.TextUtils;
 import android.view.View;
+import android.view.accessibility.AccessibilityEvent;
 
 import androidx.annotation.ColorInt;
 import androidx.annotation.Dimension;
@@ -29,6 +30,9 @@ public class ToggleHeaderView2 extends View {
   private final ReplaceAnimator<TrimmedText> titleR = new ReplaceAnimator<>((r) -> invalidate(), AnimatorUtils.DECELERATE_INTERPOLATOR, 180L);
   private final ReplaceAnimator<TrimmedText> subtitleR = new ReplaceAnimator<>((r) -> invalidate(), AnimatorUtils.DECELERATE_INTERPOLATOR, 180L);
   private final Drawable arrowDrawable;
+
+  private String title;
+  private String subtitle;
 
   @Dimension(unit = Dimension.DP)
   private float textPaddingDp = 10f;
@@ -62,15 +66,37 @@ public class ToggleHeaderView2 extends View {
   }
 
   public void setTitle (String title, boolean animated) {
+    this.title = title;
     titleR.replace(new TrimmedText(title), animated);
+    updateContentDescription();
     trimTexts();
     invalidate();
   }
 
   public void setSubtitle (String subtitle, boolean animated) {
+    this.subtitle = subtitle;
     subtitleR.replace(new TrimmedText(subtitle), animated);
+    updateContentDescription();
     trimTexts();
     invalidate();
+  }
+
+  private void updateContentDescription () {
+    StringBuilder description = new StringBuilder();
+    if (!TextUtils.isEmpty(title)) {
+      description.append(title);
+    }
+    if (!TextUtils.isEmpty(subtitle)) {
+      if (description.length() > 0) {
+        description.append("\n");
+      }
+      description.append(subtitle);
+    }
+    String contentDescription = description.length() > 0 ? description.toString() : null;
+    if (!TextUtils.equals(getContentDescription(), contentDescription)) {
+      setContentDescription(contentDescription);
+      sendAccessibilityEvent(AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED);
+    }
   }
 
   public void setTextTop (@Dimension(unit = Dimension.DP) float textTop) {
